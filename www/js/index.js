@@ -7,7 +7,7 @@ function initialize_mosaic(responseText) {
 
     $("#back-to-projects").click(function() {
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', 'https://digitalag.org/our/request.php');
+        xhr.open('POST', './request.php');
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         xhr.onload = function() {
             initialize_projects(xhr.responseText);
@@ -20,7 +20,7 @@ function initialize_mosaic(responseText) {
         console.log("going back to mosaics with project_id: " + project_id);
 
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', 'https://digitalag.org/our/request.php');
+        xhr.open('POST', './request.php');
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         xhr.onload = function() {
             initialize_mosaics(xhr.responseText);
@@ -39,7 +39,7 @@ function initialize_mosaics(responseText) {
 
     $("#back-to-projects").click(function() {
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', 'https://digitalag.org/our/request.php');
+        xhr.open('POST', './request.php');
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         xhr.onload = function() {
             initialize_projects(xhr.responseText);
@@ -54,7 +54,7 @@ function initialize_mosaics(responseText) {
         console.log("clicked mosaic link with project id: " + project_id + " and a mosaic id: " + mosaic_id);
 
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', 'https://digitalag.org/our/request.php');
+        xhr.open('POST', './request.php');
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         xhr.onload = function() {
             initialize_mosaic(xhr.responseText);
@@ -63,10 +63,25 @@ function initialize_mosaics(responseText) {
     });
 
     var r = new Resumable({
-        target: 'resumable_upload.php'
+        target: 'resumable_upload.php?id_token=' + id_token
     });
 
     r.assignBrowse(document.getElementById('add-mosaic-button'));
+
+    $('#pause-upload-button').click(function(){
+        if ($(this).attr('state') === 'play') {
+            $(this).attr('state', 'pause');
+
+            $(this).find('.fa').removeClass('fa-pause').addClass('fa-play');
+            r.pause();
+        } else {
+            $(this).attr('state', 'play');
+
+            $(this).find('.fa').removeClass('fa-play').addClass('fa-pause');
+            r.upload();
+        }
+    });
+
 
     r.on('fileSuccess', function(file){
         console.debug('fileSuccess',file);
@@ -75,27 +90,43 @@ function initialize_mosaics(responseText) {
     r.on('fileProgress', function(file){
         //console.log("PROGRESS!");
         console.debug('fileProgress', file);
-        console.log("progress: " + (r.progress() * 100.0));
-
         var file_token = file.uniqueIdentifier;
-        $("#progress-bar-" + file_token).attr("aria-valuenow", r.progress() * 100.0);
-        $("#progress-bar-" + file_token).attr("style", "width: " + r.progress() * 100.0 + "%");
+        console.log("file progress for '" + file_token + "': " + (file.progress() * 100.0));
+
+        $("#progress-bar-" + file_token).attr("aria-valuenow", file.progress() * 100.0);
+        $("#progress-bar-" + file_token).attr("style", "width: " + file.progress() * 100.0 + "%");
+        $("#progress-bar-" + file_token).text(Number(file.progress() * 100.0).toFixed(2) + "%");
+        $("#progress-bar-text-" + file_token).html(Number(Number(file.progress() * file.size / 1024).toFixed(0)).toLocaleString() + "/" + Number((file.size / 1024).toFixed(0)).toLocaleString() + "kB (" + Number(file.progress() * 100.0).toFixed(2) + "%)");
     });
 
     r.on('fileAdded', function(file, event){
-        r.upload();
+        if ($('#pause-upload-button').attr('state') === 'pause') {
+        } else {
+            $('#pause-upload-button').attr('state', 'play');
+
+            $('#pause-upload-button').find('.fa').removeClass('fa-play').addClass('fa-pause');
+            r.upload();
+        }
         console.debug('fileAdded', event);
 
         var file_token = file.uniqueIdentifier;
-        var progress_text = "<div class='progress'> <div id='progress-bar-" + file_token + "' class='progress-bar' role='progressbar' aria-valuenow='0' aria-valuemin='0' aria-valuemax='100'></div> </div>";
+        var progress_text = "<tr>"
+            + "<td style='width:35%; vertical-align: middle;'>" + file.relativePath + "</td>"
+            + "<td style='width:35%; vertical-align: middle;'><div class='progress'> <div id='progress-bar-" + file_token + "' class='progress-bar progress-bar-striped progress-bar-animated' role='progressbar' aria-valuenow='0' aria-valuemin='0' aria-valuemax='100' style='width:0.00%'></div></div></td>"
+            + "<td style='vertical-align: middle;'><div id='progress-bar-text-" + file_token + "'>0/" + (Number(file.size / 1024).toFixed(0)).toLocaleString() + "kB (0.00%)</div></td>"
+            + "</tr>";
 
-        $("#uploads-div").append(progress_text);
+        $("#uploads-table").append(progress_text);
+
+        $('#pause-upload-button').show();
     });
 
+    /*
     r.on('filesAdded', function(array){
         r.upload();
         console.debug('filesAdded', array);
     });
+    */
 
     r.on('fileRetry', function(file){
         console.debug('fileRetry', file);
@@ -140,7 +171,7 @@ function initialize_projects(responseText) {
         console.log("clicked project link with project id: " + project_id);
 
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', 'https://digitalag.org/our/request.php');
+        xhr.open('POST', './request.php');
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         xhr.onload = function() {
             initialize_mosaics(xhr.responseText);
@@ -153,7 +184,7 @@ function initialize_projects(responseText) {
 
         console.log("adding project with text: '" + $("#inputProjectName").val() + "'");
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', 'https://digitalag.org/our/request.php');
+        xhr.open('POST', './request.php');
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         xhr.onload = function() {
             initialize_projects(xhr.responseText);
@@ -174,7 +205,7 @@ function onSignIn(googleUser) {
     console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
 
     var xhr = new XMLHttpRequest();
-    xhr.open('POST', 'https://digitalag.org/our/request.php');
+    xhr.open('POST', './request.php');
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onload = function() {
         initialize_projects(xhr.responseText);
@@ -190,7 +221,7 @@ function signOut() {
         console.log('User signed out.');
 
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', 'https://digitalag.org/our/request.php');
+        xhr.open('POST', './request.php');
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         xhr.onload = function() {
             console.log('Signed in as: ' + xhr.responseText);
@@ -205,7 +236,7 @@ $(document).ready(function() {
     console.log("initializing index!");
 
     var xhr = new XMLHttpRequest();
-    xhr.open('POST', 'https://digitalag.org/our/request.php');
+    xhr.open('POST', './request.php');
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onload = function() {
         initialize_projects(xhr.responseText);

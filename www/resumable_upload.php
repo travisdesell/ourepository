@@ -19,6 +19,15 @@
  * @email meetbivek@gmail.com
  */
 
+$cwd[__FILE__] = __FILE__;
+if (is_link($cwd[__FILE__])) $cwd[__FILE__] = readlink($cwd[__FILE__]);
+$cwd[__FILE__] = dirname($cwd[__FILE__]);
+
+require_once($cwd[__FILE__] . "/../db/my_query.php");
+require_once($cwd[__FILE__] . "/user.php");
+
+$upload_dir = "/mosaic_uploads";
+
 
 ////////////////////////////////////////////////////////////////////
 // THE FUNCTIONS
@@ -70,12 +79,11 @@ function rrmdir($dir) {
  * Check if all the parts exist, and 
  * gather all the parts of the file together
  * @param string $temp_dir - the temporary directory holding all the parts of the file
- * @param string $fileName - the original file name
+ * @param string $file_name - the original file name
  * @param string $chunkSize - each chunk size (in bytes)
- * @param string $totalSize - original file size (in bytes)
+ * @param string $total_size - original file size (in bytes)
  */
-function createFileFromChunks($temp_dir, $fileName, $chunkSize, $totalSize,$total_files) {
-
+function createFileFromChunks($temp_dir, $identifier, $file_name, $chunkSize, $total_size, $total_files) {
     // count all the parts of this file
     $total_files_on_server_size = 0;
     $temp_total = 0;
@@ -84,13 +92,31 @@ function createFileFromChunks($temp_dir, $fileName, $chunkSize, $totalSize,$tota
         $tempfilesize = filesize($temp_dir.'/'.$file);
         $total_files_on_server_size = $temp_total + $tempfilesize;
     }
+
+    error_log("trying to create file from chunks, total_files_on_server_size: $total_files_on_server_size, total_size: $total_size");
+
+    //check and see if uploading_mosaics already exists in the database, otherwise increase bytes_uploaded
+    $query = "SELECT * FROM uploading_mosaics WHERE identifier = '$identifier'";
+    $result = query_our_db($query);
+
+    if (mysqli_num_rows($result) > 0) {
+        //entry exists
+        $query = "UPDATE uploading_mosaics SET bytes_uploaded = $total_files_on_server_size WHERE identifier = '$identifier'";
+        query_our_db($query);
+    } else {
+        $query = "INSERT INTO uploading_mosaics SET name = '$file_name', identifier = '$identifier', bytes_uploaded = $total_files_on_server_size, total_size = $total_size";
+        query_our_db($query);
+    } 
+
     // check that all the parts are present
     // If the Size of all the chunks on the server is equal to the size of the file uploaded.
-    if ($total_files_on_server_size >= $totalSize) {
+    if ($total_files_on_server_size >= $total_size) {
     // create the final destination file 
-        if (($fp = fopen('temp/'.$fileName, 'w')) !== false) {
+        error_log("writing to final destination file: '$temp_dir/../$file_name'");
+
+        if (($fp = fopen($temp_dir.'/../'.$file_name, 'w')) !== false) {
             for ($i=1; $i<=$total_files; $i++) {
-                fwrite($fp, file_get_contents($temp_dir.'/'.$fileName.'.part'.$i));
+                fwrite($fp, file_get_contents($temp_dir.'/'.$file_name.'.part'.$i));
                 _log('writing chunk '.$i);
             }
             fclose($fp);
@@ -99,6 +125,7 @@ function createFileFromChunks($temp_dir, $fileName, $chunkSize, $totalSize,$tota
             return false;
         }
 
+        error_log("removing directory: '$temp_dir'");
         // rename the temporary directory (to avoid access from other 
         // concurrent chunks uploads) and than delete it
         if (rename($temp_dir, $temp_dir.'_UNUSED')) {
@@ -107,7 +134,6 @@ function createFileFromChunks($temp_dir, $fileName, $chunkSize, $totalSize,$tota
             rrmdir($temp_dir);
         }
     }
-
 }
 
 
@@ -115,29 +141,46 @@ function createFileFromChunks($temp_dir, $fileName, $chunkSize, $totalSize,$tota
 // THE SCRIPT
 ////////////////////////////////////////////////////////////////////
 
+//modifications to make sure the user is logged in
+//TODO: spit out an error page if the user is not logged in
+$id_token = $_GET['id_token'];
+$user_id = get_user_id($id_token);
+
+$msg = "";
+foreach ($_GET as $key => $value) {
+    if ($key == "id_token") continue;
+    $msg .= " $key: '$value'";
+}
+error_log("$msg");
+
 //check if request is GET and the requested chunk exists or not. this makes testChunks work
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-
     if(!(isset($_GET['resumableIdentifier']) && trim($_GET['resumableIdentifier'])!='')){
         $_GET['resumableIdentifier']='';
     }
-    $temp_dir = 'temp/'.$_GET['resumableIdentifier'];
+
+    $temp_dir = $upload_dir . '/' . $user_id . '/' .$_GET['resumableIdentifier'];
     if(!(isset($_GET['resumableFilename']) && trim($_GET['resumableFilename'])!='')){
         $_GET['resumableFilename']='';
     }
+
     if(!(isset($_GET['resumableChunkNumber']) && trim($_GET['resumableChunkNumber'])!='')){
         $_GET['resumableChunkNumber']='';
     }
+
     $chunk_file = $temp_dir.'/'.$_GET['resumableFilename'].'.part'.$_GET['resumableChunkNumber'];
     if (file_exists($chunk_file)) {
-         header("HTTP/1.0 200 Ok");
-       } else {
-         header("HTTP/1.0 404 Not Found");
-       }
+        error_log("chunk file '$chunk_file' already exists! sending OK");
+        header("HTTP/1.0 200 Ok");
+    } else {
+        error_log("chunk file '$chunk_file' does not exist! sending 404");
+        header("HTTP/1.0 404 Not Found");
+    }
 }
 
 // loop through files and move the chunks to a temporarily created directory
 if (!empty($_FILES)) foreach ($_FILES as $file) {
+    error_log("working with file: " . json_encode($file));
 
     // check the error status
     if ($file['error'] != 0) {
@@ -148,20 +191,22 @@ if (!empty($_FILES)) foreach ($_FILES as $file) {
     // init the destination file (format <filename.ext>.part<#chunk>
     // the file is stored in a temporary directory
     if(isset($_POST['resumableIdentifier']) && trim($_POST['resumableIdentifier'])!=''){
-        $temp_dir = 'temp/'.$_POST['resumableIdentifier'];
+        $temp_dir = $upload_dir . '/'  . $user_id . '/' . $_POST['resumableIdentifier'];
     }
-    $dest_file = $temp_dir.'/'.$_POST['resumableFilename'].'.part'.$_POST['resumableChunkNumber'];
+    $dest_file = $temp_dir . '/' . $_POST['resumableFilename'] . '.part' . $_POST['resumableChunkNumber'];
 
     // create the temporary directory
     if (!is_dir($temp_dir)) {
         mkdir($temp_dir, 0777, true);
     }
 
+    error_log("moving uploaded file: '" . $file['tmp_name'] . " to '$dest_file'");
+
     // move the temporary file
     if (!move_uploaded_file($file['tmp_name'], $dest_file)) {
         _log('Error saving (move_uploaded_file) chunk '.$_POST['resumableChunkNumber'].' for file '.$_POST['resumableFilename']);
     } else {
         // check if all the parts present, and create the final destination file
-        createFileFromChunks($temp_dir, $_POST['resumableFilename'],$_POST['resumableChunkSize'], $_POST['resumableTotalSize'],$_POST['resumableTotalChunks']);
+        createFileFromChunks($temp_dir, $_POST['resumableIdentifier'], $_POST['resumableFilename'],$_POST['resumableChunkSize'], $_POST['resumableTotalSize'],$_POST['resumableTotalChunks']);
     }
 }

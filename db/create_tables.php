@@ -31,10 +31,23 @@ $query = "CREATE TABLE `projects` (
 	`owner_id` INT(11) NOT NULL, 
     `name` VARCHAR(128) NOT NULL,
 
-	PRIMARY KEY (`id`)
+    PRIMARY KEY (`id`),
+    UNIQUE KEY(`id`, `name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1";
 
 query_our_db($query);
+
+$query = "CREATE TABLE `uploading_mosaics` (
+    `id` INT(11) NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(128) NOT NULL,
+    `identifier` VARCHAR(128) NOT NULL,
+    `bytes_uploaded` INT(11) DEFAULT 0,
+    `total_size` INT(11) DEFAULT 0,
+
+    PRIMARY KEY (`id`),
+    UNIQUE KEY(`id`, `name`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1";
+
 
 $query = "CREATE TABLE `project_access` (
 	`user_id` INT(11) NOT NULL, 
