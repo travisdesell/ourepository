@@ -22,7 +22,7 @@ function add_project($user_id, $project_name) {
 function display_projects($user_id) {
     global $cwd;
 
-    $project_result = query_our_db("SELECT id, name FROM projects WHERE owner_id = $user_id");
+    $project_result = query_our_db("select projects.id, projects.name from projects, project_access where projects.id = project_access.project_id AND project_access.user_id = $user_id");
 
     $projects['projects'] = array();
 
