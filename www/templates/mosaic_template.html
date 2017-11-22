@@ -1,0 +1,46 @@
+<div class='container-fluid' style='padding-top:15px;'>
+    <div class='row'>
+        <div class='col-sm-12'>
+
+            <ol class='breadcrumb'>
+                <li class='breadcrumb-item'><a id='back-to-projects' href='javascript:void(0)'>Projects</a></li>
+                {{^no_project}}
+                <li class='breadcrumb-item'><a id='back-to-mosaics' project_id='{{project_id}}' href='javascript:void(0)'>{{project_name}}</a></li>
+                {{/no_project}}
+
+                <li class='breadcrumb-item active'>{{mosaic_name}}</li>
+            </ol>
+        </div> <!-- col-sm-12 -->
+    </div> <!-- row -->
+</div> <!-- container -->
+
+
+<div class='container-fluid'>
+    <div class='row'>
+        <div class='col-sm-2'>
+        {{#no_project}}
+            This mosaic is being viewed independently of a project. Please view as part of a project to mark it up.
+        {{/no_project}}
+        {{^no_project}}
+            <button type='button' class='btn btn-block' id='points-button'>Toggle Points</button>
+            <button type='button' class='btn btn-block' id='lines-button'>Toggle Lines</button>
+            <button type='button' class='btn btn-block' id='polygons-button'>Toggle Polygons</button>
+
+            <button type='button' class='btn btn-primary btn-block' id='draw-lines-button' data-toggle='button' aria-pressed='false' autocomplete='off'>Draw Lines</button>
+            <button type='button' class='btn btn-primary btn-block' id='draw-points-button' data-toggle='button' aria-pressed='false' autocomplete='off'>Draw Points</button>
+            <button type='button' class='btn btn-primary btn-block' id='draw-polygon-button' data-toggle='button' aria-pressed='false' autocomplete='off'>Draw Polygon</button>
+
+            <ul class='list-group'>
+                <li class='list-group-item' id='web-point'>Web:</li>
+                <li class='list-group-item' id='viewport-point'>Viewport:</li>
+                <li class='list-group-item' id='image-point'>Image:</li>
+            </ul>
+            {{/no_project}}
+        </div>
+
+        <div class='col-sm-10'>
+            <div id='map'></div>
+        </div>
+    </div>
+</div>
+

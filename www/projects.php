@@ -30,10 +30,33 @@ function display_projects($user_id) {
         $projects['projects'][] = $project_row;
     }
 
+    $mosaic_result = query_our_db("SELECT id, filename, identifier, total_size, bytes_uploaded, status, height, width FROM mosaics WHERE owner_id = $user_id ORDER BY filename");
+
+    $projects['mosaics'] = array();
+
+    while (($mosaic_row = $mosaic_result->fetch_assoc()) != NULL) {
+        $mosaic_row['project_id'] = $project_id;
+        $mosaic_row['percentage'] = number_format($mosaic_row['bytes_uploaded'] * 100 / $mosaic_row['total_size'], 2);
+        $mosaic_row['bytes_uploaded'] = number_format($mosaic_row['bytes_uploaded'] / 1024, 0);
+        $mosaic_row['total_size'] = number_format($mosaic_row['total_size'] / 1024, 0);
+
+        if ($mosaic_row['status'] == "UPLOADING") {
+            $mosaic_row['uploading'] = true;
+        } else if ($mosaic_row['status'] == "UPLOADED") {
+            $mosaic_row['uploaded'] = true;
+        } else if ($mosaic_row['status'] == "TILED") {
+            $mosaic_row['tiled'] = true;
+        }
+
+        $projects['mosaics'][] = $mosaic_row;
+    }
+
     $projects_template = file_get_contents($cwd[__FILE__] . "/templates/projects_template.html");
 
     $m = new Mustache_Engine;
-    echo $m->render($projects_template, $projects);
+    $response['html'] = $m->render($projects_template, $projects);
+
+    echo json_encode($response);
 }
 
 ?>

@@ -1,0 +1,52 @@
+<div class='container-fluid' style='padding-top:15px;'>
+    <div class='row'>
+        <div class='col-sm-12'>
+
+            <ol class='breadcrumb'>
+                <li class='breadcrumb-item'><a id='back-to-projects' href='javascript:void(0)'>Projects</a></li>
+                <li class='breadcrumb-item'>{{project_name}}</li>
+            </ol>
+        </div> <!-- col-sm-12 -->
+    </div> <!-- row -->
+</div> <!-- container -->
+
+
+<div class='container-fluid'>
+    <div class='row'>
+        <div class='col-sm-12'>
+
+            <table id ='mosaics-table' class='table table-bordered table-striped table-condensed'>
+                <thead>
+                    <th>Mosaic Name</th>
+                    <th>Height</th>
+                    <th>Width</th>
+                </thead>
+                <tbody>
+                    {{#mosaics}}
+                    <tr>
+                        <td><a href='javascript:void(0)' class='mosaic-link' project_id='{{project_id}}' mosaic_id='{{id}}'>{{filename}}</a></td>
+                        <td>{{height}}</td>
+                        <td>{{width}}</td>
+                    </tr>
+                    {{/mosaics}}
+                </tbody>
+            </table>
+
+        </div> <!-- col-sm-12 -->
+    </div> <!-- row -->
+
+    <div class='row'>
+        <div class='col-sm-12'>
+            <button id="add-mosaic-button" class="btn btn-primary float-right"><i class='fa fa-plus'></i> Mosaic</button>
+            <button id='pause-upload-button' class='btn btn-primary' state='play' file_token='" + file_token + "' style='display: none; height: 38px;'> <i class='fa fa-pause'></i> </button>
+        </div>
+    </div>
+
+    <div class='row' style='padding-top:15px'>
+        <div class='col-sm-12'>
+            <table id='uploads-table' class='table table-bordered table-condensed'></table>
+        </div>
+    </div>
+
+
+</div> <!-- container -->

@@ -40,6 +40,9 @@ if ($request_type == NULL || $request_type == "INDEX") {
     error_log("project_id: $project_id, mosaic_id: $mosaic_id");
 
     display_mosaic($user_id, $project_id, $mosaic_id);
+} else if ($request_type == "PROCESS") {
+    require_once($cwd[__FILE__] . "/process_mosaic.php");
+
 }
 
 ?>

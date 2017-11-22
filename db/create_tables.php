@@ -37,18 +37,6 @@ $query = "CREATE TABLE `projects` (
 
 query_our_db($query);
 
-$query = "CREATE TABLE `uploading_mosaics` (
-    `id` INT(11) NOT NULL AUTO_INCREMENT,
-    `name` VARCHAR(128) NOT NULL,
-    `identifier` VARCHAR(128) NOT NULL,
-    `bytes_uploaded` INT(11) DEFAULT 0,
-    `total_size` INT(11) DEFAULT 0,
-
-    PRIMARY KEY (`id`),
-    UNIQUE KEY(`id`, `name`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1";
-
-
 $query = "CREATE TABLE `project_access` (
 	`user_id` INT(11) NOT NULL, 
 	`project_id` INT(11) NOT NULL, 
@@ -59,12 +47,14 @@ $query = "CREATE TABLE `project_access` (
 
 query_our_db($query);
 
-
 $query = "CREATE TABLE `mosaics` (
 	`id` INT(11) NOT NULL AUTO_INCREMENT,
 	`owner_id` INT(11) NOT NULL,
-    `project_id` INT(11) NOT NULL,
 	`filename` VARCHAR(256) NOT NULL,
+    `identifier` VARCHAR(128) NOT NULL,
+    `bytes_uploaded` INT(11) DEFAULT 0,
+    `total_size` INT(11) DEFAULT 0,
+    `status` varchar(16),
 	`height` INT(11),
 	`width` INT(11),
 

@@ -83,7 +83,7 @@ function rrmdir($dir) {
  * @param string $chunkSize - each chunk size (in bytes)
  * @param string $total_size - original file size (in bytes)
  */
-function createFileFromChunks($temp_dir, $identifier, $file_name, $chunkSize, $total_size, $total_files) {
+function createFileFromChunks($user_id, $temp_dir, $identifier, $file_name, $chunkSize, $total_size, $total_files) {
     // count all the parts of this file
     $total_files_on_server_size = 0;
     $temp_total = 0;
@@ -95,16 +95,19 @@ function createFileFromChunks($temp_dir, $identifier, $file_name, $chunkSize, $t
 
     error_log("trying to create file from chunks, total_files_on_server_size: $total_files_on_server_size, total_size: $total_size");
 
-    //check and see if uploading_mosaics already exists in the database, otherwise increase bytes_uploaded
-    $query = "SELECT * FROM uploading_mosaics WHERE identifier = '$identifier'";
+    //check and see if mosaics already exists in the database, otherwise increase bytes_uploaded
+    $query = "SELECT * FROM mosaics WHERE identifier = '$identifier'";
+    error_log("$query");
     $result = query_our_db($query);
 
     if (mysqli_num_rows($result) > 0) {
         //entry exists
-        $query = "UPDATE uploading_mosaics SET bytes_uploaded = $total_files_on_server_size WHERE identifier = '$identifier'";
+        $query = "UPDATE mosaics SET bytes_uploaded = $total_files_on_server_size WHERE identifier = '$identifier'";
+        error_log("$query");
         query_our_db($query);
     } else {
-        $query = "INSERT INTO uploading_mosaics SET name = '$file_name', identifier = '$identifier', bytes_uploaded = $total_files_on_server_size, total_size = $total_size";
+        $query = "INSERT INTO mosaics SET owner_id = $user_id, filename = '$file_name', identifier = '$identifier', bytes_uploaded = $total_files_on_server_size, total_size = $total_size, status='UPLOADING'";
+        error_log("$query");
         query_our_db($query);
     } 
 
@@ -133,6 +136,10 @@ function createFileFromChunks($temp_dir, $identifier, $file_name, $chunkSize, $t
         } else {
             rrmdir($temp_dir);
         }
+
+        $query = "UPDATE mosaics SET status = 'UPLOADED' AND bytes_uploaded = $total_size WHERE owner_id = $user_id AND filename = '$file_name' AND identifier = '$identifier'";
+        error_log("$query");
+        query_our_db($query);
     }
 }
 
@@ -146,12 +153,17 @@ function createFileFromChunks($temp_dir, $identifier, $file_name, $chunkSize, $t
 $id_token = $_GET['id_token'];
 $user_id = get_user_id($id_token);
 
+error_log("request method: " . $_SERVER['REQUEST_METHOD']);
+
 $msg = "";
 foreach ($_GET as $key => $value) {
     if ($key == "id_token") continue;
     $msg .= " $key: '$value'";
 }
-error_log("$msg");
+//error_log("$msg");
+http_response_code(500);
+echo "blahblabhalbhalbhlbha";
+exit();
 
 //check if request is GET and the requested chunk exists or not. this makes testChunks work
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -207,6 +219,6 @@ if (!empty($_FILES)) foreach ($_FILES as $file) {
         _log('Error saving (move_uploaded_file) chunk '.$_POST['resumableChunkNumber'].' for file '.$_POST['resumableFilename']);
     } else {
         // check if all the parts present, and create the final destination file
-        createFileFromChunks($temp_dir, $_POST['resumableIdentifier'], $_POST['resumableFilename'],$_POST['resumableChunkSize'], $_POST['resumableTotalSize'],$_POST['resumableTotalChunks']);
+        createFileFromChunks($user_id, $temp_dir, $_POST['resumableIdentifier'], $_POST['resumableFilename'],$_POST['resumableChunkSize'], $_POST['resumableTotalSize'],$_POST['resumableTotalChunks']);
     }
 }

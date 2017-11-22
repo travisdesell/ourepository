@@ -1,0 +1,96 @@
+<div class='container-fluid' style='padding-top:15px;'>
+    <div class='row'>
+        <div class='col-sm-12'>
+
+            <ol class='breadcrumb'>
+                <li class='breadcrumb-item active'>Projects</li>
+            </ol>
+        </div> <!-- col-sm-12 -->
+    </div> <!-- row -->
+</div> <!-- container -->
+
+
+<div class='container-fluid'>
+    <div class='row'>
+        <div class='col-sm-12'>
+
+            <table id ='projects-table' class='table table-bordered table-striped table-condensed'>
+                <tbody>
+                    {{#projects}}
+                    <tr>
+                        <td><a href='javascript:void(0)' class='project-link' project-id='{{id}}'>{{name}}</a></td>
+                    </tr>
+                    {{/projects}}
+                </tbody>
+            </table>
+
+        </div> <!-- col-sm-12 -->
+    </div> <!-- row -->
+
+    <div class='row'>
+        <div class='col-sm-12'>
+            <form class="form-inline float-right">
+                <div class="form-group mx-sm-3">
+                    <label for="inputProjectName" class="sr-only">Project Name</label>
+                    <input type="text" class="form-control" id="inputProjectName" placeholder="Project Name">
+                </div>
+                <button id="add-project-button" class="btn btn-primary"><i class='fa fa-plus'></i> Project</button>
+            </form>
+
+        </div>
+    </div>
+</div> <!-- container -->
+
+<div class='container-fluid' style='padding-top:15px;'>
+    <div class='row'>
+        <div class='col-sm-12'>
+
+            <ol class='breadcrumb'>
+                <li class='breadcrumb-item active'>Your Mosaics</li>
+            </ol>
+        </div> <!-- col-sm-12 -->
+    </div> <!-- row -->
+</div> <!-- container -->
+
+
+<div class='container-fluid'>
+    <div class='row'>
+        <div class='col-sm-12'>
+
+            <table id ='mosaics-table' class='table table-bordered table-striped table-condensed'>
+                <thead>
+                    <th>Mosaic Name</th>
+                    <th colspan="2">Progress</th>
+                    <th>Status</th>
+                </thead>
+                <tbody>
+                    {{#mosaics}}
+                    <tr>
+                        <td><a href='javascript:void(0)' class='mosaic-link' project_id='{{project_id}}' mosaic_id='{{id}}'>{{filename}}</a></td>
+                        <td style='width:35%; vertical-align: middle;'><div class='progress'> <div id='progress-bar-{{identifier}}' class='progress-bar progress-bar-striped {{#uploaded}}bg-success{{/uploaded}} {{#tiled}}bg-success{{/tiled}} {{#uploading}}uploading-mosaic{{/uploading}}' role='progressbar' aria-valuenow='{{percentage}}' aria-valuemin='0' aria-valuemax='100' style='width:{{percentage}}%'>{{percentage}}</div></div></td>
+                        <td style='vertical-align: middle;'><div id='progress-bar-text-{{identifier}}'>{{bytes_uploaded}}kB /{{total_size}}kB ({{percentage}}%)</div></td>
+                        {{#tiled}}
+                            <td> <button class="btn btn-primary btn-sm btn-success remove-upload-button" mosaic_id='{{id}}'><i class='fa fa-check'></i> </button> </td>
+                        {{/tiled}}
+                        {{#uploaded}}
+                            <td> <button class="btn btn-primary btn-sm btn-warning process-upload-button" mosaic_id='{{id}}'><i class='fa fa-play'></i> </button> </td>
+                        {{/uploaded}}
+                        {{#uploading}}
+                            <td></td>
+                        {{/uploading}}
+                    </tr>
+                    {{/mosaics}}
+                </tbody>
+            </table>
+
+        </div> <!-- col-sm-12 -->
+    </div> <!-- row -->
+
+    <div class='row'>
+        <div class='col-sm-12'>
+            <button id="add-mosaic-button" class="btn btn-primary float-right"><i class='fa fa-upload'></i> Mosaic</button>
+            <button id='pause-upload-button' class='btn btn-primary' state='play' file_token='" + file_token + "' style='display: none; height: 38px;'> <i class='fa fa-pause'></i> </button>
+        </div>
+    </div>
+
+</div> <!-- container -->

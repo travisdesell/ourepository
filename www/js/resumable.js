@@ -615,11 +615,27 @@ var Resumable = function(opts){
             $.xhr = new XMLHttpRequest();
 
             var testHandler = function(e){
+                console.log("in test handler! status: " + $.status());
+                console.log("xhr.status: " + $.xhr.status);
+                console.log("xhr.statusText: " + $.xhr.statusText);
+                var xhr_status = $.xhr.status;
+
                 $.tested = true;
                 var status = $.status();
                 if(status=='success') {
                     $.callback(status, $.message());
                     $.resumableObj.uploadNextChunk();
+                } else if (status =='error') {
+                    if (xhr_status =='404') {
+                        //chunk didn't exist on the server so send it
+                        $.send();
+                    } else if (xhr_status == '500') {
+                        //had an error on the server so do something about it.
+                        console.log("Had 500 error on server! Status Text: " + $.xhr.statusText);
+                        console.log("responseText: " + $.xhr.responseText);
+                        $.resumableObj.fire('fileError', $, $.xhr.responseText);
+                    }
+
                 } else {
                     $.send();
                 }
@@ -702,6 +718,7 @@ var Resumable = function(opts){
 
             // Progress
             $.xhr.upload.addEventListener('progress', function(e){
+                console.log("in progress event listener!");
                 if( (new Date) - $.lastProgressCallback > $.getOpt('throttleProgressCallbacks') * 1000 ) {
                     $.callback('progress');
                     $.lastProgressCallback = (new Date);
