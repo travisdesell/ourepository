@@ -615,9 +615,18 @@ var Resumable = function(opts){
             $.xhr = new XMLHttpRequest();
 
             var testHandler = function(e){
+                /*
                 console.log("in test handler! status: " + $.status());
                 console.log("xhr.status: " + $.xhr.status);
                 console.log("xhr.statusText: " + $.xhr.statusText);
+
+                var $j = jQuery.noConflict();
+                console.log("modal html:" + $j(".modal").html() );
+
+                $j(".modal-body").html("<p>xhr.statusText: '" + $.xhr.statusText + "'</p>");
+                $j(".modal").modal();
+                */
+
                 var xhr_status = $.xhr.status;
 
                 $.tested = true;
@@ -718,7 +727,7 @@ var Resumable = function(opts){
 
             // Progress
             $.xhr.upload.addEventListener('progress', function(e){
-                console.log("in progress event listener!");
+                //console.log("in progress event listener!");
                 if( (new Date) - $.lastProgressCallback > $.getOpt('throttleProgressCallbacks') * 1000 ) {
                     $.callback('progress');
                     $.lastProgressCallback = (new Date);
@@ -731,7 +740,7 @@ var Resumable = function(opts){
 
             // Done (either done, failed or retry)
             var doneHandler = function(e){
-                console.log("doneHandler, e: " + e);
+                //console.log("doneHandler, e: " + e);
 
                 var status = $.status();
                 if(status=='success'||status=='error') {

@@ -2,9 +2,142 @@
     <div class='row'>
         <div class='col-sm-12'>
 
+            <ol class='breadcrumb' style='vertical-align: middle; padding:4 4 4 16;'>
+                <li class='breadcrumb-item active' style='padding:7 0 7 0;'>
+                    Your Mosaics
+                </li>
+
+                <div class="btn-group pull-right" role="group" aria-label="Basic example">
+                    <button type="button" class="geo-switch-button btn btn-small btn-secondary">Geo</button>
+                    <button type="button" class="utm-switch-button btn btn-small btn-secondary">UTM</button>
+                </div>
+            </ol>
+        </div> <!-- col-sm-12 -->
+    </div> <!-- row -->
+</div> <!-- container -->
+
+<div class='container-fluid'>
+    <div class='row' style='padding: 0px 10px 0px 10px;'>
+        {{#finished_mosaics}}
+        <div class='col-xl-3 col-lg-3 col-md-4 col-sm-6' style='padding:0px 5px 10px 5px;'>
+            <div class="card" id="finished-mosaic-card-{{identifier}}">
+                <div class='picture' identifier='{{identifier}}'>
+                    <img class="card-img-top" src="./mosaics/{{owner_id}}/{{thumbnail}}" alt="Thumbnail of {{filename}}">
+                </div>
+                <div class="card-body">
+                    <div class="picture card-title" style='vertical-align: middle;'>
+                        <a href="./mosaics.php?mosaic_id={{id}}"><b>{{filename}}</b></a>
+                        <!-- <button mosaic_identifier="{{identifier}}" style="padding:4px 6px 4px 6px;" class="delete-mosaic-button btn btn-primary btn-sm btn-danger float-right"><i class='fa fa-times'></i></button> -->
+                    </div>
+                    <hr>
+                    <p class="card-text">
+                    <b>Size:</b> {{size_kb}} Kb <br>
+                    <b>Resolution:</b> {{width}} x {{height}} <br>
+                    <b>Channels:</b> {{channels}}
+
+                    {{#geotiff}}
+                    <table class="table table-condensed geo-table" style="font-size: 60%; margin:16 0 0 0; vertical-align: middle;">
+                        <thead>
+                            <th scope='col'><b>Geo</b></th>
+                            <th scope='col'>Latitude</th>
+                            <th scope='col'>Longitude</th>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <th scope='row'>Center</th>
+                                <td>{{lat_center}}</td>
+                                <td>{{lon_center}}</td>
+                            </tr>
+                            <tr>
+                                <th scope='row'>Upper Left</th>
+                                <td>{{lat_upper_left}}</td>
+                                <td>{{lon_upper_left}}</td>
+                            </tr>
+                            <tr>
+                                <th scope='row'>Upper Right</th>
+                                <td>{{lat_upper_right}}</td>
+                                <td>{{lon_upper_right}}</td>
+                            </tr>
+                            <tr>
+                                <th scope='row'>Lower Left</th>
+                                <td>{{lat_lower_left}}</td>
+                                <td>{{lon_lower_left}}</td>
+                            </tr>
+                            <tr>
+                                <th scope='row'>Lower Right</th>
+                                <td>{{lat_lower_right}}</td>
+                                <td>{{lon_lower_right}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <table class="table table-condensed utm-table" style="font-size: 60%; margin:16 0 0 0; vertical-align: middle; display:none">
+                        <thead>
+                            <th scope='col'><b>UTM</b></th>
+                            <th scope='col'>Easting</th>
+                            <th scope='col'>Northing</th>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <th scope='row'>Center</th>
+                                <td>{{utm_e_center}}</td>
+                                <td>{{utm_n_center}}</td>
+                            </tr>
+                            <tr>
+                                <th scope='row'>Upper Left</th>
+                                <td>{{utm_e_upper_left}}</td>
+                                <td>{{utm_n_upper_left}}</td>
+                            </tr>
+                            <tr>
+                                <th scope='row'>Upper Right</th>
+                                <td>{{utm_e_upper_right}}</td>
+                                <td>{{utm_n_upper_right}}</td>
+                            </tr>
+                            <tr>
+                                <th scope='row'>Lower Left</th>
+                                <td>{{utm_e_lower_left}}</td>
+                                <td>{{utm_n_lower_left}}</td>
+                            </tr>
+                            <tr>
+                                <th scope='row'>Lower Right</th>
+                                <td>{{utm_e_lower_right}}</td>
+                                <td>{{utm_n_lower_right}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    {{/geotiff}}
+
+
+                    </p>
+                </div>
+            </div>
+        </div> <!-- col-sm-12 -->
+        {{/finished_mosaics}}
+
+    </div> <!-- row -->
+</div>
+
+{{#finished_mosaics}}
+<!-- The Modal -->
+<div id="preview-modal-{{identifier}}" class="preview-modal" identifier={{identifier}}>
+
+    <!-- The Close Button -->
+    <span class="close-preview" identifier="{{identifier}}">&times;</span>
+
+    <!-- Modal Content (The Image) -->
+    <img class="preview-modal-content" src="./mosaics/{{owner_id}}/{{preview}}" alt="Preview of {{filename}}">
+
+    <!-- Modal Caption (Image Text) -->
+    <div id="caption">{{filename}}</div>
+</div>
+{{/finished_mosaics}}
+
+<div class='container-fluid' style='padding-top:15px;'>
+    <div class='row'>
+        <div class='col-sm-12'>
+
             <ol class='breadcrumb'>
-                <li class='breadcrumb-item'><a id='back-to-projects' href='javascript:void(0)'>Projects</a></li>
-                <li class='breadcrumb-item'>{{project_name}}</li>
+                <li class='breadcrumb-item active'>Mosaic Uploads</li>
             </ol>
         </div> <!-- col-sm-12 -->
     </div> <!-- row -->
@@ -15,18 +148,37 @@
     <div class='row'>
         <div class='col-sm-12'>
 
-            <table id ='mosaics-table' class='table table-bordered table-striped table-condensed'>
+            <table id ='uploading-mosaics-table' class='table table-bordered table-striped table-condensed'>
                 <thead>
                     <th>Mosaic Name</th>
-                    <th>Height</th>
-                    <th>Width</th>
+                    <th colspan="2">Progress</th>
+                    <th>Status</th>
+                    <th></th>
                 </thead>
                 <tbody>
                     {{#mosaics}}
-                    <tr>
-                        <td><a href='javascript:void(0)' class='mosaic-link' project_id='{{project_id}}' mosaic_id='{{id}}'>{{filename}}</a></td>
-                        <td>{{height}}</td>
-                        <td>{{width}}</td>
+                    <tr class='mosaic-upload-row' id='uploading-mosaic-row-{{identifier}}'}>
+                        <td style='vertical-align: middle;'>{{filename}}</td>
+
+                        <td style='width:35%; vertical-align: middle;'><div class='progress'> <div id='progress-bar-{{identifier}}' class='progress-bar progress-bar-striped {{#uploaded}}bg-success{{/uploaded}} {{#tiling}}bg-warning{{/tiling}} {{#uploading}}uploading-mosaic{{/uploading}}' role='progressbar' aria-valuenow='{{percentage}}' aria-valuemin='0' aria-valuemax='100' style='width:{{percentage}}%'>{{percentage}}%</div></div></td>
+
+                        {{#tiling}}
+                        <td style='vertical-align: middle;'><div id='progress-bar-text-{{identifier}}'>{{bytes_uploaded}}kB /{{size_bytes}}kB (100.00%)</div></td>
+                        {{/tiling}}
+                        {{^tiling}}
+                        <td style='vertical-align: middle;'><div id='progress-bar-text-{{identifier}}'>{{bytes_uploaded}}kB /{{size_bytes}}kB ({{percentage}}%)</div></td>
+                        {{/tiling}}
+
+                        <td id='mosaic-status-text-{{identifier}}' style='vertical-align: middle;'>{{status_text}}</td>
+
+                        <td id='actions-td-{{identifier}}' style='padding-top:0px; padding-bottom:0px; vertical-align: middle;'>
+                            {{#uploading}}
+                            <button mosaic_identifier="{{identifier}}" class="resume-download-button btn btn-primary btn-sm btn-success"><i class='fa fa-upload'></i></button>
+                            {{/uploading}}
+                            <button mosaic_identifier="{{identifier}}" class="delete-mosaic-button btn btn-primary btn-sm btn-danger float-right"><i class='fa fa-times'></i></button>
+                            </div>
+                        </td>
+
                     </tr>
                     {{/mosaics}}
                 </tbody>
@@ -37,16 +189,32 @@
 
     <div class='row'>
         <div class='col-sm-12'>
-            <button id="add-mosaic-button" class="btn btn-primary float-right"><i class='fa fa-plus'></i> Mosaic</button>
-            <button id='pause-upload-button' class='btn btn-primary' state='play' file_token='" + file_token + "' style='display: none; height: 38px;'> <i class='fa fa-pause'></i> </button>
+            <input id ="mosaic-file-input" type="file" style="display: none" />
+            <button id="add-mosaic-button" class="btn btn-primary float-right"><i class='fa fa-upload'></i> Mosaic</button>
         </div>
     </div>
-
-    <div class='row' style='padding-top:15px'>
-        <div class='col-sm-12'>
-            <table id='uploads-table' class='table table-bordered table-condensed'></table>
-        </div>
-    </div>
-
 
 </div> <!-- container -->
+
+
+<!-- Modal -->
+<div class="modal fade" id="confirm-delete-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div id="confirm-delete-modal-body" class="modal-body">
+                <input type="text" id="input" placeholder="Example input">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" id='confirm-delete-button' data-dismiss="modal" class="btn btn-primary btn-danger">Confirm Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+

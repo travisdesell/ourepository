@@ -51,6 +51,15 @@ function _log($str) {
     }
 }
 
+function report_error($title, $msg) {
+    http_response_code(500);
+    $response['err_title'] = $title;
+    $response['err_msg'] = $msg . "<br>Please reload the page.";
+
+    echo json_encode($response);
+    exit();
+}
+
 /**
  * 
  * Delete a directory RECURSIVELY
@@ -125,6 +134,7 @@ function createFileFromChunks($user_id, $temp_dir, $identifier, $file_name, $chu
             fclose($fp);
         } else {
             _log('cannot create the destination file');
+            report_error('Upload Error', 'Cannot create the destination file.');
             return false;
         }
 
@@ -137,7 +147,7 @@ function createFileFromChunks($user_id, $temp_dir, $identifier, $file_name, $chu
             rrmdir($temp_dir);
         }
 
-        $query = "UPDATE mosaics SET status = 'UPLOADED' AND bytes_uploaded = $total_size WHERE owner_id = $user_id AND filename = '$file_name' AND identifier = '$identifier'";
+        $query = "UPDATE mosaics SET status = 'UPLOADED', bytes_uploaded = $total_size WHERE owner_id = $user_id AND filename = '$file_name' AND identifier = '$identifier'";
         error_log("$query");
         query_our_db($query);
     }
@@ -161,9 +171,6 @@ foreach ($_GET as $key => $value) {
     $msg .= " $key: '$value'";
 }
 //error_log("$msg");
-http_response_code(500);
-echo "blahblabhalbhalbhlbha";
-exit();
 
 //check if request is GET and the requested chunk exists or not. this makes testChunks work
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -197,6 +204,7 @@ if (!empty($_FILES)) foreach ($_FILES as $file) {
     // check the error status
     if ($file['error'] != 0) {
         _log('error '.$file['error'].' in file '.$_POST['resumableFilename']);
+        report_error('Upload Error', 'error '.$file['error'].' in file '.$_POST['resumableFilename']);
         continue;
     }
 
@@ -217,6 +225,7 @@ if (!empty($_FILES)) foreach ($_FILES as $file) {
     // move the temporary file
     if (!move_uploaded_file($file['tmp_name'], $dest_file)) {
         _log('Error saving (move_uploaded_file) chunk '.$_POST['resumableChunkNumber'].' for file '.$_POST['resumableFilename']);
+        report_error('Upload Error', 'Error saving (move_uploaded_file) chunk '.$_POST['resumableChunkNumber'].' for file '.$_POST['resumableFilename']);
     } else {
         // check if all the parts present, and create the final destination file
         createFileFromChunks($user_id, $temp_dir, $_POST['resumableIdentifier'], $_POST['resumableFilename'],$_POST['resumableChunkSize'], $_POST['resumableTotalSize'],$_POST['resumableTotalChunks']);

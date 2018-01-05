@@ -35,12 +35,13 @@ function get_user_id($id_token) {
     $client = new Google_Client(['client_id' => $CLIENT_ID]);
 
     $payload = $client->verifyIdToken($id_token);
+
     if (!$payload) {
         // Invalid ID token
-        echo "<div class='jumbotron'>
-            <p class='lead'>Invalid ID Token. Please sign back in.</p>
-            </div> <!-- jumbotron -->";
-        exit();
+        $response['err_title'] = "Login Authentication Failure";
+        $response['err_msg'] = "Google Authentication failed, please reload page and log back in.";
+        echo json_encode($response);
+        exit(1);
     }
 
     error_log("testing to see if user exists: " . $payload['email']);
