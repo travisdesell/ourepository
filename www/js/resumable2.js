@@ -368,6 +368,15 @@ function ordinal_suffix(n) {
     return original + 'th';
 }
 
+jQuery.fn.sortDivs = function sortDivs() {
+    $("> div", this[0]).sort(dec_sort).appendTo(this[0]);
+    function dec_sort(a, b){
+        var contentA = $(a).attr('data-sort');
+        var contentB = $(b).attr('data-sort');
+        return (contentA < contentB) ? -1 : (contentA > contentB) ? 1 : 0;
+    }
+}
+
 
 function update_tiling_progress(mosaic_info) {
     function process_update(responseText) {
@@ -382,6 +391,25 @@ function update_tiling_progress(mosaic_info) {
         var mosaic_info = response.mosaic_info;
 
         if (mosaic_info.status == 'TILED') {
+            $('#uploading-mosaic-row-' + mosaic_info.identifier).remove();
+
+            function add_card(responseText) {
+                var response = JSON.parse(responseText);
+                if (response.err_msg) {
+                    display_error_modal(response.err_title, response.err_msg);  
+                    return;
+                }
+
+                //console.log("response was: " + response.html);
+                //console.log("mosaic card row is:");
+                //console.log( $("#mosaic-card-row") );
+                $("#mosaic-card-row").append(response.html);
+                $("#mosaic-card-row").sortDivs();
+
+                initialize_mosaic_cards();
+            }
+
+            serverRequest("MOSAIC_CARD&mosaic_id=" + mosaic_info.id, add_card);
 
         } else if (mosaic_info.status == 'TILING') {
             set_progressbar_percent(mosaic_info.identifier, mosaic_info.tiling_progress);

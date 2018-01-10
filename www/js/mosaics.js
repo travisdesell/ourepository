@@ -11,11 +11,22 @@ var drawing_polygon = false;
 var last_point = null;
 var polygon_points = [];
 
+
+var conv_func = null;
+var filter_func = null;
+
+function display_error_modal(title, message) {
+    $("#error-modal-title").html(title);
+    $("#error-modal-body").html(message);
+    $("#error-modal").modal();
+}
+
+
 // ----------
 App = {
     // ----------
-    init: function(tiles_url, height, width) {
-        console.log("initializing OSD with tiles_url: '" + tiles_url + "', height: " + height + ", width: " + width);
+    init: function(tiles_url, channels, height, width) {
+        console.log("initializing OSD with tiles_url: '" + tiles_url + "', channels: '" + channels + "', height: " + height + ", width: " + width);
 
         viewer = OpenSeadragon({
             id: 'map',
@@ -34,6 +45,17 @@ App = {
                 }
             }]
         });
+
+        console.log("image channels: " + channels);
+        filter_func = OpenSeadragon.Filters.RGB();
+
+        //TODO: only needed if 4 channel image
+        viewer.setFilterOptions({
+            filters: {
+                processors: filter_func
+            }
+        });
+
 
         overlay = viewer.svgOverlay();
 
@@ -182,7 +204,7 @@ App = {
 };
 
 // ----------
-function initialize_openseadragon(tiles_url, height, width) {
+function initialize_openseadragon(tiles_url, channels, height, width) {
     console.log("initializing app!");
 
     if ($("#map").length == 0) {
@@ -191,7 +213,7 @@ function initialize_openseadragon(tiles_url, height, width) {
         return;
     }
     
-    App.init(tiles_url, height, width);
+    App.init(tiles_url, channels, height, width);
 
     console.log("AFTER INIT!");
 
@@ -273,3 +295,183 @@ function initialize_openseadragon(tiles_url, height, width) {
         }
     });
 }
+
+var initialized_mosaic = false;
+
+function initialize_mosaic(responseText) {
+    initialized_mosaic = true;
+    console.log("received initialize mosaic response: " + responseText);
+    var response = JSON.parse(responseText);
+
+    $("#index-content").html(response.html);
+
+    $("#back-to-projects").click(function() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', './request.php');
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.onload = function() {
+            initialize_mosaics(xhr.responseText);
+        };
+        xhr.send('id_token=' + id_token + '&request=INDEX');
+    });
+
+    $("#back-to-mosaics").click(function() {
+        var project_id = $(this).attr('project_id');
+        console.log("going back to mosaics with project_id: " + project_id);
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', './request.php');
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.onload = function() {
+            initialize_mosaics(xhr.responseText);
+        };
+        xhr.send('id_token=' + id_token + '&request=MOSAICS&project_id=' + project_id);
+    });
+
+
+    //TODO: need to grab these from JSON isntead of text
+    initialize_openseadragon(response.mosaic_url, response.channels, response.height, response.width);
+
+
+    $(".conv-button").click(function() {
+        var conv = $(this).attr("conv");
+        console.log("clicked conv button with conv: '" + conv + "', active? " + $(this).hasClass("active"));
+
+        if ($(this).hasClass("active")) {
+            conv_func = null;
+        } else {
+            $(".conv-button[conv!=" + conv + "]").removeClass("active");
+
+            if (conv == 'EDGE1') {
+                conv_func = OpenSeadragon.Filters.CONVOLUTION([
+                        1, 0, -1,
+                        0, 0,  0,
+                        -1, 0,  1]);
+
+            } else if (conv == 'EDGE2') {
+                conv_func = OpenSeadragon.Filters.CONVOLUTION([
+                        0,  1, 0,
+                        1, -4, 1,
+                        0,  1, 0]);
+
+            } else if (conv == 'EDGE3') {
+                conv_func = OpenSeadragon.Filters.CONVOLUTION([
+                        -1, -1, -1,
+                        -1,  8, -1,
+                        -1, -1, -1]);
+
+            } else if (conv == 'SHARPEN') {
+                conv_func = OpenSeadragon.Filters.CONVOLUTION([
+                        0, -1,  0,
+                        -1,  5, -1,
+                        0, -1,  0]);
+
+            }
+        }
+
+        var processors = [];
+        if (filter_func != null) processors.push(filter_func);
+        if (conv_func != null) processors.push(conv_func);
+
+        console.log("processors.length: " + processors.length);
+
+        if (processors.length > 0) {
+            viewer.setFilterOptions({
+                filters: {
+                    processors: processors
+                },
+                loadMode: 'sync'
+            });
+        }
+    });
+
+    $(".filter-button").click(function() {
+        var filter = $(this).attr("filter");
+        console.log("clicked filter button with filter: '" + filter + "'");
+
+        if (filter == 'RGB') {
+            filter_func = OpenSeadragon.Filters.RGB();
+        } else if (filter == 'NIR') {
+            filter_func = OpenSeadragon.Filters.NIR();
+        } else if (filter == 'CNIR') {
+            filter_func = OpenSeadragon.Filters.CNIR();
+        } else if (filter == 'NDVI') {
+            filter_func = OpenSeadragon.Filters.NDVI();
+        } else if (filter == 'CNDVI') {
+            filter_func = OpenSeadragon.Filters.CNDVI();
+        } else if (filter == 'VARI') {
+            filter_func = OpenSeadragon.Filters.VARI();
+        } else if (filter == 'TGI') {
+            filter_func = OpenSeadragon.Filters.TGI();
+        }
+
+        var processors = [];
+        if (filter_func != null) processors.push(filter_func);
+        if (conv_func != null) processors.push(conv_func);
+
+        if (processors.length > 0) {
+            viewer.setFilterOptions({
+                filters: {
+                    processors: processors
+                },
+                loadMode: 'sync'
+            });
+        }
+
+    });
+}
+
+function initialize_splash(responseText) {
+    var response = JSON.parse(responseText);
+
+    if (response.err_msg) {
+        display_error_modal(response.err_title, response.err_msg);
+    } else {
+        $("#index-content").html(response.html);
+    }
+}
+
+function serverRequest(requestType, responseFunction) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', './request.php');
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onload = function() {
+        responseFunction(xhr.responseText);
+    };
+    xhr.send('id_token=' + id_token + '&request=' + requestType);
+}
+
+function login() {
+    console.log("login keep alive!");
+
+    gapi.load('auth2', function() {
+        gapi.auth2.init({
+            client_id: '913778561877-7vmnbjvuc9c2g3c3qejgckjdtdivg9n1.apps.googleusercontent.com',
+        }).then(function(){
+            auth2 = gapi.auth2.getAuthInstance();
+            //console.log("SIGNED IN?" + auth2.isSignedIn.get()); //now this always returns correctly        
+
+            if (auth2.isSignedIn.get()) {
+                id_token = auth2.currentUser.get().getAuthResponse().id_token;
+                if (!initialized_mosaic) {
+                    //mosaic_id is set in mosaic.php from $_GET
+                    serverRequest("MOSAIC&mosaic_id=" + mosaic_id, initialize_mosaic);
+                }
+            } else {
+                id_token = 'NONE';
+                //mosaic_id is set in mosaic.php from $_GET
+                serverRequest("MOSAIC&mosaic_id=" + mosaic_id, initialize_splash);
+            }
+        });
+    });
+
+
+    setTimeout(login, 5 * 60 * 1000);  //1 minutes
+}
+
+$(document).ready(function() {
+    console.log("initializing index!");
+
+    login();
+});
+

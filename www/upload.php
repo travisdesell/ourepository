@@ -71,7 +71,7 @@ function initiate_upload($owner_id) {
     //  3. file does exist and has finished uploading -- report finished
     //  4. file does exist but with different hash -- error message
 
-    $query = "SELECT md5_hash, number_chunks, uploaded_chunks, chunk_status FROM mosaics WHERE filename = '$filename'";
+    $query = "SELECT md5_hash, number_chunks, uploaded_chunks, chunk_status, status FROM mosaics WHERE filename = '$filename'";
     error_log($query);
     $result = query_our_db($query);
     $row = $result->fetch_assoc();
@@ -102,14 +102,22 @@ function initiate_upload($owner_id) {
             echo json_encode($response);
             exit(1);
 
+        } else if ($row['status'] == 'TILING' || $row['status'] == 'TILED') {
+            //  3. file does exist and has finished uploading -- report finished
+            //do the same thing, client will handle completion
+
+            error_log("ERROR! Final file has already been uploaded.");
+            $response['err_title'] = "File Already Exists";
+            $response['err_msg'] = "This file has already been uploaded to the server and does not need to be uploaded again.";
+            echo json_encode($response);
+            return false;
+
         } else {
             $db_number_chunks = $row['number_chunks'];
             $db_uploaded_chunks = $row['uploaded_chunks'];
             $db_chunk_status = $row['chunk_status'];
 
             //  2. file does exist and has not finished uploading -- restart upload
-            //  3. file does exist and has finished uploading -- report finished
-            //do the same thing, client will handle completion
 
             $response['mosaic_info'] = get_mosaic_info($md5_hash);
             $response['html'] = "success!";

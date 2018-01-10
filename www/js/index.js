@@ -1,45 +1,52 @@
 var profile;
 var id_token;
 
-function initialize_mosaic(responseText) {
-    console.log("received initialize mosaic response: " + responseText);
-    var response = JSON.parse(responseText);
-
-    $("#index-content").html(response.html);
-
-    $("#back-to-projects").click(function() {
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', './request.php');
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        xhr.onload = function() {
-            initialize_mosaics(xhr.responseText);
-        };
-        xhr.send('id_token=' + id_token + '&request=INDEX');
-    });
-
-    $("#back-to-mosaics").click(function() {
-        var project_id = $(this).attr('project_id');
-        console.log("going back to mosaics with project_id: " + project_id);
-
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', './request.php');
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        xhr.onload = function() {
-            initialize_mosaics(xhr.responseText);
-        };
-        xhr.send('id_token=' + id_token + '&request=MOSAICS&project_id=' + project_id);
-    });
-
-
-    //TODO: need to grab these from JSON isntead of text
-    initialize_openseadragon(response.mosaic_url, response.height, response.width);
-}
-
 function display_error_modal(title, message) {
     $("#error-modal-title").html(title);
     $("#error-modal-body").html(message);
     $("#error-modal").modal();
 }
+
+function initialize_mosaic_cards() {
+    $('.picture:not(.bound)').addClass('bound').click(function() {
+        var identifier = $(this).attr("identifier");
+        //console.log("identifier: " + identifier);
+        $("#preview-modal-" + identifier)[0].style.display = "block";
+    });
+
+    $(".close-preview:not(.bound)").addClass('bound').click(function() {
+        var identifier = $(this).attr("identifier");
+        //console.log("identifier: " + identifier);
+        $("#preview-modal-" + identifier)[0].style.display = "none";
+    });
+
+    $(".preview-modal:not(.bound)").addClass('bound').click(function() {
+        var identifier = $(this).attr("identifier");
+        //console.log("identifier: " + identifier);
+        $("#preview-modal-" + identifier)[0].style.display = "none";
+    });
+
+    $(".utm-switch-button:not(.toggle-bound)").addClass('toggle-bound').click(function() {
+        console.log("toggling UTM switch button! aria-pressed: " + $(this).attr("aria-pressed") + ", active:" + $(this).hasClass("active"));
+        if ($(this).attr("aria-pressed") == 'true') {
+            $(".utm-table").hide();
+        } else {
+            $(".utm-table").show();
+        }
+    });
+
+    $(".geo-switch-button:not(.toggle-bound)").addClass('toggle-bound').click(function() {
+        console.log("toggling GEO switch button! aria-pressed: " + $(this).attr("aria-pressed") + ", active:" + $(this).hasClass("active"));
+        //$(".utm-table").hide();
+        //$(".geo-table").show();
+        if ($(this).attr("aria-pressed") == 'true') {
+            $(".geo-table").hide();
+        } else {
+            $(".geo-table").show();
+        }
+    });
+}
+
 
 function initialize_mosaics(responseText) {
     var response = JSON.parse(responseText);
@@ -63,33 +70,7 @@ function initialize_mosaics(responseText) {
             }
         }
 
-        $(".picture").click(function() {
-            var identifier = $(this).attr("identifier");
-            //console.log("identifier: " + identifier);
-            $("#preview-modal-" + identifier)[0].style.display = "block";
-        });
-
-        $(".close-preview").click(function() {
-            var identifier = $(this).attr("identifier");
-            //console.log("identifier: " + identifier);
-            $("#preview-modal-" + identifier)[0].style.display = "none";
-        });
-
-        $(".preview-modal").click(function() {
-            var identifier = $(this).attr("identifier");
-            //console.log("identifier: " + identifier);
-            $("#preview-modal-" + identifier)[0].style.display = "none";
-        });
-
-        $(".utm-switch-button").click(function() {
-            $(".utm-table").show();
-            $(".geo-table").hide();
-        });
-
-        $(".geo-switch-button").click(function() {
-            $(".utm-table").hide();
-            $(".geo-table").show();
-        });
+        initialize_mosaic_cards();
 
 
 		initialize_mosaic_dropdowns(id_token);
@@ -115,21 +96,6 @@ function initialize_mosaics(responseText) {
                 $("#uploading-mosaic-row-" + identifier).remove();
                 $("#finished-mosaic-card-" + identifier).remove();
             });
-        });
-
-        $(".mosaic-link").click(function() {
-            var project_id = $(this).attr('project_id');
-            var mosaic_id = $(this).attr('mosaic_id');
-
-            console.log("clicked mosaic link with project id: " + project_id + " and a mosaic id: " + mosaic_id);
-
-            var xhr = new XMLHttpRequest();
-            xhr.open('POST', './request.php');
-            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            xhr.onload = function() {
-                initialize_mosaic(xhr.responseText);
-            };
-            xhr.send('id_token=' + id_token + '&request=MOSAIC&project_id=' + project_id + '&mosaic_id=' + mosaic_id);
         });
 
         $('#mosaic-file-input').change(function(){

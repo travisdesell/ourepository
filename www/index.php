@@ -14,12 +14,12 @@ $additional_css[] = "<style> #map { width: 100%; height: 100%; background-color:
 $additional_css[] = "<link rel='stylesheet' href='./css/index.css'>";
 
 $additional_js = array();
-$additional_js[] = "<script type='text/javascript' src='./js/openseadragon.min.js'></script>";
-$additional_js[] = "<script type='text/javascript' src='./js/openseadragon-svg-overlay.js'></script>";
-$additional_js[] = "<script type='text/javascript' src='//d3js.org/d3.v3.min.js' charset='utf-8'></script>";
+//$additional_js[] = "<script type='text/javascript' src='./js/openseadragon.min.js'></script>";
+//$additional_js[] = "<script type='text/javascript' src='./js/openseadragon-svg-overlay.js'></script>";
+//$additional_js[] = "<script type='text/javascript' src='//d3js.org/d3.v3.min.js' charset='utf-8'></script>";
 $additional_js[] = "<script type='text/javascript' src='./js/spark-md5.js'></script>";
 $additional_js[] = "<script type='text/javascript' src='./js/resumable2.js'></script>";
-$additional_js[] = "<script type='text/javascript' src='./js/mosaics.js'></script>";
+//$additional_js[] = "<script type='text/javascript' src='./js/mosaics.js'></script>";
 $additional_js[] = "<script type='text/javascript' src='./js/index.js'></script>";
 
 print_header($additional_css, $additional_js);

@@ -33,18 +33,30 @@ error_log("request is: $request_type");
 //has not logged in before.
 $user_id = get_user_id($id_token);
 
+error_log("got user id: $user_id");
+
 if ($request_type == NULL || $request_type == "INDEX") {
     require_once($cwd[__FILE__] . "/mosaics.php");
-    display_mosaics($user_id);
+    display_index($user_id);
+
+} else if ($request_type == "MOSAIC_CARD") {
+    require_once($cwd[__FILE__] . "/mosaics.php");
+
+    $mosaic_id = $our_db->real_escape_string($_POST['mosaic_id']);
+    $response['html'] = get_finished_mosaic_card($user_id, $mosaic_id);
+
+    echo json_encode($response);
 
 } else if ($request_type == "MOSAIC") {
-    require_once($cwd[__FILE__] . "/mosaic.php");
-    $project_id = $our_db->real_escape_string($_POST['project_id']);
+    error_log("request type is mosaic!");
+
+    require_once($cwd[__FILE__] . "/mosaics.php");
+
     $mosaic_id = $our_db->real_escape_string($_POST['mosaic_id']);
 
-    error_log("project_id: $project_id, mosaic_id: $mosaic_id");
+    error_log("mosaic_id: '$mosaic_id'");
 
-    display_mosaic($user_id, $project_id, $mosaic_id);
+    display_mosaic($user_id, $mosaic_id);
 
 } else if ($request_type == "NEW_UPLOAD") {
     require_once($cwd[__FILE__] . "/upload.php");

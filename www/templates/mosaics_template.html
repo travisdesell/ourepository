@@ -7,9 +7,9 @@
                     Your Mosaics
                 </li>
 
-                <div class="btn-group pull-right" role="group" aria-label="Basic example">
-                    <button type="button" class="geo-switch-button btn btn-small btn-secondary">Geo</button>
-                    <button type="button" class="utm-switch-button btn btn-small btn-secondary">UTM</button>
+                <div class="btn-group pull-right">
+                    <button type="button" class="geo-switch-button btn btn-small btn-secondary" data-toggle="button" aria-pressed="false">Geo</button>
+                    <button type="button" class="utm-switch-button btn btn-small btn-secondary" data-toggle="button" aria-pressed="false">UTM</button>
                 </div>
             </ol>
         </div> <!-- col-sm-12 -->
@@ -17,120 +17,12 @@
 </div> <!-- container -->
 
 <div class='container-fluid'>
-    <div class='row' style='padding: 0px 10px 0px 10px;'>
+    <div id='mosaic-card-row' class='row' style='padding: 0px 10px 0px 10px;'>
         {{#finished_mosaics}}
-        <div class='col-xl-3 col-lg-3 col-md-4 col-sm-6' style='padding:0px 5px 10px 5px;'>
-            <div class="card" id="finished-mosaic-card-{{identifier}}">
-                <div class='picture' identifier='{{identifier}}'>
-                    <img class="card-img-top" src="./mosaics/{{owner_id}}/{{thumbnail}}" alt="Thumbnail of {{filename}}">
-                </div>
-                <div class="card-body">
-                    <div class="picture card-title" style='vertical-align: middle;'>
-                        <a href="./mosaics.php?mosaic_id={{id}}"><b>{{filename}}</b></a>
-                        <!-- <button mosaic_identifier="{{identifier}}" style="padding:4px 6px 4px 6px;" class="delete-mosaic-button btn btn-primary btn-sm btn-danger float-right"><i class='fa fa-times'></i></button> -->
-                    </div>
-                    <hr>
-                    <p class="card-text">
-                    <b>Size:</b> {{size_kb}} Kb <br>
-                    <b>Resolution:</b> {{width}} x {{height}} <br>
-                    <b>Channels:</b> {{channels}}
-
-                    {{#geotiff}}
-                    <table class="table table-condensed geo-table" style="font-size: 60%; margin:16 0 0 0; vertical-align: middle;">
-                        <thead>
-                            <th scope='col'><b>Geo</b></th>
-                            <th scope='col'>Latitude</th>
-                            <th scope='col'>Longitude</th>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <th scope='row'>Center</th>
-                                <td>{{lat_center}}</td>
-                                <td>{{lon_center}}</td>
-                            </tr>
-                            <tr>
-                                <th scope='row'>Upper Left</th>
-                                <td>{{lat_upper_left}}</td>
-                                <td>{{lon_upper_left}}</td>
-                            </tr>
-                            <tr>
-                                <th scope='row'>Upper Right</th>
-                                <td>{{lat_upper_right}}</td>
-                                <td>{{lon_upper_right}}</td>
-                            </tr>
-                            <tr>
-                                <th scope='row'>Lower Left</th>
-                                <td>{{lat_lower_left}}</td>
-                                <td>{{lon_lower_left}}</td>
-                            </tr>
-                            <tr>
-                                <th scope='row'>Lower Right</th>
-                                <td>{{lat_lower_right}}</td>
-                                <td>{{lon_lower_right}}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <table class="table table-condensed utm-table" style="font-size: 60%; margin:16 0 0 0; vertical-align: middle; display:none">
-                        <thead>
-                            <th scope='col'><b>UTM</b></th>
-                            <th scope='col'>Easting</th>
-                            <th scope='col'>Northing</th>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <th scope='row'>Center</th>
-                                <td>{{utm_e_center}}</td>
-                                <td>{{utm_n_center}}</td>
-                            </tr>
-                            <tr>
-                                <th scope='row'>Upper Left</th>
-                                <td>{{utm_e_upper_left}}</td>
-                                <td>{{utm_n_upper_left}}</td>
-                            </tr>
-                            <tr>
-                                <th scope='row'>Upper Right</th>
-                                <td>{{utm_e_upper_right}}</td>
-                                <td>{{utm_n_upper_right}}</td>
-                            </tr>
-                            <tr>
-                                <th scope='row'>Lower Left</th>
-                                <td>{{utm_e_lower_left}}</td>
-                                <td>{{utm_n_lower_left}}</td>
-                            </tr>
-                            <tr>
-                                <th scope='row'>Lower Right</th>
-                                <td>{{utm_e_lower_right}}</td>
-                                <td>{{utm_n_lower_right}}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    {{/geotiff}}
-
-
-                    </p>
-                </div>
-            </div>
-        </div> <!-- col-sm-12 -->
+        {{{card}}}
         {{/finished_mosaics}}
-
     </div> <!-- row -->
 </div>
-
-{{#finished_mosaics}}
-<!-- The Modal -->
-<div id="preview-modal-{{identifier}}" class="preview-modal" identifier={{identifier}}>
-
-    <!-- The Close Button -->
-    <span class="close-preview" identifier="{{identifier}}">&times;</span>
-
-    <!-- Modal Content (The Image) -->
-    <img class="preview-modal-content" src="./mosaics/{{owner_id}}/{{preview}}" alt="Preview of {{filename}}">
-
-    <!-- Modal Caption (Image Text) -->
-    <div id="caption">{{filename}}</div>
-</div>
-{{/finished_mosaics}}
 
 <div class='container-fluid' style='padding-top:15px;'>
     <div class='row'>
