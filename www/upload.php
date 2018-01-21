@@ -28,8 +28,8 @@ function rrmdir($dir) {
 }
 
 
-function get_mosaic_info($md5_hash) {
-    $query = "SELECT id, filename, identifier, uploaded_chunks, number_chunks, size_bytes, bytes_uploaded, chunk_status, tiling_progress, status FROM mosaics WHERE md5_hash = '$md5_hash'";
+function get_mosaic_info($owner_id, $md5_hash) {
+    $query = "SELECT id, filename, identifier, uploaded_chunks, number_chunks, size_bytes, bytes_uploaded, chunk_status, tiling_progress, status FROM mosaics WHERE md5_hash = '$md5_hash' AND owner_id = '$owner_id'";
     $result = query_our_db($query);
     $row = $result->fetch_assoc();
     $row['md5_hash'] = $md5_hash;
@@ -71,7 +71,7 @@ function initiate_upload($owner_id) {
     //  3. file does exist and has finished uploading -- report finished
     //  4. file does exist but with different hash -- error message
 
-    $query = "SELECT md5_hash, number_chunks, uploaded_chunks, chunk_status, status FROM mosaics WHERE filename = '$filename'";
+    $query = "SELECT md5_hash, number_chunks, uploaded_chunks, chunk_status, status FROM mosaics WHERE filename = '$filename' AND owner_id = '$owner_id'";
     error_log($query);
     $result = query_our_db($query);
     $row = $result->fetch_assoc();
@@ -86,7 +86,7 @@ function initiate_upload($owner_id) {
         error_log($query);
         query_our_db($query);
 
-        $response['mosaic_info'] = get_mosaic_info($md5_hash);
+        $response['mosaic_info'] = get_mosaic_info($owner_id, $md5_hash);
         $response['html'] = "success!";
         echo json_encode($response);
 
@@ -119,14 +119,14 @@ function initiate_upload($owner_id) {
 
             //  2. file does exist and has not finished uploading -- restart upload
 
-            $response['mosaic_info'] = get_mosaic_info($md5_hash);
+            $response['mosaic_info'] = get_mosaic_info($owner_id, $md5_hash);
             $response['html'] = "success!";
             echo json_encode($response);
         }
     }
 }
 
-function process_chunk($user_id) {
+function process_chunk($owner_id) {
     global $our_db;
 
     if (count($_FILES) == 0) {
@@ -178,7 +178,7 @@ function process_chunk($user_id) {
         error_log("working with file: " . json_encode($file));
 
         //overwrite chunk if it already exists due to some issue
-        $target = "/mosaic_uploads/$user_id/$identifier";
+        $target = "/mosaic_uploads/$owner_id/$identifier";
         mkdir($target, 0777, true); //make the parent directory if it does not exist
         $target .= "/$chunk.part";
 
@@ -199,7 +199,7 @@ function process_chunk($user_id) {
 
     mysqli_begin_transaction($our_db, MYSQLI_TRANS_START_READ_WRITE);
 
-    $query = "SELECT uploaded_chunks, chunk_status FROM mosaics WHERE md5_hash = '$md5_hash' FOR UPDATE";
+    $query = "SELECT uploaded_chunks, chunk_status FROM mosaics WHERE md5_hash = '$md5_hash' AND owner_id = '$owner_id' FOR UPDATE";
     error_log($query);
     if ($result = query_our_db($query)) {
         $row = $result->fetch_assoc();
@@ -209,7 +209,7 @@ function process_chunk($user_id) {
 
         $db_chunk_status[$chunk] = '1';
 
-        $query = "UPDATE mosaics SET uploaded_chunks = $db_uploaded_chunks, chunk_status = '$db_chunk_status', bytes_uploaded = bytes_uploaded + $chunk_size WHERE md5_hash = '$md5_hash'";
+        $query = "UPDATE mosaics SET uploaded_chunks = $db_uploaded_chunks, chunk_status = '$db_chunk_status', bytes_uploaded = bytes_uploaded + $chunk_size WHERE md5_hash = '$md5_hash' AND owner_id = '$owner_id'";
         error_log($query);
         if (!($result = query_our_db($query))) {
             mysqli_rollback($our_db);
@@ -219,7 +219,7 @@ function process_chunk($user_id) {
     }
     mysqli_commit($our_db);  
 
-    $response['mosaic_info'] = get_mosaic_info($md5_hash);
+    $response['mosaic_info'] = get_mosaic_info($owner_id, $md5_hash);
     $db_number_chunks = $response['mosaic_info']['number_chunks'];
 
     if ($db_uploaded_chunks == $db_number_chunks) {
@@ -227,12 +227,12 @@ function process_chunk($user_id) {
         $db_md5_hash = $response['mosaic_info']['md5_hash'];
 
         //create the final file
-        $target = "/mosaic_uploads/$user_id/$db_filename";
+        $target = "/mosaic_uploads/$owner_id/$db_filename";
         error_log("attempting to write file to '$target'");
 
         if (($fp = fopen($target, 'w')) !== false) {
             for ($i = 0; $i < $db_number_chunks; $i++) {
-                $source = "/mosaic_uploads/$user_id/$identifier/$i.part";
+                $source = "/mosaic_uploads/$owner_id/$identifier/$i.part";
                 error_log("appending file: '$source'");
                 fwrite($fp, file_get_contents($source));
             }   
@@ -245,13 +245,13 @@ function process_chunk($user_id) {
             error_log("expected md5 hash: '$db_md5_hash'");
 
             if ($new_md5_hash == $db_md5_hash) {
-                $query = "UPDATE mosaics SET status = 'UPLOADED' WHERE md5_hash = '$db_md5_hash'";
+                $query = "UPDATE mosaics SET status = 'UPLOADED' WHERE md5_hash = '$db_md5_hash' AND owner_id = '$owner_id'";
                 error_log($query);
                 query_our_db($query);
                 //we're golden
                 //TODO: delete the directory and parts
 
-                $upload_dir = "/mosaic_uploads/$user_id/$identifier";
+                $upload_dir = "/mosaic_uploads/$owner_id/$identifier";
                 error_log("removing directory: '$upload_dir'");
                 // rename the temporary directory (to avoid access from other 
                 // concurrent chunks uploads) and than delete it

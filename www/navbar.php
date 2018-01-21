@@ -1,35 +1,22 @@
 <?php
 
+$cwd[__FILE__] = __FILE__;
+if (is_link($cwd[__FILE__])) $cwd[__FILE__] = readlink($cwd[__FILE__]);
+$cwd[__FILE__] = dirname($cwd[__FILE__]);
+
+$navbar_html = file_get_contents($cwd[__FILE__] . "/templates/initial_navbar.html");
+
 function print_navbar() {
-echo "
-<nav class='navbar navbar-expand-sm navbar-light bg-light'>
-    <a class='navbar-brand' href='./index.php'>OURepository</a>
+    global $navbar_html;
 
-    <button class='navbar-toggler' type='button' data-toggle='collapse' data-target='#navbarSupportedContent' aria-controls='navbarSupportedContent' aria-expanded='false' aria-label='Toggle navigation'>
-        <span class='navbar-toggler-icon'></span>
-    </button>
+    echo $navbar_html;
+}
 
-    <div class='collapse navbar-collapse' id='navbarSupportedContent'>
-        <ul class='navbar-nav mr-auto'>
-<!--
-            <li class='nav-item active'>
-                <a class='nav-link' href='javascript:void(0)'>Home <span class='sr-only'>(current)</span></a>
-            </li>
-            <li class='nav-item'>
-                <a class='nav-link' href='javascript:void(0)'>Link</a>
-            </li>
-            <li class='nav-item'>
-                <a class='nav-link disabled' href='javascript:void(0)'>Disabled</a>
-            </li>
--->
-        </ul>
+function get_navbar() {
+    global $navbar_html;
 
-        <form id='signin-form' class='form-inline my-2 my-lg-0'>
-            <div class='btn g-signin2' data-onsuccess='onSignIn'></div>
-        </form>
-    </div>
-</nav>
-";
+    error_log("get navbar: " . $navbar_html);
+    return $navbar_html;
 }
 
 ?>

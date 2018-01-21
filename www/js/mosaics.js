@@ -12,7 +12,7 @@ var last_point = null;
 var polygon_points = [];
 
 
-var conv_func = null;
+var kernel_func = null;
 var filter_func = null;
 
 function display_error_modal(title, message) {
@@ -304,6 +304,10 @@ function initialize_mosaic(responseText) {
     var response = JSON.parse(responseText);
 
     $("#index-content").html(response.html);
+    if (typeof response.navbar != undefined) {
+        console.log("SETTING NAVBAR CONTENT");
+        $("#navbar-content").html(response.navbar);
+    }
 
     $("#back-to-projects").click(function() {
         var xhr = new XMLHttpRequest();
@@ -333,35 +337,37 @@ function initialize_mosaic(responseText) {
     initialize_openseadragon(response.mosaic_url, response.channels, response.height, response.width);
 
 
-    $(".conv-button").click(function() {
-        var conv = $(this).attr("conv");
-        console.log("clicked conv button with conv: '" + conv + "', active? " + $(this).hasClass("active"));
+    $(".kernel-nav").click(function() {
+        var kernel = $(this).attr("kernel");
+        console.log("clicked kernel nav with kernel : '" + kernel + "', active? " + $(this).hasClass("active"));
 
         if ($(this).hasClass("active")) {
-            conv_func = null;
+            kernel_func = null;
+            $(this).removeClass("active");
         } else {
-            $(".conv-button[conv!=" + conv + "]").removeClass("active");
+            $(".kernel-nav").removeClass("active");
+            $(this).addClass("active");
 
-            if (conv == 'EDGE1') {
-                conv_func = OpenSeadragon.Filters.CONVOLUTION([
-                        1, 0, -1,
-                        0, 0,  0,
-                        -1, 0,  1]);
+            if (kernel == 'EDGE1') {
+                kernel_func = OpenSeadragon.Filters.CONVOLUTION([
+                         1,  2,  1,
+                         0,  0,  0,
+                        -1, -2, -1]);
 
-            } else if (conv == 'EDGE2') {
-                conv_func = OpenSeadragon.Filters.CONVOLUTION([
-                        0,  1, 0,
-                        1, -4, 1,
-                        0,  1, 0]);
+            } else if (kernel == 'EDGE2') {
+                kernel_func = OpenSeadragon.Filters.CONVOLUTION([
+                        -1,  0, 1,
+                        -2,  0, 2,
+                        -1,  0, 1]);
 
-            } else if (conv == 'EDGE3') {
-                conv_func = OpenSeadragon.Filters.CONVOLUTION([
+            } else if (kernel == 'EDGE3') {
+                kernel_func = OpenSeadragon.Filters.CONVOLUTION([
                         -1, -1, -1,
                         -1,  8, -1,
                         -1, -1, -1]);
 
-            } else if (conv == 'SHARPEN') {
-                conv_func = OpenSeadragon.Filters.CONVOLUTION([
+            } else if (kernel == 'SHARPEN') {
+                kernel_func = OpenSeadragon.Filters.CONVOLUTION([
                         0, -1,  0,
                         -1,  5, -1,
                         0, -1,  0]);
@@ -371,7 +377,7 @@ function initialize_mosaic(responseText) {
 
         var processors = [];
         if (filter_func != null) processors.push(filter_func);
-        if (conv_func != null) processors.push(conv_func);
+        if (kernel_func != null) processors.push(kernel_func);
 
         console.log("processors.length: " + processors.length);
 
@@ -385,9 +391,13 @@ function initialize_mosaic(responseText) {
         }
     });
 
-    $(".filter-button").click(function() {
+    $(".filter-nav").click(function() {
         var filter = $(this).attr("filter");
-        console.log("clicked filter button with filter: '" + filter + "'");
+        console.log("clicked filter nav with filter: '" + filter + "'");
+
+        $(".filter-nav").removeClass("active");
+        $(this).addClass("active");
+
 
         if (filter == 'RGB') {
             filter_func = OpenSeadragon.Filters.RGB();
@@ -407,7 +417,7 @@ function initialize_mosaic(responseText) {
 
         var processors = [];
         if (filter_func != null) processors.push(filter_func);
-        if (conv_func != null) processors.push(conv_func);
+        if (kernel_func != null) processors.push(kernel_func);
 
         if (processors.length > 0) {
             viewer.setFilterOptions({
@@ -428,6 +438,11 @@ function initialize_splash(responseText) {
         display_error_modal(response.err_title, response.err_msg);
     } else {
         $("#index-content").html(response.html);
+
+        if (typeof response.navbar != undefined) {
+            console.log("SETTING NAVBAR CONTENT");
+            $("#navbar-content").html(response.navbar);
+        }
     }
 }
 
@@ -440,6 +455,32 @@ function serverRequest(requestType, responseFunction) {
     };
     xhr.send('id_token=' + id_token + '&request=' + requestType);
 }
+
+function onSignIn(googleUser) {
+    profile = googleUser.getBasicProfile();
+    id_token = googleUser.getAuthResponse().id_token;
+
+    console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
+    console.log('Name: ' + profile.getName());
+    console.log('Image URL: ' + profile.getImageUrl());
+    console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
+
+    initialized_mosaic = true;
+    serverRequest("MOSAIC&mosaic_id=" + mosaic_id, initialize_mosaic);
+
+    //$("#signin-form").append("<a href='javascript:void(0)' id='signout-button' class='btn btn-outline-success my-2 my-sm-0' onclick='signOut();'>Sign out</a>");
+}
+
+function signOut() {
+    var auth2 = gapi.auth2.getAuthInstance();
+
+    auth2.signOut().then(function () {
+        console.log('User signed out.');
+
+        window.location.href = "./";
+    });
+}
+
 
 function login() {
     console.log("login keep alive!");
@@ -455,7 +496,9 @@ function login() {
                 id_token = auth2.currentUser.get().getAuthResponse().id_token;
                 if (!initialized_mosaic) {
                     //mosaic_id is set in mosaic.php from $_GET
-                    serverRequest("MOSAIC&mosaic_id=" + mosaic_id, initialize_mosaic);
+                    if (!initialized_mosaic) {
+                        serverRequest("MOSAIC&mosaic_id=" + mosaic_id, initialize_mosaic);
+                    }
                 }
             } else {
                 id_token = 'NONE';

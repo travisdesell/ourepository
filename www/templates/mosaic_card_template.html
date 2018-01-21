@@ -1,12 +1,11 @@
-<div class='col-xl-3 col-lg-3 col-md-4 col-sm-6 mosaic-card' data-sort='{{filename}}' style='padding:0px 5px 10px 5px;'>
-    <div class="card" id="finished-mosaic-card-{{identifier}}" style='border-width:3px'>
+<div class='col-xl-3 col-lg-3 col-md-4 col-sm-6 mosaic-card' mosaic_id={{id}} data-sort='{{filename}}' style='padding:0px 5px 10px 5px;'>
+    <div class="card {{#shared}}border-success{{/shared}} {{#sharing}}border-primary{{/sharing}}" id="finished-mosaic-card-{{identifier}}">
         <div class='picture' identifier='{{identifier}}'>
             <img class="card-img-top" src="./mosaics/{{owner_id}}/{{thumbnail}}" alt="Thumbnail of {{filename}}">
         </div>
         <div class="card-body">
             <div class="card-title" style='vertical-align: middle;'>
-                <a href="./mosaic.php?mosaic_id={{id}}"><b>{{filename}}</b></a>
-                <!-- <button mosaic_identifier="{{identifier}}" style="padding:4px 6px 4px 6px;" class="delete-mosaic-button btn btn-primary btn-sm btn-danger float-right"><i class='fa fa-times'></i></button> -->
+                <a class='mosaic-href' mosaic_id={{id}} href="./mosaic.php?mosaic_id={{id}}"><b>{{filename}}</b></a>
             </div>
             <hr>
             <p class="card-text">
@@ -86,22 +85,39 @@
             </table>
             {{/geotiff}}
 
+            <div class='sharing-info' mosaic_id='{{id}}' style='display:none'>
+                {{#sharing}}
+                <p>You have shared these mosaics with:</p>
+                <table mosaic_id='{{id}}' class="share-table table table-condensed" style="font-size:60%; margin:16 0 0 0; vertical-align: middle;">
+                {{#shared_with}}
+                    <tr id="share-row-{{id}}-{{user_id}}" user_id={{user_id}}>
+                        <td name={{name}}>{{name}}</td>
+                        <td email={{email}}>{{email}}</td>
+                    </tr>
+                {{/shared_with}}
+                </table>
+                {{/sharing}}
+
+                {{#shared_by}}
+                <p style="font-size:60%">{{name}} ({{email}}) shared this mosaic with you.</p>
+                {{/shared_by}}
+            </div>
 
             </p>
         </div>
     </div>
+
+    <!-- The Modal -->
+    <div id="preview-modal-{{identifier}}" class="preview-modal" identifier={{identifier}}>
+
+        <!-- The Close Button -->
+        <span class="close-preview" identifier="{{identifier}}">&times;</span>
+
+        <!-- Modal Content (The Image) -->
+        <img class="preview-modal-content" src="./mosaics/{{owner_id}}/{{preview}}" alt="Preview of {{filename}}">
+
+        <!-- Modal Caption (Image Text) -->
+        <div id="caption">{{filename}}</div>
+    </div>
 </div> <!-- col -->
-
-<!-- The Modal -->
-<div id="preview-modal-{{identifier}}" class="preview-modal" identifier={{identifier}}>
-
-    <!-- The Close Button -->
-    <span class="close-preview" identifier="{{identifier}}">&times;</span>
-
-    <!-- Modal Content (The Image) -->
-    <img class="preview-modal-content" src="./mosaics/{{owner_id}}/{{preview}}" alt="Preview of {{filename}}">
-
-    <!-- Modal Caption (Image Text) -->
-    <div id="caption">{{filename}}</div>
-</div>
 

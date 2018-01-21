@@ -1,36 +1,59 @@
+<div id='folder-content'>
+    {{#folders}}
+    <div class='folder' data-sort='{{folder_sort}}' folder_name='{{folder_name}}' folder_id ='{{folder_id}}'>
+        <div class='container-fluid' style='padding-top:15px;'>
+            <div class='row'>
+                <div class='col-sm-12'>
+
+                    <div class='card bg-light' style='vertical-align: middle; padding:4 4 4 16; margin-bottom:5px;'>
+                        <div class='row'>
+                            <div class='col-sm-6'>
+                                <h5 class='card-title' style='padding-top:7px; margin-bottom:0px;'>{{folder_name}}</h5>
+                            </div>
+
+                            <div class='col-sm-6'>
+                                <button type="button" folder_id='{{folder_id}}' class="unselect-folder-button btn btn-small btn-outline-secondary" style="padding: 2 12 2 12; margin-right:5px; display:none;">Unselect Folder</button>
+                                <button type="button" folder_id='{{folder_id}}' class="select-folder-button btn btn-small btn-outline-secondary" style="padding: 2 12 2 12; margin-right:5px; display:none;">Select Folder</button>
+                                <button type="button" folder_id='{{folder_id}}' class="invert-folder-button btn btn-small btn-outline-secondary" style='padding: 2 12 2 12; display:none;'>Invert</button>
+
+                                <button folder_id='{{folder_id}}' class="hide-folder-button btn btn-outline-secondary float-right" showing='1'><i class='fa fa-angle-double-up'></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div> <!-- col-sm-12 -->
+            </div> <!-- row -->
+        </div> <!-- container -->
+
+        <div class='container-fluid cards-container'>
+            <div folder_name='{{folder_name}}' folder_id='{{folder_id}}' class='mosaic-card-row row' style='padding: 0px 10px 0px 10px;'>
+                {{#finished_mosaics}}
+                {{{card}}}
+                {{/finished_mosaics}}
+            </div> <!-- row -->
+        </div>
+    </div> <!-- folder -->
+    {{/folders}}
+</div> <!-- folder-content -->
+
 <div class='container-fluid' style='padding-top:15px;'>
     <div class='row'>
         <div class='col-sm-12'>
 
-            <ol class='breadcrumb' style='vertical-align: middle; padding:4 4 4 16;'>
-                <li class='breadcrumb-item active' style='padding:7 0 7 0;'>
-                    Your Mosaics
-                </li>
+            <div class='card bg-light' style='vertical-align: middle; padding:4 4 4 16; margin-bottom:5px;'>
+                <div class='row'>
+                    <div class='col-sm-4'>
+                        <h5 class='card-title bg-light' style='padding-top:7px; margin-bottom:0px;'>Mosaic Uploads</h5>
+                    </div>
 
-                <div class="btn-group pull-right">
-                    <button type="button" class="geo-switch-button btn btn-small btn-secondary" data-toggle="button" aria-pressed="false">Geo</button>
-                    <button type="button" class="utm-switch-button btn btn-small btn-secondary" data-toggle="button" aria-pressed="false">UTM</button>
+                    <div class='col-sm-8'>
+                        <input id ="mosaic-file-input" type="file" style="display: none" />
+                        <button id="add-mosaic-button" class="btn btn-primary float-right"><i class='fa fa-upload'></i> Mosaic</button>
+
+                    </div>
                 </div>
-            </ol>
-        </div> <!-- col-sm-12 -->
-    </div> <!-- row -->
-</div> <!-- container -->
+            </div>
 
-<div class='container-fluid'>
-    <div id='mosaic-card-row' class='row' style='padding: 0px 10px 0px 10px;'>
-        {{#finished_mosaics}}
-        {{{card}}}
-        {{/finished_mosaics}}
-    </div> <!-- row -->
-</div>
-
-<div class='container-fluid' style='padding-top:15px;'>
-    <div class='row'>
-        <div class='col-sm-12'>
-
-            <ol class='breadcrumb'>
-                <li class='breadcrumb-item active'>Mosaic Uploads</li>
-            </ol>
         </div> <!-- col-sm-12 -->
     </div> <!-- row -->
 </div> <!-- container -->
@@ -48,7 +71,7 @@
                     <th></th>
                 </thead>
                 <tbody>
-                    {{#mosaics}}
+                    {{#uploading_mosaics}}
                     <tr class='mosaic-upload-row' id='uploading-mosaic-row-{{identifier}}'}>
                         <td style='vertical-align: middle;'>{{filename}}</td>
 
@@ -63,7 +86,7 @@
 
                         <td id='mosaic-status-text-{{identifier}}' style='vertical-align: middle;'>{{status_text}}</td>
 
-                        <td id='actions-td-{{identifier}}' style='padding-top:0px; padding-bottom:0px; vertical-align: middle;'>
+                        <td id='actions-td-{{identifier}}' style='padding-top:0px; padding-bottom:0px; vertical-align: middle; width:88px;'>
                             {{#uploading}}
                             <button mosaic_identifier="{{identifier}}" class="resume-download-button btn btn-primary btn-sm btn-success"><i class='fa fa-upload'></i></button>
                             {{/uploading}}
@@ -72,39 +95,198 @@
                         </td>
 
                     </tr>
-                    {{/mosaics}}
+                    {{/uploading_mosaics}}
                 </tbody>
             </table>
 
         </div> <!-- col-sm-12 -->
     </div> <!-- row -->
 
-    <div class='row'>
-        <div class='col-sm-12'>
-            <input id ="mosaic-file-input" type="file" style="display: none" />
-            <button id="add-mosaic-button" class="btn btn-primary float-right"><i class='fa fa-upload'></i> Mosaic</button>
-        </div>
-    </div>
-
 </div> <!-- container -->
 
-
 <!-- Modal -->
-<div class="modal fade" id="confirm-delete-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
+<div class="modal fade" id="unshare-modal" tabindex="-1" role="dialog" aria-labelledby="unshareModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Confirm Delete</h5>
+                <h5 class="modal-title">Share Mosaics</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div id="confirm-delete-modal-body" class="modal-body">
-                <input type="text" id="input" placeholder="Example input">
+            <div id="unshare-modal-body" class="modal-body">
+                <p>You have selected the following mosaics:</p>
+                <table class='table table-striped table-bordered table-condensed'>
+                    <tbody id='unshare-modal-table'>
+                    </tbody>
+                </table>
+                <p>Enter the email addresses of those you're unsharing with:</p>
+                <table class='table table-striped table-bordered table-condensed'>
+                    <tbody id='unshare-modal-user-table'>
+                    </tbody>
+                </table>
+                 <div class="input-group mb-3">
+                    <input type="text" class="form-control" id='unshare-modal-user-email' placeholder="Email Address" aria-label="Email Address" aria-describedby="basic-addon2">
+                    <div class="input-group-append">
+                        <button id='unshare-modal-user-button' class="btn btn-outline-secondary" type="button" style='padding: 11 12 11 12;'><i class='fa fa-plus'></i></button>
+                    </div>
+                </div>
+
+
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" id='confirm-delete-button' data-dismiss="modal" class="btn btn-primary btn-danger">Confirm Delete</button>
+                <button type="button" id='unshare-modal-button' class="btn btn-warning">Unshare Mosaics</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="share-modal" tabindex="-1" role="dialog" aria-labelledby="shareModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Share Mosaics</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div id="share-modal-body" class="modal-body">
+                <p>You have selected the following mosaics:</p>
+                <table class='table table-striped table-bordered table-condensed'>
+                    <tbody id='share-modal-table'>
+                    </tbody>
+                </table>
+                <p>Enter the email addresses of those you're sharing with:</p>
+                <table class='table table-striped table-bordered table-condensed'>
+                    <tbody id='share-modal-user-table'>
+                    </tbody>
+                </table>
+                 <div class="input-group mb-3">
+                    <input type="text" class="form-control" id='share-modal-user-email' placeholder="Email Address" aria-label="Email Address" aria-describedby="basic-addon2">
+                    <div class="input-group-append">
+                        <button id='share-modal-user-button' class="btn btn-outline-secondary" type="button" style='padding: 11 12 11 12;'><i class='fa fa-plus'></i></button>
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" id='share-modal-button' class="btn btn-primary">Share Mosaics</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="remove-modal" tabindex="-1" role="dialog" aria-labelledby="removeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Share Mosaics</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div id="remove-modal-body" class="modal-body">
+                <p>You have selected the following mosaics:</p>
+                <table class='table table-striped table-bordered table-condensed'>
+                    <tbody id='remove-modal-table'>
+                    </tbody>
+                </table>
+                <p>This will delete mosaics you have uploaded, and remove those shared with you.</p>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" id='remove-modal-button' class="btn btn-danger">Remove Mosaics</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="create-folder-modal" tabindex="-1" role="dialog" aria-labelledby="addFolderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Folder</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div id="create-folder-modal-body" class="modal-body">
+                <p>Enter the name of the folder:</p>
+                 <div class="input-group mb-3">
+                    <input type="text" class="form-control" id='create-folder-name' placeholder="Folder Name" aria-label="Folder Name" aria-describedby="basic-addon2">
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" id='create-folder-modal-button' class="btn btn-primary">Create Folder</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="remove-folder-modal" tabindex="-1" role="dialog" aria-labelledby="addFolderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Folder</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div id="remove-folder-modal-body" class="modal-body">
+                <p>Select the folder to remove. This will move any mosaics in that folder to your 'Unorganized Mosaics' folder. </p>
+                <ul class="list-group" id="remove-folder-list-tab">
+                    {{#folders}}
+                    <li class="list-group-item" data-sort='{{folder_sort}}' folder_id='{{folder_id}}' data-toggle="list">{{folder_name}}</li>
+                    {{/folders}}
+                </ul>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" id='remove-folder-modal-button' class="btn btn-danger">Remove Folder</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="move-mosaics-modal" tabindex="-1" role="dialog" aria-labelledby="moveMosaicsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Move Mosaics</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div id="create-folder-modal-body" class="modal-body">
+                <p>You have selected the following mosaics:</p>
+                <table class='table table-striped table-bordered table-condensed'>
+                    <tbody id='move-mosaics-modal-table'>
+                    </tbody>
+                </table>
+                <p>Select the folder to move these to:</p>
+                <ul class="list-group" id="move-mosaics-list-tab">
+                    {{#folders}}
+                    <li class="list-group-item" data-sort='{{folder_sort}}' folder_id='{{folder_id}}' data-toggle="list">{{folder_name}}</li>
+                    {{/folders}}
+                </ul>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" id='move-mosaics-modal-button' class="btn btn-primary">Move Mosaics</button>
             </div>
         </div>
     </div>

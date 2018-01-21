@@ -10,20 +10,14 @@ require_once($cwd[__FILE__] . "/../db/my_query.php");
 
 
 function get_user_id($id_token) {
-    global $our_db;
+    global $our_db, $cwd;
 
     //An ID token will be passed if there is a logged in user, otherwise display
     //the splash screen
     if ($id_token == NULL || $id_token == 'NONE') {
-        echo "
-    <div class='jumbotron'>
-        <h1 class='display-3'>Welcome to the Open UAS Repository!</h1>
-        <br>
-        <p class='lead'>Please sign in with your Google account to get started.</p>
+        $response['html'] = file_get_contents($cwd[__file__] . "/templates/jumbotron_template.html");
 
-        <!-- <p>We use Google's authentication to ensure your data privacy and safety.</p> -->
-    </div> <!-- jumbotron -->";
-
+        echo json_encode($response);
         exit();
     }
 

@@ -5,6 +5,7 @@ if (is_link($cwd[__FILE__])) $cwd[__FILE__] = readlink($cwd[__FILE__]);
 $cwd[__FILE__] = dirname($cwd[__FILE__]);
 
 require_once($cwd[__FILE__] . "/../db/my_query.php");
+require_once($cwd[__FILE__] . "/upload.php"); //for rrmdir
 require_once($cwd[__FILE__] . "/../../Mustache.php/src/Mustache/Autoloader.php");
 Mustache_Autoloader::register();
 
@@ -20,12 +21,45 @@ function ordinal_suffix($num) {
     return 'th';
 }
 
-function get_finished_mosaic_card($user_id, $mosaic_id) {
+function get_finished_mosaic_card($user_id, $mosaic_id, &$filename) {
     global $cwd;
 
-    $mosaic_result = query_our_db("SELECT * FROM mosaics WHERE owner_id = $user_id AND id = $mosaic_id");
+    //$mosaic_result = query_our_db("SELECT * FROM mosaics WHERE owner_id = $user_id AND id = $mosaic_id");
+    $query = "SELECT * FROM mosaics WHERE id = $mosaic_id";
+    error_log($query);
+    $mosaic_result = query_our_db($query);
 
     $mosaic_row = $mosaic_result->fetch_assoc();
+
+    if ($user_id == $mosaic_row['owner_id']) {
+        //user owns this mosaic
+
+        $query = "SELECT users.email, users.id, users.name FROM mosaic_access, users WHERE users.id = mosaic_access.user_id AND mosaic_access.mosaic_id = $mosaic_id";
+        //error_log($query);
+        $result = query_our_db($query);
+
+        while (($row = $result->fetch_assoc()) != NULL) {
+            $mosaic_row['sharing'] = true;
+
+            $mosaic_row['shared_with'][] = array(
+                "mosaic_id" => $mosaic_id,
+                "user_id" => $row['id'],
+                "name" => $row['name'],
+                "email" => $row['email']
+            );
+        }
+
+    } else {
+        //this mosaic is shared to this user
+        $mosaic_row['shared'] = true;
+        $owner_id = $mosaic_row['owner_id'];
+
+        $result = query_our_db("SELECT name, email FROM users WHERE id = $owner_id");
+        $row = $result->fetch_assoc();
+        $mosaic_row['shared_by']['name'] = $row['name'];
+        $mosaic_row['shared_by']['email'] = $row['email'];
+
+    }
 
     if ($mosaic_row == NULL) {
         error_log("ERROR! could not find mosaic for card");
@@ -57,26 +91,91 @@ function get_finished_mosaic_card($user_id, $mosaic_id) {
 function display_index($user_id) {
     global $cwd;
 
+    $shares = array();
     $projects['all_mosaics'] = array();
 
-    $projects['finished_mosaics'] = array();
-    $mosaic_result = query_our_db("SELECT * FROM mosaics WHERE owner_id = $user_id AND status = 'TILED' ORDER BY filename");
-    while (($mosaic_row = $mosaic_result->fetch_assoc()) != NULL) {
-        $mosaic_id = $mosaic_row['id'];
+    $projects['folders'] = array();
 
-        $card['card'] = get_finished_mosaic_card($user_id, $mosaic_id);
+    $mosaic_ids = array();
+    //get the ids of all mosaics owned by or shared with the user
+    $query = "SELECT id FROM mosaics WHERE owner_id = $user_id AND status = 'TILED' ORDER BY filename";
+    $result = query_our_db($query);
+    while (($row = $result->fetch_assoc()) != NULL) {
+        $mosaic_ids[] = $row['id'];
+    }
 
-        $projects['finished_mosaics'][] = $card;
-        $projects['all_mosaics'][] = $mosaic_row;
+    $query = "SELECT mosaic_id FROM mosaic_access WHERE user_id = $user_id";
+    $result = query_our_db($query);
+    while (($row = $result->fetch_assoc()) != NULL) {
+        $mosaic_ids[] = $row['mosaic_id'];
+    }
+
+    $query = "SELECT folder_id, name FROM folders WHERE owner_id = $user_id";
+    error_log($query);
+    $folder_result = query_our_db($query);
+
+
+    function cmp($a, $b) {
+        return strnatcmp($a['filename'], $b['filename']);
     }
 
 
+    while (($folder_row = $folder_result->fetch_assoc()) != NULL) {
+        $folder_id = $folder_row['folder_id'];
+        $folder_name = $folder_row['name'];
+
+        $finished_mosaics = array();
+        $query = "SELECT mosaic_id FROM folder_assignments WHERE owner_id = $user_id AND folder_id = $folder_id";
+        $assignment_result = query_our_db($query);
+
+        while (($assignment_row = $assignment_result->fetch_assoc()) != NULL) {
+            $mosaic_id = $assignment_row['mosaic_id'];
+            $card['card'] = get_finished_mosaic_card($user_id, $mosaic_id, $filename);
+            $card['filename'] = $filename;
+            $finished_mosaics[] = $card;
+
+            $mosaic_result = query_our_db("SELECT * FROM mosaics WHERE id = $mosaic_id");
+            $mosaic_row = $mosaic_result->fetch_assoc();
+            $projects['all_mosaics'][] = $mosaic_row;
+
+            $mosaic_ids = array_diff($mosaic_ids, [$mosaic_id]); // remove this ID from the array of mosaic ids
+        }
+        usort($finished_mosaics, "cmp");
+
+        $projects['folders'][] = array(
+            "folder_id" => $folder_id,
+            "folder_name" => $folder_name,
+            "folder_sort" => $folder_name,
+            "finished_mosaics" => $finished_mosaics
+        );
+    }
+
+    $finished_mosaics = array();
+    foreach ($mosaic_ids as $mosaic_id) {
+        $mosaic_result = query_our_db("SELECT * FROM mosaics WHERE id = $mosaic_id");
+        $mosaic_row = $mosaic_result->fetch_assoc();
+        $mosaic_id = $mosaic_row['id'];
+
+        $card['card'] = get_finished_mosaic_card($user_id, $mosaic_id, $filename);
+        $card['filename'] = $filename;
+
+        $finished_mosaics[] = $card;
+        $projects['all_mosaics'][] = $mosaic_row;
+    }
+    usort($finished_mosaics, "cmp");
+
+    $projects['folders'][] = array(
+        "folder_id" => "-1",
+        "folder_name" => "Unorganized Mosaics",
+        "folder_sort" => "ZZZZZZZZZZZZZZZZZZ",
+        "finished_mosaics" => $finished_mosaics
+    );
+    error_log("folders size: " . count($projects['folders']));
+
+    $projects['uploading_mosaics'] = array();
+
     $mosaic_result = query_our_db("SELECT * FROM mosaics WHERE owner_id = $user_id AND status != 'TILED' ORDER BY filename");
-
-    $projects['mosaics'] = array();
-
     while (($mosaic_row = $mosaic_result->fetch_assoc()) != NULL) {
-        $mosaic_row['project_id'] = $project_id;
         $mosaic_row['percentage'] = number_format($mosaic_row['bytes_uploaded'] * 100 / $mosaic_row['size_bytes'], 2);
         $mosaic_row['bytes_uploaded'] = number_format($mosaic_row['bytes_uploaded'] / 1024, 0);
         $mosaic_row['size_bytes'] = number_format($mosaic_row['size_bytes'] / 1024, 0);
@@ -102,7 +201,7 @@ function display_index($user_id) {
             $mosaic_row['percentage'] = number_format($mosaic_row['tiling_progress'], 2);
         }
 
-        $projects['mosaics'][] = $mosaic_row;
+        $projects['uploading_mosaics'][] = $mosaic_row;
         $projects['all_mosaics'][] = $mosaic_row;
     }
 
@@ -111,6 +210,8 @@ function display_index($user_id) {
     $m = new Mustache_Engine;
     $response['html'] = $m->render($projects_template, $projects);
     $response['mosaics'] = $projects['all_mosaics'];
+
+    $response['navbar'] = file_get_contents($cwd[__FILE__] . "/templates/index_navbar.html");
 
     echo json_encode($response);
 }
@@ -136,7 +237,7 @@ function display_mosaic($user_id, $mosaic_id) {
     if ($channels > 3) $mosaic['has_nir'] = true;
 
     $filename = substr($filename, 0, -4);
-    $response['mosaic_url'] = './mosaics/' . $user_id . '/' . $filename . '_files/';
+    $response['mosaic_url'] = './mosaics/' . $mosaic_row['owner_id'] . '/' . $filename . '_files/';
     $response['height'] = $height;
     $response['width'] = $width;
     $response['channels'] = $channels;
@@ -149,9 +250,380 @@ function display_mosaic($user_id, $mosaic_id) {
     $m = new Mustache_Engine;
     $response['html'] = $m->render($mosaic_template, $mosaic);
 
+    $navbar_template = file_get_contents($cwd[__FILE__] . "/templates/mosaic_navbar.html");
+    $m = new Mustache_Engine;
+    $response['navbar'] = $m->render($navbar_template, $navbar);
+
+
     echo json_encode($response);
 }
 
+function share_mosaics($user_id, $mosaic_ids, $mosaic_names, $emails) {
+    global $our_db, $cwd;
+
+    $invalid_emails = [];
+    $valid_emails = [];
+    $valid_email_ids = [];
+
+    foreach ($emails as $email) {
+        error_log("selected email: " . $email);
+        //check if user exists
+        $query = "SELECT id FROM users WHERE email = '$email'";
+        $result = query_our_db($query);
+        $row = $result->fetch_assoc();
+
+        if ($row == NULL) {
+            $invalid_emails[] = $email;
+        } else {
+            $valid_emails[] = $email;
+            $valid_email_ids[] = $row['id'];
+        }
+    }
+
+    $invalid_mosaics = [];
+    $unowned_mosaics = [];
+    $valid_mosaics = [];
+    $valid_mosaic_ids = [];
+
+    for ($i = 0; $i < count($mosaic_ids); $i++) {
+        $mosaic_id = $mosaic_ids[$i];
+        error_log("mosaic id: " . $mosaic_id);
+
+        //check if mosaic_exists
+        $query = "SELECT owner_id FROM mosaics WHERE id = $mosaic_id";
+        $result = query_our_db($query);
+        $row = $result->fetch_assoc();
+
+        if ($row == NULL) {
+            //mosaic does not exist
+            $invalid_mosaics[] = $mosaic_names[$i];
+        } else {
+            //check if user is owner of mosaic
+            $owner_id = $row['owner_id'];
+
+            if ($owner_id != $user_id) {
+                $unowned_mosaics[] = $mosaic_names[$i];
+            } else {
+                $valid_mosaics[] = $mosaic_names[$i];
+                $valid_mosaic_ids[] = $mosaic_ids[$i];
+            }
+        }
+    }
+
+    $shares = array();
+
+    $message = "";
+    if (count($valid_emails) > 0 && count($valid_mosaic_ids) > 0) {
+        for ($j = 0; $j < count($valid_mosaic_ids); $j++) {
+            $mosaic_id = $valid_mosaic_ids[$j];
+            $mosaic_name = $valid_mosaics[$j];
+
+            $message .= "<p>Shared '$mosaic_name' with:</p>";
+            $message .= "<table class='table table-bordered table-striped table-condensed'><tbody>";
+            for ($i = 0; $i < count($valid_emails); $i++) {
+                $email = $valid_emails[$i];
+                $id = $valid_email_ids[$i];
+
+                $query = "SELECT name FROM users WHERE id = $id";
+                $result = query_our_db($query);
+                $row = $result->fetch_assoc();
+                $user_name = $row['name'];
+
+                $query = "REPLACE INTO mosaic_access SET owner_id = $user_id, user_id = $id, mosaic_id = $mosaic_id, type = 'rw'";
+                query_our_db($query);
+
+                error_log($query);
+
+                $shares[] = array(
+                    "owner_id" => $user_id,
+                    "user_id" => $id,
+                    "mosaic_id" => $mosaic_id,
+                    "user_name" => $user_name,
+                    "email" => $email
+                );
+
+                $message .= "<tr><td>" . $email. "</td></tr>";
+            }
+            $message .= "</tbody></table>";
+        }
+    }
+
+    if (count($invalid_mosaics) > 0) {
+        $message .= "<br>";
+        $message .= "<p>Could not share the following mosaics as they were not in the database (this should never happen, contact the administrator):</p>";
+        $message .= "<table class='table table-bordered table-striped table-condensed'><tbody>";
+        foreach ($invalid_mosaics as $invalid_mosaic) {
+            $message .= "<tr><td>" . $invalid_mosaic . "</td></tr>";
+        }
+        $message .= "</tbody></table>";
+    }
+
+    if (count($unowned_mosaics) > 0) {
+        $message .= "<br>";
+
+        $message .= "<p>Could not share the following mosaics as they were not owned by you:</p>";
+        $message .= "<table class='table table-bordered table-striped table-condensed'><tbody>";
+        foreach ($unowned_mosaics as $unowned_mosaic) {
+            $message .= "<tr><td>" . $unowned_mosaic . "</td></tr>";
+        }
+        $message .= "</tbody></table>";
+    }
+
+    if (count($invalid_emails) > 0) {
+        $message .= "<br>";
+
+        $message .= "<p>Could not share the mosaics with the following users as they do not exist:</p>";
+        $message .= "<table class='table table-bordered table-striped table-condensed'><tbody>";
+        foreach ($invalid_emails as $invalid_email) {
+            $message .= "<tr><td>" . $invalid_email . "</td></tr>";
+        }
+        $message .= "</tbody></table>";
+    }
+
+    $response['message'] = $message;
+    $response['title'] = 'Share Mosaics Results';
+    $response['shares'] = $shares;
+
+    echo json_encode($response);
+}
+
+function unshare_mosaics($user_id, $mosaic_ids, $mosaic_names, $emails) {
+    global $our_db, $cwd;
+
+    $invalid_emails = [];
+    $valid_emails = [];
+    $valid_email_ids = [];
+
+    foreach ($emails as $email) {
+        error_log("selected email: " . $email);
+        //check if user exists
+        $query = "SELECT id FROM users WHERE email = '$email'";
+        $result = query_our_db($query);
+        $row = $result->fetch_assoc();
+
+        if ($row == NULL) {
+            $invalid_emails[] = $email;
+        } else {
+            $valid_emails[] = $email;
+            $valid_email_ids[] = $row['id'];
+        }
+    }
+
+    $invalid_mosaics = [];
+    $unowned_mosaics = [];
+    $valid_mosaics = [];
+    $valid_mosaic_ids = [];
+
+    for ($i = 0; $i < count($mosaic_ids); $i++) {
+        $mosaic_id = $mosaic_ids[$i];
+        error_log("mosaic id: " . $mosaic_id);
+
+        //check if mosaic_exists
+        $query = "SELECT owner_id FROM mosaics WHERE id = $mosaic_id";
+        $result = query_our_db($query);
+        $row = $result->fetch_assoc();
+
+        if ($row == NULL) {
+            //mosaic does not exist
+            $invalid_mosaics[] = $mosaic_names[$i];
+        } else {
+            //check if user is owner of mosaic
+            $owner_id = $row['owner_id'];
+
+            if ($owner_id != $user_id) {
+                $unowned_mosaics[] = $mosaic_names[$i];
+            } else {
+                $valid_mosaics[] = $mosaic_names[$i];
+                $valid_mosaic_ids[] = $mosaic_ids[$i];
+            }
+        }
+    }
+
+    $unshares = array();
+
+    $message = "";
+    if (count($valid_emails) > 0 && count($valid_mosaic_ids) > 0) {
+        for ($j = 0; $j < count($valid_mosaic_ids); $j++) {
+            $mosaic_id = $valid_mosaic_ids[$j];
+            $mosaic_name = $valid_mosaics[$j];
+
+            $message .= "<p>Unshared '$mosaic_name' with:</p>";
+            $message .= "<table class='table table-bordered table-striped table-condensed'><tbody>";
+            for ($i = 0; $i < count($valid_emails); $i++) {
+                $email = $valid_emails[$i];
+                $id = $valid_email_ids[$i];
+
+                $query = "DELETE FROM mosaic_access WHERE user_id = $id AND mosaic_id = $mosaic_id";
+                query_our_db($query);
+
+                error_log($query);
+
+                $unshares[] = array(
+                    "user_id" => $id,
+                    "mosaic_id" => $mosaic_id
+                );
+
+
+                $message .= "<tr><td>" . $email. "</td></tr>";
+            }
+            $message .= "</tbody></table>";
+        }
+    }
+
+    if (count($invalid_mosaics) > 0) {
+        $message .= "<br>";
+        $message .= "<p>Could not unshare the following mosaics as they were not in the database (this should never happen, contact the administrator):</p>";
+        $message .= "<table class='table table-bordered table-striped table-condensed'><tbody>";
+        foreach ($invalid_mosaics as $invalid_mosaic) {
+            $message .= "<tr><td>" . $invalid_mosaic . "</td></tr>";
+        }
+        $message .= "</tbody></table>";
+    }
+
+    if (count($unowned_mosaics) > 0) {
+        $message .= "<br>";
+
+        $message .= "<p>Could not unshare the following mosaics as they were not owned by you:</p>";
+        $message .= "<table class='table table-bordered table-striped table-condensed'><tbody>";
+        foreach ($unowned_mosaics as $unowned_mosaic) {
+            $message .= "<tr><td>" . $unowned_mosaic . "</td></tr>";
+        }
+        $message .= "</tbody></table>";
+    }
+
+    if (count($invalid_emails) > 0) {
+        $message .= "<br>";
+
+        $message .= "<p>Could not unshare the mosaics with the following users as they do not exist:</p>";
+        $message .= "<table class='table table-bordered table-striped table-condensed'><tbody>";
+        foreach ($invalid_emails as $invalid_email) {
+            $message .= "<tr><td>" . $invalid_email . "</td></tr>";
+        }
+        $message .= "</tbody></table>";
+    }
+
+    $response['message'] = $message;
+    $response['title'] = 'Unshare Mosaics Results';
+    $response['unshares'] = $unshares;
+
+    echo json_encode($response);
+}
+
+function delete_mosaic($user_id, $mosaic_id) {
+    $query = "SELECT filename, identifier FROM mosaics WHERE owner_id = $user_id AND id = '$mosaic_id'";
+    error_log($query);
+    $result = query_our_db($query);
+    $row = $result->fetch_assoc();
+
+    $filename = $row['filename'];
+    $identifier = $row['identifier'];
+    $upload_dir = "/mosaic_uploads/$user_id/$identifier/";
+
+    error_log("recursively deleting directory $upload_dir");
+    rrmdir($upload_dir);
+    error_log("unlinking file: '/mosaic_uploads/$user_id/$filename'");
+    unlink("/mosaic_uploads/$user_id/$filename");
+
+    $filename_base = substr($filename, 0, strrpos($filename, "."));
+    $thumbnail_filename = $filename_base . "_thumbnail.png";
+
+    $tile_dir = "/mosaics/$user_id/$filename_base" . "_files";
+    rrmdir($tile_dir);
+    unlink("/mosaics/$user_id/$filename_base" . ".dzi");
+    unlink("/mosaics/$user_id/$filename_base" . "_thumbnail.png");
+
+    $query = "DELETE FROM mosaics WHERE owner_id = $user_id AND id = '$mosaic_id'";
+    error_log($query);
+    query_our_db($query);
+
+    $query = "DELETE FROM mosaic_access WHERE mosaic_id = $mosaic_id";
+    error_log($query);
+    query_our_db($query);
+
+    $query = "DELETE FROM folder_assignments WHERE mosaic_id = $mosaic_id";
+    error_log($query);
+    query_our_db($query);
+}
+
+function remove_mosaics($user_id, $mosaic_ids, $mosaic_names) {
+    global $our_db, $cwd;
+
+    $invalid_mosaics = [];
+    $deleted_mosaics = []; //mosaics that were deleted (owned by the user)
+    $removed_mosaics = []; //mosaics which had access removed (those not owned by user)
+    $processed_ids = []; //mosaic ids for 
+
+    for ($i = 0; $i < count($mosaic_ids); $i++) {
+        $mosaic_id = $mosaic_ids[$i];
+        error_log("mosaic id: " . $mosaic_id);
+
+        //check if mosaic_exists
+        $query = "SELECT owner_id FROM mosaics WHERE id = $mosaic_id";
+        $result = query_our_db($query);
+        $row = $result->fetch_assoc();
+
+        if ($row == NULL) {
+            //mosaic does not exist
+            $invalid_mosaics[] = $mosaic_names[$i];
+        } else {
+            //check if user is owner of mosaic
+            $processed_ids[] = $mosaic_ids[$i];
+
+            $owner_id = $row['owner_id'];
+            if ($owner_id != $user_id) {
+                //user is owner, delete the mosaic
+                $removed_mosaics[] = $mosaic_names[$i];
+
+                $query = "DELETE FROM mosaic_access WHERE mosaic_id = " . $mosaic_ids[$i] . " AND user_id = " . $user_id;
+                query_our_db($query);
+
+            } else {
+                //user is not owner, remove access
+                $deleted_mosaics[] = $mosaic_names[$i];
+                delete_mosaic($user_id, $mosaic_ids[$i]);
+            }
+        }
+    }
+
+
+    $message = "";
+    if (count($deleted_mosaics) > 0) {
+        $message .= "<p>Deleted the following mosaics:</p>";
+        $message .= "<table class='table table-bordered table-striped table-condensed'><tbody>";
+
+        for ($j = 0; $j < count($deleted_mosaics); $j++) {
+            $message .= "<tr><td>" . $deleted_mosaics[$j] . "</td></tr>";
+        }
+        $message .= "</tbody></table>";
+    }
+
+    if (count($removed_mosaics) > 0) {
+        if (count($message) > 0) $message .= "<br>";
+        $message .= "<p>Removed your access to:</p>";
+        $message .= "<table class='table table-bordered table-striped table-condensed'><tbody>";
+
+        for ($j = 0; $j < count($removed_mosaics); $j++) {
+            $message .= "<tr><td>" . $removed_mosaics[$j] . "</td></tr>";
+        }
+        $message .= "</tbody></table>";
+    }
+
+    if (count($invalid_mosaics) > 0) {
+        if (count($message) > 0) $message .= "<br>";
+        $message .= "<p>Could not remove or delete the following mosaics as they were not in the database (this should never happen, contact the administrator):</p>";
+        $message .= "<table class='table table-bordered table-striped table-condensed'><tbody>";
+        foreach ($invalid_mosaics as $invalid_mosaic) {
+            $message .= "<tr><td>" . $invalid_mosaic . "</td></tr>";
+        }
+        $message .= "</tbody></table>";
+    }
+
+    $response['message'] = $message;
+    $response['title'] = 'Remove Mosaics Results';
+    $response['removes'] = $processed_ids;
+
+    echo json_encode($response);
+}
 
 ?>
 

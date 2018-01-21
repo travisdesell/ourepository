@@ -1,63 +1,14 @@
-<div class='container-fluid' style='padding-top:5px;'>
-    <div class='row'>
-        <div class='col-sm-12'>
-
-            <ol class='breadcrumb' style='vertical-align: middle; padding:4 4 4 16; margin-bottom:5;'>
-                <li class='breadcrumb-item active' style='padding:7 0 7 0;'>
-                    Filters
-                </li>
-
-
-                <div class="btn-group btn-group-toggle pull-right" data-toggle="buttons">
-                    <label filter='RGB' class="filter-button btn btn-secondary active">
-                        <input type="radio" name="options" id="option1" autocomplete="off" checked> RGB
-                    </label>
-                    <label filter='VARI' class="filter-button btn btn-secondary">
-                        <input type="radio" name="options" id="option6" autocomplete="off"> VARI
-                    </label>
-                    <label filter='TGI' class="filter-button btn btn-secondary">
-                        <input type="radio" name="options" id="option7" autocomplete="off"> TGI
-                    </label>
-                    {{#has_nir}}
-                    <label filter='NIR' class="filter-button btn btn-secondary">
-                        <input type="radio" name="options" id="option2" autocomplete="off"> NIR
-                    </label>
-                    <label filter='CNIR' class="filter-button btn btn-secondary">
-                        <input type="radio" name="options" id="option3" autocomplete="off"> CNIR
-                    </label>
-                    <label filter='NDVI' class="filter-button btn btn-secondary">
-                        <input type="radio" name="options" id="option4" autocomplete="off"> NDVI
-                    </label>
-                    <label filter='CNDVI' class="filter-button btn btn-secondary">
-                        <input type="radio" name="options" id="option5" autocomplete="off"> CNDVI
-                    </label>
-                    {{/has_nir}}
-                </div>
-
-                <div class="btn-group pull-right" style='padding-right:15px'>
-                    <button conv='EDGE1' type="button" class="conv-button btn btn-small btn-secondary" data-toggle="button" aria-pressed="false">EDGE1</button>
-                    <button conv='EDGE2' type="button" class="conv-button btn btn-small btn-secondary" data-toggle="button" aria-pressed="false">EDGE2</button>
-                    <button conv='EDGE3' type="button" class="conv-button btn btn-small btn-secondary" data-toggle="button" aria-pressed="false">EDGE3</button>
-                    <button conv='SHARPEN' type="button" class="conv-button btn btn-small btn-secondary" data-toggle="button" aria-pressed="false">SHARPEN</button>
-                </div>
-
-
-            </ol>
-        </div> <!-- col-sm-12 -->
-    </div> <!-- row -->
-</div> <!-- container -->
-
 <div class='container-fluid'>
     <div class='row'>
         <div class='col-sm-2'>
 
-            <button type='button' class='btn btn-block' id='points-button'>Toggle Points</button>
-            <button type='button' class='btn btn-block' id='lines-button'>Toggle Lines</button>
-            <button type='button' class='btn btn-block' id='polygons-button'>Toggle Polygons</button>
+            <button type='button' class='btn btn-block btn-outline-secondary' id='points-button'>Toggle Points</button>
+            <button type='button' class='btn btn-block btn-outline-secondary' id='lines-button'>Toggle Lines</button>
+            <button type='button' class='btn btn-block btn-outline-secondary' id='polygons-button'>Toggle Polygons</button>
 
-            <button type='button' class='btn btn-primary btn-block' id='draw-lines-button' data-toggle='button' aria-pressed='false' autocomplete='off'>Draw Lines</button>
-            <button type='button' class='btn btn-primary btn-block' id='draw-points-button' data-toggle='button' aria-pressed='false' autocomplete='off'>Draw Points</button>
-            <button type='button' class='btn btn-primary btn-block' id='draw-polygon-button' data-toggle='button' aria-pressed='false' autocomplete='off'>Draw Polygon</button>
+            <button type='button' class='btn btn-block btn-outline-primary' id='draw-lines-button' data-toggle='button' aria-pressed='false' autocomplete='off'>Draw Lines</button>
+            <button type='button' class='btn btn-block btn-outline-primary' id='draw-points-button' data-toggle='button' aria-pressed='false' autocomplete='off'>Draw Points</button>
+            <button type='button' class='btn btn-block btn-outline-primary' id='draw-polygon-button' data-toggle='button' aria-pressed='false' autocomplete='off'>Draw Polygon</button>
 
             <ul class='list-group'>
                 <li class='list-group-item' id='web-point'>Web:</li>

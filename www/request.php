@@ -35,6 +35,17 @@ $user_id = get_user_id($id_token);
 
 error_log("got user id: $user_id");
 
+function escape_array($array) {
+    global $our_db;
+
+    $new_array = array();
+    foreach ($array as $item) {
+        $new_array[] = $our_db->real_escape_string($item);
+    }
+    return $new_array;
+}
+
+
 if ($request_type == NULL || $request_type == "INDEX") {
     require_once($cwd[__FILE__] . "/mosaics.php");
     display_index($user_id);
@@ -43,7 +54,7 @@ if ($request_type == NULL || $request_type == "INDEX") {
     require_once($cwd[__FILE__] . "/mosaics.php");
 
     $mosaic_id = $our_db->real_escape_string($_POST['mosaic_id']);
-    $response['html'] = get_finished_mosaic_card($user_id, $mosaic_id);
+    $response['html'] = get_finished_mosaic_card($user_id, $mosaic_id, $filename);
 
     echo json_encode($response);
 
@@ -71,48 +82,74 @@ if ($request_type == NULL || $request_type == "INDEX") {
     require_once($cwd[__FILE__] . "/upload.php");
 
     $md5_hash = $our_db->real_escape_string($_POST['md5_hash']);
-    $mosaic_info = get_mosaic_info($md5_hash);
+    $mosaic_info = get_mosaic_info($user_id, $md5_hash);
 
     $response['html'] = "success!";
     $response['mosaic_info'] = $mosaic_info;
 
     echo json_encode($response);
 } else if ($request_type == "DELETE_MOSAIC") {
-    require_once($cwd[__FILE__] . "/upload.php");
+    //this happens when the user deletes an uploading or untiled mosaic
+    require_once($cwd[__FILE__] . "/mosaics.php");
 
     $md5_hash = $our_db->real_escape_string($_POST['md5_hash']);
     $mosaic_id = $our_db->real_escape_string($_POST['mosaic_id']);
 
     error_log("trying to delete a mosaic with md5_hash: '$md5_hash' and id: $mosaic_id");
 
-    $query = "SELECT filename, identifier FROM mosaics WHERE owner_id = $user_id AND md5_hash = '$md5_hash' AND id = '$mosaic_id'";
-    error_log($query);
-    $result = query_our_db($query);
-    $row = $result->fetch_assoc();
-
-    $filename = $row['filename'];
-    $identifier = $row['identifier'];
-    $upload_dir = "/mosaic_uploads/$user_id/$identifier/";
-
-    error_log("recursively deleting directory $upload_dir");
-    rrmdir($upload_dir);
-    error_log("unlinking file: '/mosaic_uploads/$user_id/$filename'");
-    unlink("/mosaic_uploads/$user_id/$filename");
-
-    $filename_base = substr($filename, 0, strrpos($filename, "."));
-    $thumbnail_filename = $filename_base . "_thumbnail.png";
-
-    $tile_dir = "/mosaics/$user_id/$filename_base" . "_files";
-    rrmdir($tile_dir);
-    unlink("/mosaics/$user_id/$filename_base" . ".dzi");
-    unlink("/mosaics/$user_id/$filename_base" . "_thumbnail.png");
-
-
-    $query = "DELETE FROM mosaics WHERE owner_id = $user_id AND md5_hash ='$md5_hash' AND id = '$mosaic_id'";
-    query_our_db($query);
-    //TODO delete mosaic access records as well
-
+    delete_mosaic($user_id, $mosaic_id);
 
     $response['html'] = 'success!';
     echo json_encode($response);
+
+} else if ($request_type == "SHARE_MOSAICS") {
+    require_once($cwd[__FILE__] . "/mosaics.php");
+
+    $mosaic_ids = escape_array($_POST['mosaic_ids']);
+    $mosaic_names = escape_array($_POST['mosaic_names']);
+    $selected_emails = escape_array($_POST['selected_emails']);
+
+    share_mosaics($user_id, $mosaic_ids, $mosaic_names, $selected_emails);
+
+} else if ($request_type == "UNSHARE_MOSAICS") {
+    require_once($cwd[__FILE__] . "/mosaics.php");
+
+    $mosaic_ids = escape_array($_POST['mosaic_ids']);
+    $mosaic_names = escape_array($_POST['mosaic_names']);
+    $selected_emails = escape_array($_POST['selected_emails']);
+
+    unshare_mosaics($user_id, $mosaic_ids, $mosaic_names, $selected_emails);
+
+} else if ($request_type == "REMOVE_MOSAICS") {
+    //this happens when the user selects one or more mosaics to remove
+    require_once($cwd[__FILE__] . "/mosaics.php");
+
+    $mosaic_ids = escape_array($_POST['mosaic_ids']);
+    $mosaic_names = escape_array($_POST['mosaic_names']);
+
+    remove_mosaics($user_id, $mosaic_ids, $mosaic_names);
+
+} else if ($request_type == "CREATE_FOLDER") {
+    require_once($cwd[__FILE__] . "/folders.php");
+
+    $folder_name = $our_db->real_escape_string($_POST['folder_name']);
+
+    create_folder($user_id, $folder_name);
+
+} else if ($request_type == "MOVE_MOSAICS") {
+    require_once($cwd[__FILE__] . "/folders.php");
+
+    $folder_id = $our_db->real_escape_string($_POST['folder_id']);
+    $mosaic_ids = escape_array($_POST['mosaic_ids']);
+    $mosaic_names = escape_array($_POST['mosaic_names']);
+
+    move_mosaics($user_id, $folder_id, $mosaic_ids, $mosaic_names);
+
+} else if ($request_type == "REMOVE_FOLDER") {
+    require_once($cwd[__FILE__] . "/folders.php");
+
+    $folder_id = $our_db->real_escape_string($_POST['folder_id']);
+
+    remove_folder($user_id, $folder_id);
+
 }

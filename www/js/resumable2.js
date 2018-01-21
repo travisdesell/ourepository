@@ -4,12 +4,12 @@ var paused = [];
 
 var chunk_size = 1 * 1024 * 1024; //5MB
 
-function restart_uploads(id_token) {
+function restart_uploads() {
     console.log("number of uploads: " + Object.keys(mosaics).length);
     for (var i in mosaics) {
         console.log("key: " + i);
         console.log("restarting upload for mosaic: " + mosaics[i].filename);
-        upload_chunk(mosaics[i], id_token);
+        upload_chunk(mosaics[i]);
     }
 }
 
@@ -39,7 +39,7 @@ function get_unique_identifier(file) {
 }
 
 
-function set_actions(id_token, identifier, actions) {
+function set_actions(identifier, actions) {
     $("#actions-td-" + identifier).html("");
 
     var actions_html = "";
@@ -57,10 +57,10 @@ function set_actions(id_token, identifier, actions) {
     }
 
     $("#actions-td-" + identifier).html(actions_html);
-    initialize_mosaic_dropdowns(id_token);
+    initialize_mosaic_dropdowns();
 }
 
-function initialize_mosaic_dropdowns(id_token) {
+function initialize_mosaic_dropdowns() {
     $('.resume-download-button:not(.bound)').addClass('bound').click(function() {
 		var identifier = $(this).attr("mosaic_identifier");
 
@@ -73,12 +73,12 @@ function initialize_mosaic_dropdowns(id_token) {
 
 			$(".resume-download-button[mosaic_identifier='" + identifier + "']").remove();
 			paused[identifier] = false;
-			upload_chunk(mosaics[identifier], id_token);
+			upload_chunk(mosaics[identifier]);
 
-            set_actions(id_token, identifier, ["pause", "delete"]);
+            set_actions(identifier, ["pause", "delete"]);
 
 			$('#progress-bar-' + identifier).addClass('progress-bar-animated');
-			initialize_mosaic_dropdowns(id_token);
+			initialize_mosaic_dropdowns();
 		}
     });
 
@@ -91,10 +91,10 @@ function initialize_mosaic_dropdowns(id_token) {
 		paused[identifier] = true;
 		console.log("setting paused for '" + identifier + "'");
 
-        set_actions(id_token, identifier, ["resume", "delete"]);
+        set_actions(identifier, ["resume", "delete"]);
 
 		$('#progress-bar-' + identifier).removeClass('progress-bar-animated');
-		initialize_mosaic_dropdowns(id_token);
+		initialize_mosaic_dropdowns();
     });
 
     $('.delete-mosaic-button:not(.bound)').addClass('bound').click(function() {
@@ -123,7 +123,7 @@ function add_mosaic_to_table(mosaic_info) {
         + "<td style='vertical-align: middle;'><div id='progress-bar-text-" + mosaic_info.identifier + "'>0/" + (Number(mosaic_info.size_bytes / 1024).toFixed(0)).toLocaleString() + "kB (0.00%)</div></td>"
         + "<td style='vertical-align: middle;' id='mosaic-status-text-" + mosaic_info.identifier + "'>hashing</td>"
 
-		+ "<td id='actions-td-" + mosaic_info.identifier + "' style='padding-top:0px; padding-bottom:0px; vertical-align: middle;'></td>"
+		+ "<td id='actions-td-" + mosaic_info.identifier + "' style='padding-top:0px; padding-bottom:0px; vertical-align: middle; width:88px;'></td>"
 
         + "</tr>";
 
@@ -135,9 +135,6 @@ function add_mosaic_to_table(mosaic_info) {
         set_progressbar_percent(mosaic_info.identifier, 0);
         set_progressbar_status(mosaic_info.identifier, "calculating md5 hash");
     }
-}
-
-function update_mosaic_in_table(mosaic_info) {
 }
 
 function get_md5_hash(file, on_finish) {
@@ -196,7 +193,7 @@ function get_md5_hash(file, on_finish) {
     loadNext();
 }
 
-function start_upload(file, id_token) {
+function start_upload(file) {
     var identifier = get_unique_identifier(file);
     //different versions of firefox have different field names
     var filename = file.webkitRelativePath || file.fileName || file.name;
@@ -215,15 +212,15 @@ function start_upload(file, id_token) {
     mosaic_info.status = 'HASHING';
 
     add_mosaic_to_table(mosaic_info);
-	initialize_mosaic_dropdowns(id_token);
+	initialize_mosaic_dropdowns();
 
 	function on_finish(md5_hash) {
 		$('#progress-bar-' + identifier).addClass("hashed");
 
-        set_actions(id_token, identifier, ["pause", "delete"]);
+        set_actions(identifier, ["pause", "delete"]);
 
 		$('#progress-bar-' + identifier).addClass('progress-bar-animated');
-		initialize_mosaic_dropdowns(id_token);
+		initialize_mosaic_dropdowns();
 
 		file.md5_hash = md5_hash;
 		console.log("got md5_hash: '" + md5_hash + "'");
@@ -244,7 +241,7 @@ function start_upload(file, id_token) {
 			} else {
 				var mosaic_info = response.mosaic_info;
 				mosaic_info.file = file; //set the file in the response mosaic_info so it can be used later
-				upload_chunk(mosaic_info, id_token);
+				upload_chunk(mosaic_info);
 			}
 		};
 
@@ -263,7 +260,7 @@ function start_upload(file, id_token) {
 
 }
 
-function upload_chunk(mosaic_info, id_token) {
+function upload_chunk(mosaic_info) {
     //store the mosaic info in case the upload needs to be restarted
     mosaics[mosaic_info.identifier] = mosaic_info;
     var file = mosaic_info.file;
@@ -332,9 +329,9 @@ function upload_chunk(mosaic_info, id_token) {
                  //console.log("uploading next chunk with response:");
                  //console.log(response);
 
-                 upload_chunk(mosaic_info, id_token);
+                 upload_chunk(mosaic_info);
              } else {
-                 set_actions(id_token, mosaic_info.identifier, ["delete"]);
+                 set_actions(mosaic_info.identifier, ["delete"]);
 
                  $('#progress-bar-' + mosaic_info.identifier).removeClass('progress-bar-animated');
                  set_progressbar_color(mosaic_info.identifier, 'bg-success');
@@ -368,8 +365,8 @@ function ordinal_suffix(n) {
     return original + 'th';
 }
 
-jQuery.fn.sortDivs = function sortDivs() {
-    $("> div", this[0]).sort(dec_sort).appendTo(this[0]);
+jQuery.fn.sort_sub = function sort_sub(sort_by) {
+    $("> " + sort_by, this[0]).sort(dec_sort).appendTo(this[0]);
     function dec_sort(a, b){
         var contentA = $(a).attr('data-sort');
         var contentB = $(b).attr('data-sort');
@@ -403,8 +400,8 @@ function update_tiling_progress(mosaic_info) {
                 //console.log("response was: " + response.html);
                 //console.log("mosaic card row is:");
                 //console.log( $("#mosaic-card-row") );
-                $("#mosaic-card-row").append(response.html);
-                $("#mosaic-card-row").sortDivs();
+                $(".mosaic-card-row[folder_id='-1']").append(response.html);
+                $(".mosaic-card-row[folder_id='-1']").sort_sub("div");
 
                 initialize_mosaic_cards();
             }

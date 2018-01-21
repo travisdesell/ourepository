@@ -11,11 +11,13 @@ if ($drop_tables) {
 	query_our_db("DROP TABLE users");
 	query_our_db("DROP TABLE projects");
     query_our_db("DROP TABLE mosaics");
-}
     query_our_db("DROP TABLE mosaics");
     query_our_db("DROP TABLE tiling_trace");
     query_our_db("DROP TABLE mosaic_progress");
-
+    query_our_db("DROP TABLE folders");
+    query_our_db("DROP TABLE folder_assignments");
+}
+query_our_db("DROP TABLE folder_assignments");
 
 $query = "CREATE TABLE `mosaics` (
 	`id` INT(11) NOT NULL AUTO_INCREMENT,
@@ -26,8 +28,8 @@ $query = "CREATE TABLE `mosaics` (
     `uploaded_chunks` int(11) NOT NULL,
     `chunk_status` VARCHAR(8096) NOT NULL,
     `md5_hash` VARCHAR(32) NOT NULL,
-    `size_bytes` INT(11) NOT NULL,
-    `bytes_uploaded` INT(11) DEFAULT 0,
+    `size_bytes` BIGINT NOT NULL,
+    `bytes_uploaded` BIGINT DEFAULT 0,
     `tiling_progress` double default 0,
     `status` varchar(16),
 	`height` INT(11),
@@ -109,11 +111,34 @@ query_our_db($query);
 
 
 $query = "CREATE TABLE `mosaic_access` (
+    `owner_id` INT(11) NOT NULL,
 	`user_id` INT(11) NOT NULL, 
 	`mosaic_id` INT(11) NOT NULL, 
     `type` VARCHAR(16) NOT NULL,
 
 	PRIMARY KEY (`user_id`, `mosaic_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1";
+
+query_our_db($query);
+
+
+$query = "CREATE TABLE `folders` (
+    `folder_id` INT(11) NOT NULL AUTO_INCREMENT,
+    `owner_id` INT(11) NOT NULL,
+    `name` VARCHAR(128) NOT NULL,
+
+    PRIMARY KEY (`folder_id`),
+    UNIQUE KEY (`owner_id`, `name`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1";
+
+query_our_db($query);
+
+$query = "CREATE TABLE `folder_assignments` (
+    `owner_id` INT(11) NOT NULL,
+    `mosaic_id` INT(11) NOT NULL,
+    `folder_id` INT(11) NOT NULL,
+
+    PRIMARY KEY (`owner_id`, `mosaic_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1";
 
 query_our_db($query);
