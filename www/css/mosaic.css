@@ -1,0 +1,9 @@
+body {
+    padding-top: 60px;
+}
+
+.filter {
+    opacity:    0.1;
+    filter:     alpha(opacity=10);
+    background-color: #7FFF00;
+}

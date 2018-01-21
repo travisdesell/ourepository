@@ -1,0 +1,121 @@
+<nav class='navbar navbar-expand-sm navbar-light bg-light fixed-top'>
+    <a class='navbar-brand' href='./index.php'>OURepository</a>
+
+    <button class='navbar-toggler' type='button' data-toggle='collapse' data-target='#navbarSupportedContent' aria-controls='navbarSupportedContent' aria-expanded='false' aria-label='Toggle navigation'>
+        <span class='navbar-toggler-icon'></span>
+    </button>
+
+    <div class='collapse navbar-collapse' id='navbarSupportedContent'>
+        <ul class='navbar-nav mr-auto'>
+        </ul>
+
+        <ul class="navbar-nav">
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="actionsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Filters
+                </a>
+                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="actionsDropdown">
+                    <a filter="RGB" class="filter-nav dropdown-item active" href="javascript:void(0)">RGB</a>
+                    <a filter="VARI" class="filter-nav dropdown-item" href="javascript:void(0)">VARI</a>
+                    <a filter="TGI" class="filter-nav dropdown-item" href="javascript:void(0)">TGI</a>
+                    <a filter="NIR" class="filter-nav dropdown-item" href="javascript:void(0)">NIR</a>
+                    <a filter="CNIR" class="filter-nav dropdown-item" href="javascript:void(0)">CNIR</a>
+                    <a filter="NDVI" class="filter-nav dropdown-item" href="javascript:void(0)">NDVI</a>
+                    <a filter="CNDVI" class="filter-nav dropdown-item" href="javascript:void(0)">CNDVI</a>
+                </div>
+            </li>
+
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="actionsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Kernels
+                </a>
+                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="actionsDropdown">
+                    <a kernel="EDGE1" class="kernel-nav dropdown-item" href="javascript:void(0)">EDGE1</a>
+                    <a kernel="EDGE2" class="kernel-nav dropdown-item" href="javascript:void(0)">EDGE2</a>
+                    <a kernel="EDGE3" class="kernel-nav dropdown-item" href="javascript:void(0)">EDGE3</a>
+                    <a kernel="SHARPEN" class="kernel-nav dropdown-item" href="javascript:void(0)">SHARPEN</a>
+                </div>
+            </li>
+
+
+            <li class="nav-item">
+                <a class="nav-link" href="javascript:void(0);" onclick="signOut();">Sign Out</a>
+            </li>
+        </ul>
+ 
+    </div>
+</nav>
+
+
+<div id="share-message" class='container-fluid fixed-message' style='padding-top:15px; display:none;'>
+    <div class='row'>
+        <div class='col-sm-12'>
+
+            <div class='card border-info text-info' style='vertical-align: middle; padding:4 4 4 16; margin-bottom:5px;'>
+                <div class='row'>
+                    <div class='col-sm-6'>
+                        <h5 id='help-message' class='card-title' style='padding-top:7px; margin-bottom:0px;'>Please select the mosaics to share.</h5>
+                    </div>
+
+                    <div class='col-sm-6'>
+                        <button type="button" class="select-all-button btn btn-small btn-secondary" data-toggle="button" aria-pressed="false" style="margin-right:5px;">Select All</button>
+                        <button type="button" class="invert-select-button btn btn-small btn-secondary" data-toggle="button" aria-pressed="false">Invert</button>
+
+                        <button type="button" class="cancel-select-button btn btn-small btn-secondary pull-right" data-toggle="button" aria-pressed="false">Cancel</button>
+                        <button type="button" id="share-message-button" class="btn btn-small btn-primary pull-right" data-toggle="button" aria-pressed="false" style="margin-right:10px;">Share</button>
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- col-sm-12 -->
+    </div> <!-- row -->
+</div> <!-- container -->
+
+<div id="unshare-message" class='container-fluid fixed-message' style='padding-top:15px; display:none;'>
+    <div class='row'>
+        <div class='col-sm-12'>
+
+            <div class='card border-warning text-warning' style='vertical-align: middle; padding:4 4 4 16; margin-bottom:5px;'>
+                <div class='row'>
+                    <div class='col-sm-6'>
+                        <h5 id='help-message' class='card-title' style='padding-top:7px; margin-bottom:0px;'>Please select the mosaics to unshare.</h5>
+                    </div>
+
+                    <div class='col-sm-6'>
+                        <button type="button" class="select-all-button btn btn-small btn-secondary" data-toggle="button" aria-pressed="false" style="margin-right:5px;">Select All</button>
+                        <button type="button" class="invert-select-button btn btn-small btn-secondary" data-toggle="button" aria-pressed="false">Invert</button>
+
+                        <button type="button" class="cancel-select-button btn btn-small btn-secondary pull-right" data-toggle="button" aria-pressed="false">Cancel</button>
+                        <button type="button" id="unshare-message-button" class="btn btn-small btn-warning pull-right" data-toggle="button" aria-pressed="false" style="margin-right:10px;">Unshare</button>
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- col-sm-12 -->
+    </div> <!-- row -->
+</div> <!-- container -->
+
+<div id="remove-message" class='container-fluid fixed-message' style='padding-top:15px; display:none;'>
+    <div class='row'>
+        <div class='col-sm-12'>
+
+            <div class='card border-danger text-danger' style='vertical-align: middle; padding:4 4 4 16; margin-bottom:5px;'>
+                <div class='row'>
+                    <div class='col-sm-6'>
+                        <h5 id='help-message' class='card-title' style='padding-top:7px; margin-bottom:0px;'>Please select the mosaics to remove.</h5>
+                    </div>
+
+                    <div class='col-sm-6'>
+                        <button type="button" class="select-all-button btn btn-small btn-secondary" data-toggle="button" aria-pressed="false" style="margin-right:5px;">Select All</button>
+                        <button type="button" class="invert-select-button btn btn-small btn-secondary" data-toggle="button" aria-pressed="false">Invert</button>
+
+                        <button type="button" class="cancel-select-button btn btn-small btn-secondary pull-right" data-toggle="button" aria-pressed="false">Cancel</button>
+                        <button type="button" id="remove-message-button" class="btn btn-small btn-danger pull-right" data-toggle="button" aria-pressed="false" style="margin-right:10px;">Remove</button>
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- col-sm-12 -->
+    </div> <!-- row -->
+</div> <!-- container -->
+

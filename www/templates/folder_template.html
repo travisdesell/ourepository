@@ -1,0 +1,32 @@
+<div class='folder' data-sort='{{sort}}' folder_name='{{name}}' folder_id ='{{id}}'>
+    <div class='container-fluid' style='padding-top:15px;'>
+        <div class='row'>
+            <div class='col-sm-12'>
+
+                <div class='card bg-light' style='vertical-align: middle; padding:4 4 4 16; margin-bottom:5px;'>
+                    <div class='row'>
+                        <div class='col-sm-6'>
+                            <h5 class='card-title' style='padding-top:7px; margin-bottom:0px;'>{{name}}</h5>
+                        </div>
+
+                        <div class='col-sm-6'>
+                                <button type="button" folder_id='{{id}}' class="unselect-folder-button btn btn-small btn-outline-secondary" style="padding: 2 12 2 12; margin-right:5px; display:none;">Unselect Folder</button>
+                                <button type="button" folder_id='{{id}}' class="select-folder-button btn btn-small btn-outline-secondary" style="padding: 2 12 2 12; margin-right:5px; display:none;">Select Folder</button>
+                                <button type="button" folder_id='{{id}}' class="invert-folder-button btn btn-small btn-outline-secondary" style='padding: 2 12 2 12; display:none;'>Invert</button>
+
+                                <button folder_id='{{id}}' class="hide-folder-button btn btn-outline-secondary float-right" showing='1'><i class='fa fa-angle-double-up'></i></button>
+                        </div>
+                    </div>
+                </div>
+
+            </div> <!-- col-sm-12 -->
+        </div> <!-- row -->
+    </div> <!-- container -->
+
+    <div class='container-fluid cards-container'>
+        <div folder_id='{{id}}' folder_name='{{name}}' class='mosaic-card-row row' style='padding: 0px 10px 0px 10px;'>
+        </div> <!-- row -->
+    </div>
+</div> <!-- folder -->
+
+
