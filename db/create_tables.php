@@ -17,7 +17,7 @@ if ($drop_tables) {
     query_our_db("DROP TABLE folders");
     query_our_db("DROP TABLE folder_assignments");
 }
-query_our_db("DROP TABLE folder_assignments");
+query_our_db("DROP TABLE labels");
 
 $query = "CREATE TABLE `mosaics` (
 	`id` INT(11) NOT NULL AUTO_INCREMENT,
@@ -39,6 +39,7 @@ $query = "CREATE TABLE `mosaics` (
     `coordinate_system` BLOB,
     `metadata` BLOB,
     `bands` BLOB,
+    `utm_zone` VARCHAR(4) DEFAULT NULL,
     `lat_upper_left` VARCHAR(16) DEFAULT NULL,
     `lon_upper_left` VARCHAR(16) DEFAULT NULL,
     `lat_upper_right` VARCHAR(16) DEFAULT NULL,
@@ -142,6 +143,21 @@ $query = "CREATE TABLE `folder_assignments` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1";
 
 query_our_db($query);
+
+$query = "CREATE TABLE `labels` (
+    `label_id` INT(11) NOT NULL AUTO_INCREMENT,
+    `owner_id` INT(11) NOT NULL,
+    `mosaic_id` INT(11) NOT NULL,
+    `label_name` VARCHAR(256) NOT NULL,
+    `label_type` VARCHAR(32) NOT NULL,
+    `label_color` VARCHAR(7),
+
+    PRIMARY KEY (`label_id`),
+    UNIQUE KEY (`mosaic_id`, `owner_id`, `label_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1";
+
+query_our_db($query);
+
 
 
 

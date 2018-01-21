@@ -1,6 +1,26 @@
 var viewer;
 var overlay;
 
+var utm_zone;
+
+var lat_upper_left;
+var lon_upper_left;
+var lat_upper_right;
+var lon_upper_right;
+var lat_lower_left;
+var lon_lower_left;
+var lat_lower_right;
+var lon_lower_right;
+
+var utm_e_upper_left;
+var utm_n_upper_left;
+var utm_e_upper_right;
+var utm_n_upper_right;
+var utm_e_lower_left;
+var utm_n_lower_left;
+var utm_e_lower_right;
+var utm_n_lower_right;
+
 var drawn_polygons = 0;
 var drawn_lines = 0;
 var drawn_points = 0;
@@ -11,6 +31,10 @@ var drawing_polygon = false;
 var last_point = null;
 var polygon_points = [];
 
+var current_label_id = -1;
+var current_label_name;
+var current_label_type;
+var current_label_color;
 
 var kernel_func = null;
 var filter_func = null;
@@ -19,6 +43,25 @@ function display_error_modal(title, message) {
     $("#error-modal-title").html(title);
     $("#error-modal-body").html(message);
     $("#error-modal").modal();
+}
+
+function toDegreesMinutesAndSeconds(coordinate) {
+    var absolute = Math.abs(coordinate);
+    var degrees = Math.floor(absolute);
+    var minutesNotTruncated = (absolute - degrees) * 60;
+    var minutes = Math.floor(minutesNotTruncated);
+    var seconds = Number((minutesNotTruncated - minutes) * 60).toFixed(4);
+
+    return degrees + "d" + minutes + "'" + seconds;
+}
+
+function hexToRgb(hex) {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
 }
 
 
@@ -34,7 +77,8 @@ App = {
             tileSources: [{
                 "Image": {
                     "xmlns":    "http://schemas.microsoft.com/deepzoom/2008",
-                    "Url": tiles_url,
+                    //"Url": tiles_url,
+                    "Url": "request.php?request=TILE&id_token=" + id_token + "&mosaic_id=" + mosaic_id + "&file=" + tiles_url,
                     "Format":   "png", 
                     "Overlap":  "0", 
                     "TileSize": "256",
@@ -59,10 +103,67 @@ App = {
 
         overlay = viewer.svgOverlay();
 
+        viewer.addHandler('open', function() {
+            var tracker = new OpenSeadragon.MouseTracker({
+                element: viewer.container,
+                moveHandler: function(event) {
+                    var webPoint = event.position;
+                    var viewportPoint = viewer.viewport.pointFromPixel(webPoint);
+                    var imagePoint = viewer.viewport.viewportToImageCoordinates(viewportPoint);
+                    //var zoom = viewer.viewport.getZoom(true);
+                    //var imageZoom = viewer.viewport.viewportToImageZoom(zoom);
+
+                    //$("#web-point").text("Web Point: " + webPoint.x + ", " + webPoint.y);
+                    //$("#viewport-point").text("Viewport Point: " + viewportPoint.toString());
+                    $("#pixel-y").text(Math.round(imagePoint.y));
+                    $("#pixel-x").text(Math.round(imagePoint.x));
+
+                    var x = imagePoint.x / width;
+                    var y = imagePoint.y / height;
+
+                    /*
+                    console.log("utm_n_upper_left: " + utm_n_upper_left + ", utm_n_lower_left: " + utm_n_lower_left);
+                    console.log("utm_e_upper_left: " + utm_e_upper_left + ", utm_e_upper_right: " + utm_n_upper_right);
+                    console.log("y: " + y + ", x: " + x);
+                    */
+                    
+                    if (utm_n_upper_left != null) {
+                        var utm_n = utm_n_upper_left + (y * (utm_n_upper_left - utm_n_lower_left));
+                        var utm_e = utm_e_upper_left + (x * (utm_e_upper_left - utm_e_lower_right));
+
+                        $("#utm-n").text(Number(utm_n).toLocaleString('en', {maximumFractionDigits : 4, minimumFractionDigits : 4}));
+                        $("#utm-e").text(Number(utm_e).toLocaleString('en', {maximumFractionDigits : 4, minimumFractionDigits : 4}));
+
+                        //var utm = "+proj=utm +zone=32";
+                        var utm = "+proj=utm +zone=" + utm_zone;
+                        var wgs84 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
+                        geo = proj4(utm, wgs84, [utm_e, utm_n]);
+                        //console.log(geo);
+
+                        var lat = toDegreesMinutesAndSeconds(geo[0]);
+                        var latitudeCardinal = Math.sign(geo[0]) >= 0 ? "N" : "S";
+
+                        var lon = toDegreesMinutesAndSeconds(geo[1]);
+                        var longitudeCardinal = Math.sign(geo[1]) >= 0 ? "E" : "W";
+
+                        $("#geo-y").text(lat + " " + latitudeCardinal);
+                        $("#geo-x").text(lon + " " + longitudeCardinal);
+                    }
+                }
+            });
+
+
+            tracker.setTracking(true);  
+
+        });
+
         viewer.addHandler('canvas-click', function(event) {
+            var color = hexToRgb(current_label_color);
+
             if (drawing_polygon) {
                 // The canvas-click event gives us a position in web coordinates.
                 var webPoint = event.position;
+                console.log(event);
 
                 // Convert that to viewport coordinates, the lingua franca of OpenSeadragon coordinates.
                 var viewportPoint = viewer.viewport.pointFromPixel(webPoint);
@@ -72,9 +173,10 @@ App = {
 
                 // Show the results.
                 //$("#web-point").text("Web Point: " + webPoint.toString());
-                $("#web-point").text("Web Point: " + webPoint.x + ", " + webPoint.y);
-                $("#viewport-point").text("Viewport Point: " + viewportPoint.toString());
-                $("#image-point").text("Image Point: " + imagePoint.toString());
+                //$("#web-point").text("Web Point: " + webPoint.x + ", " + webPoint.y);
+                //$("#viewport-point").text("Viewport Point: " + viewportPoint.toString());
+                //$("#pixel-x").text(Math.round(imagePoint.x));
+                //$("#pixel-y").text(Math.round(imagePoint.y));
 
                 console.log(webPoint.toString(), viewportPoint.toString(), imagePoint.toString());
                 //console.log(viewer.world.getItemAt(0).source.dimensions);
@@ -85,13 +187,14 @@ App = {
 
                 var radius = 0.0025;
 
+
                 var d3Circle = d3.select(overlay.node()).append("circle")
-                    .style('fill', 'rgba(0,0,255,0.25)')
+                    .style('fill', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.25)')
                     .attr("id", "svg-circle-" + drawn_points)
                     .attr("cx", x)
                     .attr("cy", y)
                     .attr("r", radius)
-                    .attr("class", "svg-polygon-circle");
+                    .attr("class", "svg-polygon-circle current-draw svg-item-" + current_label_id);
 
                 drawn_points++;
 
@@ -104,14 +207,14 @@ App = {
                     var y2 = viewportPoint.y;
 
                     var d3Line = d3.select(overlay.node()).append("line")
-                        .style('stroke', 'rgba(0,0,255,0.75)')
+                        .style('stroke', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.75)')
                         .attr("id", "svg-polygon-line-" + drawn_lines)
                         .attr("x1", x1)
                         .attr("y1", y1)
                         .attr("x2", x2)
                         .attr("y2", y2)
                         .attr("stroke-width", 0.0005)
-                        .attr("class", "svg-polygon-line")
+                        .attr("class", "svg-polygon-line current-draw svg-item-" + current_label_id);
 
                     drawn_lines++;
                 
@@ -145,12 +248,12 @@ App = {
                 var radius = 0.005;
 
                 var d3Circle = d3.select(overlay.node()).append("circle")
-                    .style('fill', 'rgba(255,0,0,0.25)')
+                    .style('fill', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.25)')
                     .attr("id", "svg-circle-" + drawn_points)
                     .attr("cx", x)
                     .attr("cy", y)
                     .attr("r", radius)
-                    .attr("class", "svg-circle");
+                    .attr("class", "svg-circle current-draw svg-item-" + current_label_id);
 
                 drawn_points++;
 
@@ -184,14 +287,14 @@ App = {
                     var y2 = viewportPoint.y;
 
                     var d3Line = d3.select(overlay.node()).append("line")
-                        .style('stroke', 'rgba(0,255,0,0.25)')
+                        .style('stroke', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.25)')
                         .attr("id", "svg-line-" + drawn_lines)
                         .attr("x1", x1)
                         .attr("y1", y1)
                         .attr("x2", x2)
                         .attr("y2", y2)
                         .attr("stroke-width", 0.001)
-                        .attr("class", "svg-line")
+                        .attr("class", "svg-line current-draw svg-item-" + current_label_id);
                 
                     drawn_lines++;
                     last_point = viewportPoint;
@@ -202,6 +305,59 @@ App = {
         });
     }
 };
+
+function initialize_labels() {
+    $(".label-list-item:not(.bound)").addClass("bound").click(function() {
+        if ($(this).hasClass("active")) {
+            $(this).removeClass("active");
+            $(this).css("background-color", "#fff");
+            $(this).css("border-color", 'rgba(0,0,0,0.125)');
+            $(this).css("color", "#495057")
+
+            var label_id = $(this).attr("label_id");
+            var label_name = $(this).attr("label_name");
+
+            if (label_name != $("#mark-label-select").val()) {
+                $(".svg-item-" + label_id).hide();
+            }
+        } else {
+            $(this).addClass("active");
+
+            //var color = $(this).attr("label_color");
+            //$(this).css("background-color", color);
+
+            var color = hexToRgb($(this).attr("label_color"));
+            $(this).css("background-color", 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.25)');
+            $(this).css("border-color", 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',1)');
+            //$(this).css("color", 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',1)');
+            $(this).css("color", "#495057")
+
+            var label_id = $(this).attr("label_id");
+            $(".svg-item-" + label_id).show();
+        }
+
+    });
+}
+
+function cancel_drawing() {
+    $(".current-draw").remove();
+    $(".cancel-drawing-button").hide();
+
+    drawing_points = false;
+    drawing_polygon = false;
+    drawing_lines = false;
+
+    polygon_points = [];
+    last_point = null;
+
+    if (current_label_type == "POLYGON") {
+        $("#draw-polygon-button").text("Draw Polygon").attr("aria-pressed", "false").removeClass("active");
+    } else if (current_label_type == "LINE") {
+        $("#draw-lines-button").text("Draw Lines").attr("aria-pressed", "false").removeClass("active");
+    } else if (current_label_type == "POINT") {
+        $("#draw-points-button").text("Draw Points").attr("aria-pressed", "false").removeClass("active");
+    }
+}
 
 // ----------
 function initialize_openseadragon(tiles_url, channels, height, width) {
@@ -217,6 +373,8 @@ function initialize_openseadragon(tiles_url, channels, height, width) {
 
     console.log("AFTER INIT!");
 
+    initialize_labels();
+
     $('#points-button').click(function() {
         $('.svg-circle').toggle();
     });
@@ -230,15 +388,24 @@ function initialize_openseadragon(tiles_url, channels, height, width) {
         $('.svg-polygon').toggle();
     });
 
+    $(".cancel-drawing-button").click(function() {
+        cancel_drawing();
+    });
 
     $('#draw-lines-button').click(function() {
         if ($(this).attr("aria-pressed") === "false") {
-            $(this).text("Stop Drawing");
+            $(".cancel-drawing-button").show();
+            $(this).text("Save Lines");
 
+            drawing_points = false;
+            drawing_polygon = false;
             drawing_lines = true;
+
             last_point = null;
         } else {
+            $(".cancel-drawing-button").hide();
             $(this).text("Draw Lines");
+            $(".current-draw").removeClass("current-draw");
 
             drawing_lines = false;
             last_point = null;
@@ -247,12 +414,15 @@ function initialize_openseadragon(tiles_url, channels, height, width) {
 
     $('#draw-points-button').click(function() {
         if ($(this).attr("aria-pressed") === "false") {
-            $(this).text("Stop Drawing");
+            $(".cancel-drawing-button").show();
+            $(this).text("Save Points");
 
             drawing_points = true;
             drawing_polygon = false;
             drawing_lines = false;
         } else {
+            $(".cancel-drawing-button").hide();
+            $(".current-draw").removeClass("current-draw");
             $(this).text("Draw Points");
 
             drawing_points = false;
@@ -261,11 +431,16 @@ function initialize_openseadragon(tiles_url, channels, height, width) {
 
     $('#draw-polygon-button').click(function() {
         if ($(this).attr("aria-pressed") === "false") {
-            $(this).text("Close Polygon");
+            $(".cancel-drawing-button").show();
+            $(this).text("Save Polygon");
 
+            drawing_points = false;
+            drawing_lines = false;
             drawing_polygon = true;
             last_point = null;
         } else {
+            $(".cancel-drawing-button").hide();
+            $(".current-draw").removeClass("current-draw");
             $(this).text("Draw Polygon");
 
             var points_str = "";
@@ -276,12 +451,13 @@ function initialize_openseadragon(tiles_url, channels, height, width) {
 
             console.log(points_str);
 
+            var color = hexToRgb(current_label_color);
             var d3Polygon = d3.select(overlay.node()).append("polygon")
-                .style('fill', 'rgba(0,0,255,0.25)')
+                .style('fill', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.25)')
                 .attr("id", "svg-polygon-" + drawn_polygons)
                 .attr("points", points_str)
                 .attr("stroke-width", 0.001)
-                .attr("class", "svg-polygon")
+                .attr("class", "svg-polygon svg-item-" + current_label_id)
 
             drawn_polygons++;
 
@@ -303,37 +479,35 @@ function initialize_mosaic(responseText) {
     console.log("received initialize mosaic response: " + responseText);
     var response = JSON.parse(responseText);
 
+    var mosaic_info = response.mosaic_info;
+    console.log(mosaic_info);
+    utm_zone = mosaic_info.utm_zone;
+
+    lat_upper_left = Number(mosaic_info.lat_upper_left);
+    lon_upper_left = Number(mosaic_info.lon_upper_left);
+    lat_upper_right = Number(mosaic_info.lat_upper_right);
+    lon_upper_right = Number(mosaic_info.lon_upper_right);
+    lat_lower_left = Number(mosaic_info.lat_lower_left);
+    lon_lower_left = Number(mosaic_info.lon_lower_left);
+    lat_lower_right = Number(mosaic_info.lat_lower_right);
+    lon_lower_right = Number(mosaic_info.lon_lower_right);
+
+    utm_e_upper_left = Number(mosaic_info.utm_e_upper_left);
+    utm_n_upper_left = Number(mosaic_info.utm_n_upper_left);
+    utm_e_upper_right = Number(mosaic_info.utm_e_upper_right);
+    utm_n_upper_right = Number(mosaic_info.utm_n_upper_right);
+    utm_e_lower_left = Number(mosaic_info.utm_e_lower_left);
+    utm_n_lower_left = Number(mosaic_info.utm_n_lower_left);
+    utm_e_lower_right = Number(mosaic_info.utm_e_lower_right);
+    utm_n_lower_right = Number(mosaic_info.utm_n_lower_right);
+
+
     $("#index-content").html(response.html);
     if (typeof response.navbar != undefined) {
         console.log("SETTING NAVBAR CONTENT");
         $("#navbar-content").html(response.navbar);
     }
 
-    $("#back-to-projects").click(function() {
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', './request.php');
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        xhr.onload = function() {
-            initialize_mosaics(xhr.responseText);
-        };
-        xhr.send('id_token=' + id_token + '&request=INDEX');
-    });
-
-    $("#back-to-mosaics").click(function() {
-        var project_id = $(this).attr('project_id');
-        console.log("going back to mosaics with project_id: " + project_id);
-
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', './request.php');
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        xhr.onload = function() {
-            initialize_mosaics(xhr.responseText);
-        };
-        xhr.send('id_token=' + id_token + '&request=MOSAICS&project_id=' + project_id);
-    });
-
-
-    //TODO: need to grab these from JSON isntead of text
     initialize_openseadragon(response.mosaic_url, response.channels, response.height, response.width);
 
 
@@ -350,21 +524,33 @@ function initialize_mosaic(responseText) {
 
             if (kernel == 'EDGE1') {
                 kernel_func = OpenSeadragon.Filters.CONVOLUTION([
-                         1,  2,  1,
+                         1,  0, -1,
                          0,  0,  0,
-                        -1, -2, -1]);
+                        -1,  0,  1]);
 
             } else if (kernel == 'EDGE2') {
                 kernel_func = OpenSeadragon.Filters.CONVOLUTION([
-                        -1,  0, 1,
-                        -2,  0, 2,
-                        -1,  0, 1]);
+                         0,  1,  0,
+                         1, -4,  1,
+                         0,  1,  0]);
 
             } else if (kernel == 'EDGE3') {
                 kernel_func = OpenSeadragon.Filters.CONVOLUTION([
                         -1, -1, -1,
                         -1,  8, -1,
                         -1, -1, -1]);
+
+            } else if (kernel == 'SOBEL-Y') {
+                kernel_func = OpenSeadragon.Filters.CONVOLUTION([
+                         1,  2,  1,
+                         0,  0,  0,
+                        -1, -2, -1]);
+
+            } else if (kernel == 'SOBEL-X') {
+                kernel_func = OpenSeadragon.Filters.CONVOLUTION([
+                        -1,  0, 1,
+                        -2,  0, 2,
+                        -1,  0, 1]);
 
             } else if (kernel == 'SHARPEN') {
                 kernel_func = OpenSeadragon.Filters.CONVOLUTION([
@@ -428,6 +614,265 @@ function initialize_mosaic(responseText) {
             });
         }
 
+    });
+
+    $(".pixel-switch-button").click(function() {
+        $(".table-pixel").show();
+        $(".table-geo").hide();
+        $(".table-utm").hide();
+
+        $(".pixel-switch-button").addClass("active").addClass("btn-secondary").removeClass("btn-outline-secondary");
+        $(".geo-switch-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
+        $(".utm-switch-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
+    });
+
+    $(".geo-switch-button").click(function() {
+        $(".table-pixel").hide();
+        $(".table-geo").show();
+        $(".table-utm").hide();
+
+        $(".pixel-switch-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
+        $(".geo-switch-button").addClass("active").addClass("btn-secondary").removeClass("btn-outline-secondary");
+        $(".utm-switch-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
+    });
+
+    $(".utm-switch-button").click(function() {
+        $(".table-pixel").hide();
+        $(".table-geo").hide();
+        $(".table-utm").show();
+
+        $(".pixel-switch-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
+        $(".geo-switch-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
+        $(".utm-switch-button").addClass("active").addClass("btn-secondary").removeClass("btn-outline-secondary");
+    });
+
+    $(".create-label-nav").click(function() {
+        $("#create-label-modal-button").addClass("disabled");
+        $(".label-type-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
+        $("#create-label-modal").modal();
+    });
+
+    $(".label-type-button").click(function() {
+        $(".label-type-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
+        $(this).addClass("active").addClass("btn-secondary").removeClass("btn-outline-secondary");
+
+        var val = $.trim( $("#label-name-text-input").val() );
+        if (val != "") {
+            $("#create-label-modal-button").removeClass("disabled");
+        } else {
+            $("#create-label-modal-button").addClass("disabled");
+        }
+    });
+
+    $("#label-name-text-input").on("propertychange change click keyup input paste", function() {
+        var val = $.trim( $(this).val() );
+
+        if (val != "" && $(".label-type-button.active").length ) {
+            $("#create-label-modal-button").removeClass("disabled");
+        } else {
+            $("#create-label-modal-button").addClass("disabled");
+        }
+    });
+
+    $("#create-label-modal-button").click(function() {
+        if ($(this).hasClass("disabled")) return;
+        $(this).addClass("disabled");
+
+        var name = $.trim( $("#label-name-text-input").val() );
+        var type = $(".label-type-button.active").text().toUpperCase().slice(0,-1);
+        var color = $("#html5colorpicker").val();
+
+        console.log("name: '" + name + "'");
+        console.log("type: '" + type + "'");
+        console.log("color: '" + color + "'");
+
+        var submission_data = {
+            request : "CREATE_LABEL",
+            id_token : id_token,
+            mosaic_id : mosaic_id,
+            label_name : name,
+            label_type : type,
+            label_color : color
+        };
+
+        $.ajax({
+            type: 'POST',
+            url: './request.php',
+            data : submission_data,
+            dataType : 'text',
+            success : function(responseText) {
+                console.log("received response: " + responseText);
+                var response = JSON.parse(responseText);
+
+                $("#create-label-modal").modal('hide');
+
+                if (response.err_msg) {
+                    display_error_modal(response.err_title, response.err_msg);
+                } else {
+                    var label_id = response.label_id;
+                    var label_name = response.label_name;
+                    var label_type = response.label_type;
+                    var label_color = response.label_color;
+
+                    $("#labels-card").show();
+
+                    var list_html = "<a href='javascript:void(0);' label_id='" + label_id + "' label_type='" + label_type + "' label_name='" + label_name + "' label_color='" + label_color + "' class='label-list-item list-group-item list-group-item-action' style='margin: 0 -1 0 -1;' >" + label_name + "</a>";
+                    $("#labels-card > .list-group").append(list_html);
+
+                    var option_html = "<option label_id='" + label_id + "' label_type='" + label_type + "' label_name='" + label_name + "' label_color='" + label_color + "'>" + label_name + "</option>";
+                    $("#mark-label-select").append(option_html);
+                    initialize_labels();
+                }
+
+            },
+            error : function(jqXHR, textStatus, errorThrown) {
+                console.log(errorThrown);
+                display_error_modal(textStatus, errorThrown);
+
+            },
+            async: true
+        });
+    });
+
+    $(".remove-label-nav").click(function() {
+        $("#remove-label-modal-button").addClass("disabled");
+
+        var buttons_html = "";
+
+        $(".label-list-item").each(function() {
+            var label_id = $(this).attr("label_id");
+            var label_name = $(this).attr("label_name");
+            var label_color = $(this).attr("label_color");
+
+            buttons_html += "<button type='button' label_id='" + label_id + "' label_name='" + label_name + "' label_color='" + label_color + "' class='remove-label-group-button label-type-button btn btn-small btn-outline-secondary' data-toggle='button' aria-pressed='false'>" + label_name + "</button>";
+        });
+        $("#remove-modal-button-group").html(buttons_html);
+
+        //initialize the buttons
+        $(".remove-label-group-button:not(.bound)").addClass("bound").click(function() {
+            $(".remove-label-group-button").removeClass("active");
+            $(this).addClass("active");
+            $("#remove-label-modal-button").removeClass("disabled");
+
+            $(".remove-label-group-button").css("background-color", "#fff");
+            $(".remove-label-group-button").css("border-color", 'rgba(0,0,0,0.125)');
+            $(".remove-label-group-button").css("color", "#495057")
+
+            var color = hexToRgb($(this).attr("label_color"));
+            $(this).css("background-color", 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.25)');
+            $(this).css("border-color", 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',1)');
+            $(this).css("color", "#495057")
+        });
+
+        $(".remove-label-group-button").hover(function() {
+            var color = hexToRgb($(this).attr("label_color"));
+            $(this).css("background-color", 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.25)');
+            $(this).css("border-color", 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',1)');
+            $(this).css("color", "#495057")
+        }, function() {
+            if (!$(this).hasClass("active")) {
+                $(this).css("background-color", "#fff");
+                $(this).css("border-color", 'rgba(0,0,0,0.125)');
+                $(this).css("color", "#495057")
+            }
+        });
+
+        $(".remove-label-group-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
+        $("#remove-label-modal").modal();
+    });
+
+    $("#remove-label-modal-button").click(function() {
+        if ($(this).hasClass("disabled")) return;
+
+        var label_id = $(".remove-label-group-button.active").attr("label_id");
+        var label_name = $(".remove-label-group-button.active").attr("label_name");
+        console.log("removing label with id: " + label_id);
+
+        var submission_data = {
+            request : "REMOVE_LABEL",
+            id_token : id_token,
+            mosaic_id : mosaic_id,
+            label_id : label_id,
+            label_name : label_name
+        };
+
+        $.ajax({
+            type: 'POST',
+            url: './request.php',
+            data : submission_data,
+            dataType : 'text',
+            success : function(responseText) {
+                console.log("received response: " + responseText);
+                var response = JSON.parse(responseText);
+
+                $("#remove-label-modal").modal('hide');
+
+                if (response.err_msg) {
+                    display_error_modal(response.err_title, response.err_msg);
+                } else {
+                    var label_id = response.label_id;
+                    var label_name = response.label_name;
+
+                    $(".svg-item-" + label_id).remove();
+                    $(".label-list-item[label_id='" + label_id + "']").remove();
+
+                    if ($("#mark-label-select").val() == label_name) {
+                        cancel_drawing();
+                        $("#polygon-marking").hide();
+                        $("#lines-marking").hide();
+                        $("#points-marking").hide();
+                    }
+                    $("#mark-label-select > option[label_id='" + label_id + "']").remove();
+                }
+
+            },
+            error : function(jqXHR, textStatus, errorThrown) {
+                console.log(errorThrown);
+                display_error_modal(textStatus, errorThrown);
+
+            },
+            async: true
+        });
+    });
+
+
+    $("#mark-label-select").change(function() {
+        var label_name = this.value;
+        console.log("changed mark-label-select to: " + label_name);
+
+        var option = $("#mark-label-select > option[label_name='" + label_name + "']");
+
+        previous_label_id = current_label_id;
+
+        current_label_id = option.attr("label_id");
+        current_label_name = option.attr("label_name");
+        current_label_type = option.attr("label_type");
+        current_label_color = option.attr("label_color");
+
+        console.log("selected label " + current_label_id + ", '" + current_label_name + "', " + current_label_type + ", " + current_label_color);
+
+        $("#polygon-marking").hide();
+        $("#lines-marking").hide();
+        $("#points-marking").hide();
+
+        if (current_label_type == 'POLYGON') {
+            $("#polygon-marking").show();
+        } else if (current_label_type == 'LINE') {
+            $("#lines-marking").show();
+        } else if (current_label_type == 'POINT') {
+            $("#points-marking").show();
+        }
+        cancel_drawing();
+        $(".cancel-drawing-button").hide();
+
+        console.log("previous label id: " + previous_label_id);
+        //was the previous select also selected for viewing, if not hide it's elements
+        if ( !$(".label-list-item[label_id=" + previous_label_id + "]").hasClass("active") ) {
+            $(".svg-item-" + previous_label_id).hide();
+        }
+
+        //show elements for this label
+        $(".svg-item-" + current_label_id).show();
     });
 }
 

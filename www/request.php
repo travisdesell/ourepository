@@ -20,20 +20,25 @@ foreach ($_GET as $key => $value) {
 foreach ($_POST as $key => $value) {
     error_log("_POST['$key']: '$value'");
 }
- */
+*/
 
 // Get $id_token via HTTPS POST.
-$id_token = $_POST['id_token'];
-$request_type = $_POST['request'];
+if (isset($_POST['id_token'])) {
+    $id_token = $_POST['id_token'];
+    $request_type = $_POST['request'];
+} else {
+    $id_token = $_GET['id_token'];
+    $request_type = $_GET['request'];
+}
 
-error_log("request is: $request_type");
+//error_log("request is: $request_type");
 //error_log("id_token: '$id_token'");
 
 //Get our user ID for this email, create a new user if this user
 //has not logged in before.
 $user_id = get_user_id($id_token);
 
-error_log("got user id: $user_id");
+//error_log("got user id: $user_id");
 
 function escape_array($array) {
     global $our_db;
@@ -49,6 +54,25 @@ function escape_array($array) {
 if ($request_type == NULL || $request_type == "INDEX") {
     require_once($cwd[__FILE__] . "/mosaics.php");
     display_index($user_id);
+
+} else if ($request_type == "TILE") {
+    // open the file in a binary mode
+    // tiles come as GETs not POSTs
+
+    $name = $_GET['file'];
+    $mosaic_id = $_GET['mosaic_id'];
+    //TODO: check and see if user has access to this mosaic
+
+    //error_log("got a request for a tile: '$name'");
+    $fp = fopen($name, 'rb');
+    
+    // send the right headers
+    header("Content-Type: image/png");
+    header("Content-Length: " . filesize($name));
+
+    // dump the picture and stop the script
+    fpassthru($fp);
+    exit;
 
 } else if ($request_type == "MOSAIC_CARD") {
     require_once($cwd[__FILE__] . "/mosaics.php");
@@ -152,4 +176,22 @@ if ($request_type == NULL || $request_type == "INDEX") {
 
     remove_folder($user_id, $folder_id);
 
+} else if ($request_type == "CREATE_LABEL") {
+    require_once($cwd[__FILE__] . "/labels.php");
+
+    $mosaic_id = $our_db->real_escape_string($_POST['mosaic_id']);
+    $label_name = $our_db->real_escape_string($_POST['label_name']);
+    $label_color = $our_db->real_escape_string($_POST['label_color']);
+    $label_type = $our_db->real_escape_string($_POST['label_type']);
+
+    create_label($user_id, $mosaic_id, $label_name, $label_type, $label_color);
+
+} else if ($request_type == "REMOVE_LABEL") {
+    require_once($cwd[__FILE__] . "/labels.php");
+
+    $mosaic_id = $our_db->real_escape_string($_POST['mosaic_id']);
+    $label_id = $our_db->real_escape_string($_POST['label_id']);
+    $label_name = $our_db->real_escape_string($_POST['label_name']);
+
+    remove_label($user_id, $mosaic_id, $label_id, $label_name);
 }

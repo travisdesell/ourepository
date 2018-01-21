@@ -220,7 +220,7 @@ function display_mosaic($user_id, $mosaic_id) {
     global $cwd;
 
     //check and see if the mosaic exists
-    $mosaic_result = query_our_db("SELECT owner_id, filename, channels, width, height FROM mosaics WHERE id = $mosaic_id");
+    $mosaic_result = query_our_db("SELECT * FROM mosaics WHERE id = $mosaic_id");
     $mosaic_row = $mosaic_result->fetch_assoc();
     if ($mosaic_row == NULL) {
         print_unknown_mosaic($project_id, $project_name, $mosaic_id);
@@ -234,16 +234,32 @@ function display_mosaic($user_id, $mosaic_id) {
     $height = $mosaic_row['height'];
     $channels = $mosaic_row['channels'];
 
+    error_log("utm zone: " . $mosaic_row['utm_zone']);
+    if ($mosaic_row['utm_zone'] != NULL) {
+        $mosaic['has_utm'] = true;
+        $navbar['has_utm'] = true;
+    }
+
     if ($channels > 3) $mosaic['has_nir'] = true;
+    if ($channels > 3) $navbar['has_nir'] = true;
 
     $filename = substr($filename, 0, -4);
-    $response['mosaic_url'] = './mosaics/' . $mosaic_row['owner_id'] . '/' . $filename . '_files/';
+    $response['mosaic_url'] = '/mosaics/' . $mosaic_row['owner_id'] . '/' . $filename . '_files/';
     $response['height'] = $height;
     $response['width'] = $width;
     $response['channels'] = $channels;
 
     $mosaic['no_project'] = true;
     $mosaic['mosaic_name'] = $filename;
+
+    $mosaic['labels'] = array();
+    $query = "SELECT * FROM labels WHERE owner_id = $user_id AND mosaic_id = $mosaic_id";
+    $result = query_our_db($query);
+    while (($row = $result->fetch_assoc()) != NULL) {
+        $mosaic['has_labels'] = true;
+        $mosaic['labels'][] = $row;
+    }
+
 
     $mosaic_template = file_get_contents($cwd[__FILE__] . "/templates/mosaic_template.html");
 
@@ -253,6 +269,7 @@ function display_mosaic($user_id, $mosaic_id) {
     $navbar_template = file_get_contents($cwd[__FILE__] . "/templates/mosaic_navbar.html");
     $m = new Mustache_Engine;
     $response['navbar'] = $m->render($navbar_template, $navbar);
+    $response['mosaic_info'] = $mosaic_row;
 
 
     echo json_encode($response);

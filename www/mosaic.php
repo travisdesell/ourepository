@@ -17,12 +17,14 @@ $mosaic_id = $_GET['mosaic_id'];
 
 $additional_js = array();
 $additional_js[] = "<script type='text/javascript'>var mosaic_id = $mosaic_id;</script>";
+$additional_js[] = "<script type='text/javascript'>var id_token;</script>"; //define an id_token variable for use by all other scripts
 
 $additional_js[] = "<script type='text/javascript' src='./js/amwg256.js'></script>";
 $additional_js[] = "<script type='text/javascript' src='./js/openseadragon.min.js'></script>";
 $additional_js[] = "<script type='text/javascript' src='./js/openseadragon-filtering.js'></script>";
 $additional_js[] = "<script type='text/javascript' src='./js/openseadragon-svg-overlay.js'></script>";
 $additional_js[] = "<script type='text/javascript' src='//d3js.org/d3.v3.min.js' charset='utf-8'></script>";
+$additional_js[] = "<script type='text/javascript' src='./js/proj4.js'></script>";
 $additional_js[] = "<script type='text/javascript' src='./js/mosaics.js'></script>";
 
 

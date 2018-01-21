@@ -38,7 +38,7 @@ function get_user_id($id_token) {
         exit(1);
     }
 
-    error_log("testing to see if user exists: " . $payload['email']);
+    //error_log("testing to see if user exists: " . $payload['email']);
 
     $user_result = query_our_db("SELECT id FROM users WHERE email = '" . $payload['email'] . "'");
 
