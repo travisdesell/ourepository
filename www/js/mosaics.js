@@ -39,6 +39,9 @@ var current_label_color;
 var kernel_func = null;
 var filter_func = null;
 
+var mosaic_width;
+var mosaic_height;
+
 function display_error_modal(title, message) {
     $("#error-modal-title").html(title);
     $("#error-modal-body").html(message);
@@ -64,6 +67,86 @@ function hexToRgb(hex) {
     } : null;
 }
 
+
+function get_mark_coordinates(viewportPoint, type) {
+    console.log("viewportPoint: " + viewportPoint);
+
+    var imagePoint = viewer.viewport.viewportToImageCoordinates(viewportPoint);
+
+    console.log("imagePoint: " + imagePoint);
+
+    var pixel_y = Math.round(imagePoint.y);
+    var pixel_x = Math.round(imagePoint.x);
+
+    if (type == "pixel") return { y : pixel_y, x : pixel_x };
+
+    var x = imagePoint.x / image_width;
+    var y = imagePoint.y / image_height;
+
+    /*
+       console.log("utm_n_upper_left: " + utm_n_upper_left + ", utm_n_lower_left: " + utm_n_lower_left);
+       console.log("utm_e_upper_left: " + utm_e_upper_left + ", utm_e_upper_right: " + utm_n_upper_right);
+       console.log("y: " + y + ", x: " + x);
+       */
+
+    if (utm_n_upper_left != null) {
+        var utm_n = utm_n_upper_left + (y * (utm_n_upper_left - utm_n_lower_left));
+        var utm_e = utm_e_upper_left + (x * (utm_e_upper_left - utm_e_lower_right));
+
+        var utm_n_text = Number(utm_n).toLocaleString('en', {maximumFractionDigits : 4, minimumFractionDigits : 4});
+        var utm_e_text = Number(utm_e).toLocaleString('en', {maximumFractionDigits : 4, minimumFractionDigits : 4});
+
+        if (type == "utm") return { y : utm_n_text, x : utm_e_text };
+
+        //var utm = "+proj=utm +zone=32";
+        var utm = "+proj=utm +zone=" + utm_zone;
+        var wgs84 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
+        geo = proj4(utm, wgs84, [utm_e, utm_n]);
+        //console.log(geo);
+
+        var lat = toDegreesMinutesAndSeconds(geo[0]);
+        var latitudeCardinal = Math.sign(geo[0]) >= 0 ? "N" : "S";
+
+        var lon = toDegreesMinutesAndSeconds(geo[1]);
+        var longitudeCardinal = Math.sign(geo[1]) >= 0 ? "E" : "W";
+
+        var lat_text = lat + " " + latitudeCardinal;
+        var lon_text = lon + " " + longitudeCardinal;
+
+        if (type == "geo") return { y : lat_text, x : lon_text };
+    }
+
+    return { y : 0, x : 0 };
+}
+
+function set_mark_coordinates() {
+    var type;
+
+    if ($(".pixel-switch-button").hasClass("active")) {
+        type = "pixel";
+    } else if ($(".geo-switch-button").hasClass("active")) {
+        type = "geo";
+    } else if ($(".utm-switch-button").hasClass("active")) {
+        type = "utm";
+    } else {
+        return; //should never get here
+    }
+
+    $(".pixel-pair").each(function() {
+        var vy = Number($(this).attr("vy"));
+        var vx = Number($(this).attr("vx"));
+
+        var point = new OpenSeadragon.Point(vx, vy);
+
+        var new_coords = get_mark_coordinates(point, type);
+
+        console.log("result " + new_coords.y + ", " + new_coords.x + " in " + type);
+
+        $(this).find(".pixel-y").text(new_coords.y);
+        $(this).find(".pixel-x").text(new_coords.x);
+        
+    });
+}
 
 // ----------
 App = {
@@ -109,7 +192,10 @@ App = {
                 moveHandler: function(event) {
                     var webPoint = event.position;
                     var viewportPoint = viewer.viewport.pointFromPixel(webPoint);
+                    //console.log("viewportPoint: " + viewportPoint);
                     var imagePoint = viewer.viewport.viewportToImageCoordinates(viewportPoint);
+                    //console.log("imagePoint: " + imagePoint);
+
                     //var zoom = viewer.viewport.getZoom(true);
                     //var imageZoom = viewer.viewport.viewportToImageZoom(zoom);
 
@@ -344,6 +430,55 @@ function initialize_labels() {
 }
 
 function initialize_mark_buttons() {
+    $(".highlight-point-button:not(.bound)").addClass("bound").click(function() {
+        var point_id = $(this).attr("point_id");
+        var point = d3.select(".svg-item[point_id='" + point_id + "']");
+        var fill = point.style("fill");
+
+        if ($(this).hasClass("active")) {
+            $(this).removeClass("active");
+            fill = fill.replace(/[\d\.]+\)$/g, '0.25)');
+            point.attr("r", "0.005").style("fill", fill);
+        } else {
+            $(this).addClass("active");
+            fill = fill.replace(/[\d\.]+\)$/g, '0.75)');
+            point.attr("r", "0.015").style("fill", fill);
+        }
+    });
+
+    $(".highlight-line-button:not(.bound)").addClass("bound").click(function() {
+        var line_id = $(this).attr("line_id");
+        var line = d3.select(".svg-item[line_id='" + line_id + "']");
+        var stroke = line.style("stroke");
+
+        if ($(this).hasClass("active")) {
+            $(this).removeClass("active");
+            stroke = stroke.replace(/[\d\.]+\)$/g, '0.25)');
+            line.attr("stroke-width",0.001).style("stroke", stroke);
+        } else {
+            $(this).addClass("active");
+            stroke = stroke.replace(/[\d\.]+\)$/g, '0.75)');
+            line.attr("stroke-width",0.003).style("stroke", stroke);
+        }
+    });
+
+    $(".highlight-polygon-button:not(.bound)").addClass("bound").click(function() {
+        var polygon_id = $(this).attr("polygon_id");
+        var polygon = d3.select(".svg-item[polygon_id='" + polygon_id + "']");
+        var fill = polygon.style("fill");
+
+        if ($(this).hasClass("active")) {
+            $(this).removeClass("active");
+            fill = fill.replace(/[\d\.]+\)$/g, '0.25)');
+            polygon.style("fill", fill);
+        } else {
+            $(this).addClass("active");
+            fill = fill.replace(/[\d\.]+\)$/g, '0.75)');
+            polygon.style("fill", fill);
+        }
+    });
+
+
     $(".remove-point-button:not(.bound)").addClass("bound").click(function() {
         var point_id = $(this).attr("point_id");
 
@@ -480,6 +615,8 @@ function cancel_drawing() {
 // ----------
 function initialize_openseadragon(tiles_url, channels, height, width, marks) {
     console.log("initializing app!");
+    image_width = width;
+    image_height = height;
 
     if ($("#map").length == 0) {
         //The map was not actually loaded and the div does not exist.
@@ -985,6 +1122,8 @@ function initialize_mosaic(responseText) {
         $(".pixel-switch-button").addClass("active").addClass("btn-secondary").removeClass("btn-outline-secondary");
         $(".geo-switch-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
         $(".utm-switch-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
+
+        set_mark_coordinates();
     });
 
     $(".geo-switch-button").click(function() {
@@ -995,6 +1134,8 @@ function initialize_mosaic(responseText) {
         $(".pixel-switch-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
         $(".geo-switch-button").addClass("active").addClass("btn-secondary").removeClass("btn-outline-secondary");
         $(".utm-switch-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
+
+        set_mark_coordinates();
     });
 
     $(".utm-switch-button").click(function() {
@@ -1005,6 +1146,8 @@ function initialize_mosaic(responseText) {
         $(".pixel-switch-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
         $(".geo-switch-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
         $(".utm-switch-button").addClass("active").addClass("btn-secondary").removeClass("btn-outline-secondary");
+
+        set_mark_coordinates();
     });
 
     $(".create-label-nav").click(function() {
@@ -1245,6 +1388,8 @@ function initialize_mosaic(responseText) {
 
         //show elements for this label
         $(".svg-item[label_id='" + current_label_id + "']").show();
+
+        set_mark_coordinates();
     });
 }
 

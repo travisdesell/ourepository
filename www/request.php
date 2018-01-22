@@ -74,6 +74,26 @@ if ($request_type == NULL || $request_type == "INDEX") {
     fpassthru($fp);
     exit;
 
+} else if ($request_type == "IMAGE") {
+    // open the file in a binary mode
+    // tiles come as GETs not POSTs
+
+    $name = $_GET['file'];
+    $mosaic_id = $_GET['mosaic_id'];
+    //TODO: check and see if user has access to this mosaic
+
+    //error_log("got a request for a tile: '$name'");
+    $fp = fopen($name, 'rb');
+    
+    // send the right headers
+    header("Content-Type: image/png");
+    header("Content-Length: " . filesize($name));
+
+    // dump the picture and stop the script
+    fpassthru($fp);
+    exit;
+
+
 } else if ($request_type == "MOSAIC_CARD") {
     require_once($cwd[__FILE__] . "/mosaics.php");
 

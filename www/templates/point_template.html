@@ -1,15 +1,19 @@
-<div label_id='{{label_id}}' point_id='{{point_id}}' class="point-mark" {{^visible}}style='display:none'{{/visible}}>
+<div label_id='{{label_id}}' point_id='{{point_id}}' class="point-mark" style='width:100%; {{^visible}}display:none{{/visible}}'>
     <table class='table table-bordered table-condensed' style='margin:0 5 0 0; font-size:75%;'>
-        <tbody>
-            <tr class='table-pixel'>
+        <tbody class='pixel-pair' vy='{{cy}}' vx='{{cx}}'>
+            <tr>
                 <td style='width:35%;'>CY</td>
-                <td point_id='{{point_id}}' class='point-cy' style='text-align:right;'>{{cy}}</td>
+                <td point_id='{{point_id}}' class='pixel-y' style='text-align:right;'>{{cy}}</td>
             </tr>
-            <tr class='table-pixel'>
+            <tr>
                 <td style='width:35%;'>CX</td>
-                <td point_id='{{point_id}}' class='point-cx' style='text-align:right;'>{{cx}}</td>
+                <td point_id='{{point_id}}' class='pixel-x' style='text-align:right;'>{{cx}}</td>
             </tr>
         </tbody>
     </table>
-    <button type='button' point_id='{{point_id}}' class='btn btn-block btn-outline-secondary remove-point-button' style='margin-bottom:5px'>Remove</button>
+
+    <div class="btn-group btn-block" style='margin-bottom:5px; width:100%;'>
+        <button type='button' point_id='{{point_id}}' class='btn btn-small btn-outline-secondary highlight-point-button' style='width:50%;'>Highlight</button>
+        <button type='button' point_id='{{point_id}}' class='btn btn-small btn-outline-secondary remove-point-button' style='width:50%;'>Remove</button>
+    </div>
 </div>

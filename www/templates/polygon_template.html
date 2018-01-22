@@ -1,18 +1,21 @@
-<div label_id='{{label_id}}' polygon_id='{{polygon_id}}' class="polygon-mark" {{^visible}}style='display:none'{{/visible}}>
+<div label_id='{{label_id}}' polygon_id='{{polygon_id}}' class="polygon-mark" style='width:100%; {{^visible}}display:none{{/visible}}'>
     <table class='table table-bordered table-condensed' style='margin:0 5 0 0; font-size:75%;'>
-        <tbody>
-            {{#points}}
-            <tr class='table-pixel'>
+        {{#points}}
+        <tbody class='pixel-pair' vy='{{y}}' vx='{{x}}'>
+            <tr>
                 <td style='width:35%;'>Y{{n}}</td>
-                <td polygon_id='{{polygon_id}}' class='polygon-y' style='text-align:right;'>{{y}}</td>
+                <td polygon_id='{{polygon_id}}' class='pixel-y' style='text-align:right;'>{{y}}</td>
             </tr>
-            <tr class='table-pixel'>
+            <tr>
                 <td style='width:35%;'>X{{n}}</td>
-                <td polygon_id='{{polygon_id}}' class='polygon-x' style='text-align:right;'>{{x}}</td>
+                <td polygon_id='{{polygon_id}}' class='pixel-x' style='text-align:right;'>{{x}}</td>
             </tr>
             {{/points}}
         </tbody>
     </table>
 
-    <button type='button' polygon_id='{{polygon_id}}' class='btn btn-block btn-outline-secondary remove-polygon-button' style='margin-bottom:5px'>Remove</button>
+    <div class="btn-group btn-block" style='margin-bottom:5px; width:100%;'>
+        <button type='button' polygon_id='{{polygon_id}}' class='btn btn-small btn-outline-secondary highlight-polygon-button' style='width:50%;'>Highlight</button>
+        <button type='button' polygon_id='{{polygon_id}}' class='btn btn-small btn-outline-secondary remove-polygon-button' style='width:50%;'>Remove</button>
+    </div>
 </div>

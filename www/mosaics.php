@@ -23,7 +23,7 @@ function ordinal_suffix($num) {
 }
 
 function get_finished_mosaic_card($user_id, $mosaic_id, &$filename) {
-    global $cwd;
+    global $cwd, $id_token;
 
     //$mosaic_result = query_our_db("SELECT * FROM mosaics WHERE owner_id = $user_id AND id = $mosaic_id");
     $query = "SELECT * FROM mosaics WHERE id = $mosaic_id";
@@ -83,6 +83,7 @@ function get_finished_mosaic_card($user_id, $mosaic_id, &$filename) {
 
     $preview_filename = $filename_base . "_preview.png";
     $mosaic_row['preview'] = $preview_filename;
+    $mosaic_row['id_token'] = $id_token;
 
     $mosaic_card_template = file_get_contents($cwd[__FILE__] . "/templates/mosaic_card_template.html");
     $m = new Mustache_Engine;
