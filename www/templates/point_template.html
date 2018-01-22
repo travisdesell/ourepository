@@ -1,0 +1,15 @@
+<div label_id='{{label_id}}' point_id='{{point_id}}' class="point-mark" {{^visible}}style='display:none'{{/visible}}>
+    <table class='table table-bordered table-condensed' style='margin:0 5 0 0; font-size:75%;'>
+        <tbody>
+            <tr class='table-pixel'>
+                <td style='width:35%;'>CY</td>
+                <td point_id='{{point_id}}' class='point-cy' style='text-align:right;'>{{cy}}</td>
+            </tr>
+            <tr class='table-pixel'>
+                <td style='width:35%;'>CX</td>
+                <td point_id='{{point_id}}' class='point-cx' style='text-align:right;'>{{cx}}</td>
+            </tr>
+        </tbody>
+    </table>
+    <button type='button' point_id='{{point_id}}' class='btn btn-block btn-outline-secondary remove-point-button' style='margin-bottom:5px'>Remove</button>
+</div>

@@ -1,0 +1,18 @@
+<div label_id='{{label_id}}' polygon_id='{{polygon_id}}' class="polygon-mark" {{^visible}}style='display:none'{{/visible}}>
+    <table class='table table-bordered table-condensed' style='margin:0 5 0 0; font-size:75%;'>
+        <tbody>
+            {{#points}}
+            <tr class='table-pixel'>
+                <td style='width:35%;'>Y{{n}}</td>
+                <td polygon_id='{{polygon_id}}' class='polygon-y' style='text-align:right;'>{{y}}</td>
+            </tr>
+            <tr class='table-pixel'>
+                <td style='width:35%;'>X{{n}}</td>
+                <td polygon_id='{{polygon_id}}' class='polygon-x' style='text-align:right;'>{{x}}</td>
+            </tr>
+            {{/points}}
+        </tbody>
+    </table>
+
+    <button type='button' polygon_id='{{polygon_id}}' class='btn btn-block btn-outline-secondary remove-polygon-button' style='margin-bottom:5px'>Remove</button>
+</div>

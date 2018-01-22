@@ -1,0 +1,23 @@
+<div label_id='{{label_id}}' line_id='{{line_id}}' class="line-mark" {{^visible}}style='display:none'{{/visible}}>
+    <table class='table table-bordered table-condensed' style='margin:0 5 0 0; font-size:75%;'>
+        <tbody>
+            <tr class='table-pixel'>
+                <td style='width:35%;'>Y1</td>
+                <td line_id='{{line_id}}' class='line-y1' style='text-align:right;'>{{y1}}</td>
+            </tr>
+            <tr class='table-pixel'>
+                <td style='width:35%;'>X1</td>
+                <td line_id='{{line_id}}' class='line-x1' style='text-align:right;'>{{x1}}</td>
+            </tr>
+            <tr class='table-pixel'>
+                <td style='width:35%;'>Y2</td>
+                <td line_id='{{line_id}}' class='line-y2' style='text-align:right;'>{{y2}}</td>
+            </tr>
+            <tr class='table-pixel'>
+                <td style='width:35%;'>X2</td>
+                <td line_id='{{line_id}}' class='line-x2' style='text-align:right;'>{{x2}}</td>
+            </tr>
+        </tbody>
+    </table>
+    <button type='button' line_id='{{line_id}}' class='btn btn-block btn-outline-secondary remove-line-button' style='margin-bottom:5px'>Remove</button>
+</div>
