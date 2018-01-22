@@ -194,7 +194,8 @@ App = {
                     .attr("cx", x)
                     .attr("cy", y)
                     .attr("r", radius)
-                    .attr("class", "svg-polygon-circle current-draw svg-item-" + current_label_id);
+                    .attr("label_id", current_label_id)
+                    .attr("class", "svg-polygon-circle current-draw svg-item");
 
                 drawn_points++;
 
@@ -214,7 +215,8 @@ App = {
                         .attr("x2", x2)
                         .attr("y2", y2)
                         .attr("stroke-width", 0.0005)
-                        .attr("class", "svg-polygon-line current-draw svg-item-" + current_label_id);
+                        .attr("label_id", current_label_id)
+                        .attr("class", "svg-polygon-line current-draw svg-item");
 
                     drawn_lines++;
                 
@@ -253,7 +255,8 @@ App = {
                     .attr("cx", x)
                     .attr("cy", y)
                     .attr("r", radius)
-                    .attr("class", "svg-circle current-draw svg-item-" + current_label_id);
+                    .attr("label_id", current_label_id)
+                    .attr("class", "svg-circle current-draw svg-item");
 
                 drawn_points++;
 
@@ -294,7 +297,8 @@ App = {
                         .attr("x2", x2)
                         .attr("y2", y2)
                         .attr("stroke-width", 0.001)
-                        .attr("class", "svg-line current-draw svg-item-" + current_label_id);
+                        .attr("label_id", current_label_id)
+                        .attr("class", "svg-line current-draw svg-item");
                 
                     drawn_lines++;
                     last_point = viewportPoint;
@@ -318,7 +322,7 @@ function initialize_labels() {
             var label_name = $(this).attr("label_name");
 
             if (label_name != $("#mark-label-select").val()) {
-                $(".svg-item-" + label_id).hide();
+                $(".svg-item[label_id='" + label_id + "']").hide();
             }
         } else {
             $(this).addClass("active");
@@ -333,10 +337,124 @@ function initialize_labels() {
             $(this).css("color", "#495057")
 
             var label_id = $(this).attr("label_id");
-            $(".svg-item-" + label_id).show();
+            $(".svg-item[label_id='" + label_id + "']").show();
         }
 
     });
+}
+
+function initialize_mark_buttons() {
+    $(".remove-point-button:not(.bound)").addClass("bound").click(function() {
+        var point_id = $(this).attr("point_id");
+
+        var submission_data = {
+            request : "REMOVE_POINT",
+            id_token : id_token,
+            mosaic_id : mosaic_id,
+            point_id : point_id
+        };
+
+        $.ajax({
+            type: 'POST',
+            url: './request.php',
+            data : submission_data,
+            dataType : 'json',
+            success : function(response) {
+                console.log("received response: ");
+                console.log(response);
+
+                if (response.err_msg) {
+                    display_error_modal(response.err_title, response.err_msg);
+                    cancel_drawing();
+                    return;
+                }
+
+                $(".svg-item[point_id='" + point_id + "']").remove();
+                $(".point-mark[point_id='" + point_id + "']").remove();
+
+            },
+            error : function(jqXHR, textStatus, errorThrown) {
+                console.log(errorThrown);
+                display_error_modal(textStatus, errorThrown);
+            },
+            async: true
+        });
+    });
+
+    $(".remove-line-button:not(.bound)").addClass("bound").click(function() {
+        var line_id = $(this).attr("line_id");
+
+        var submission_data = {
+            request : "REMOVE_LINE",
+            id_token : id_token,
+            mosaic_id : mosaic_id,
+            line_id : line_id
+        };
+
+        $.ajax({
+            type: 'POST',
+            url: './request.php',
+            data : submission_data,
+            dataType : 'json',
+            success : function(response) {
+                console.log("received response: ");
+                console.log(response);
+
+                if (response.err_msg) {
+                    display_error_modal(response.err_title, response.err_msg);
+                    cancel_drawing();
+                    return;
+                }
+
+                $(".svg-item[line_id='" + line_id + "']").remove();
+                $(".line-mark[line_id='" + line_id + "']").remove();
+
+            },
+            error : function(jqXHR, textStatus, errorThrown) {
+                console.log(errorThrown);
+                display_error_modal(textStatus, errorThrown);
+            },
+            async: true
+        });
+    });
+
+    $(".remove-polygon-button:not(.bound)").addClass("bound").click(function() {
+        var polygon_id = $(this).attr("polygon_id");
+
+        var submission_data = {
+            request : "REMOVE_POLYGON",
+            id_token : id_token,
+            mosaic_id : mosaic_id,
+            polygon_id : polygon_id
+        };
+
+        $.ajax({
+            type: 'POST',
+            url: './request.php',
+            data : submission_data,
+            dataType : 'json',
+            success : function(response) {
+                console.log("received response: ");
+                console.log(response);
+
+                if (response.err_msg) {
+                    display_error_modal(response.err_title, response.err_msg);
+                    cancel_drawing();
+                    return;
+                }
+
+                $(".svg-item[polygon_id='" + polygon_id + "']").remove();
+                $(".polygon-mark[polygon_id='" + polygon_id + "']").remove();
+
+            },
+            error : function(jqXHR, textStatus, errorThrown) {
+                console.log(errorThrown);
+                display_error_modal(textStatus, errorThrown);
+            },
+            async: true
+        });
+    });
+
 }
 
 function cancel_drawing() {
@@ -360,7 +478,7 @@ function cancel_drawing() {
 }
 
 // ----------
-function initialize_openseadragon(tiles_url, channels, height, width) {
+function initialize_openseadragon(tiles_url, channels, height, width, marks) {
     console.log("initializing app!");
 
     if ($("#map").length == 0) {
@@ -373,23 +491,162 @@ function initialize_openseadragon(tiles_url, channels, height, width) {
 
     console.log("AFTER INIT!");
 
+    var points = marks.points;
+
+    console.log("received points!");
+    for (var i = 0; i < points.length; i++) {
+        console.log(points[i]);
+
+        var color = hexToRgb(points[i].color);
+
+        var d3Circle = d3.select(overlay.node()).append("circle")
+            .style('fill', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.25)')
+            .attr("cx", points[i].cx)
+            .attr("cy", points[i].cy)
+            .attr("r", points[i].radius)
+            .attr("label_id", points[i].label_id)
+            .attr("point_id", points[i].point_id)
+            .attr("class", "svg-circle svg-item");
+    }
+
+    var lines = marks.lines;
+
+    console.log("received lines!");
+    for (var i = 0; i < lines.length; i++) {
+        console.log(lines[i]);
+
+        var color = hexToRgb(lines[i].color);
+
+        var d3Line = d3.select(overlay.node()).append("line")
+            .style('stroke', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.75)')
+            .attr("x1", lines[i].x1)
+            .attr("y1", lines[i].y1)
+            .attr("x2", lines[i].x2)
+            .attr("y2", lines[i].y2)
+            .attr("stroke-width", 0.0005)
+            .attr("label_id", lines[i].label_id)
+            .attr("line_id", lines[i].line_id)
+            .attr("class", "svg-line svg-item");
+    }
+
+    var polygons = marks.polygons;
+
+    console.log("received polygons!");
+    for (var i = 0; i < polygons.length; i++) {
+        console.log(polygons[i]);
+
+        var color = hexToRgb(polygons[i].color);
+
+        var d3Polygon = d3.select(overlay.node()).append("polygon")
+            .style('fill', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.25)')
+            .attr("points", polygons[i].points_str)
+            .attr("stroke-width", 0.001)
+            .attr("label_id", polygons[i].label_id)
+            .attr("polygon_id", polygons[i].polygon_id)
+            .attr("class", "svg-polygon svg-item");
+    }
+
+    //everything starts as hidden initially
+    $(".svg-item").hide();
+
+
     initialize_labels();
-
-    $('#points-button').click(function() {
-        $('.svg-circle').toggle();
-    });
-
-
-    $('#lines-button').click(function() {
-        $('.svg-line').toggle();
-    });
-
-    $('#polygons-button').click(function() {
-        $('.svg-polygon').toggle();
-    });
 
     $(".cancel-drawing-button").click(function() {
         cancel_drawing();
+    });
+
+    $('#draw-points-button').click(function() {
+        if ($(this).attr("aria-pressed") === "false") {
+            $(".cancel-drawing-button").show();
+            $(this).text("Save Points");
+
+            drawing_points = true;
+            drawing_polygon = false;
+            drawing_lines = false;
+        } else {
+            //drawing finished
+
+            var points = [];
+            var point_elements = [];
+            $(".current-draw").each(function() {
+                point_elements.push($(this));
+
+                var cx = $(this).attr("cx");
+                var cy = $(this).attr("cy");
+                var radius = $(this).attr("r");
+
+                console.log("point: " + cx + ", " + cy + ", " + radius);
+
+                points.push({
+                    cx : cx,
+                    cy : cy,
+                    radius : radius
+                });
+
+            });
+
+            //console.log(points);
+            //console.log(point_elements);
+
+            var submission_data = {
+                request : "CREATE_POINTS",
+                id_token : id_token,
+                mosaic_id : mosaic_id,
+                label_id : current_label_id,
+                points : points
+            };
+
+            $.ajax({
+                type: 'POST',
+                url: './request.php',
+                data : submission_data,
+                dataType : 'json',
+                success : function(response) {
+                    console.log("received response: ");
+                    console.log(response);
+                    //var response = JSON.parse(responseText);
+
+                    if (response.err_msg) {
+                        display_error_modal(response.err_title, response.err_msg);
+                        cancel_drawing();
+                        return;
+                    }
+
+                    var point_ids = response.point_ids;
+                    if (point_ids.length != point_elements.length) {
+                        display_error_modal("Create Points Error", "Internal server error. Number of returned points is not equal to the number of saved points. This should never happen, please contact the administrator");
+                        cancel_drawing();
+                        return;
+                    }
+
+                    var point_htmls = response.point_htmls;
+                    for (var i = 0; i < point_htmls.length; i++) {
+                        $("#marks-card").append(point_htmls[i]);
+                    }
+                    initialize_mark_buttons();
+
+                    for (var i = 0; i < point_ids.length; i++) {
+                        console.log("setting mark id for point (" + points[i].cx + ", " + points[i].cy + ", " + points[i].radius + ") to " + point_ids[i]);
+                        point_elements[i].attr("point_id", point_ids[i]);
+                    }
+
+                    $(".cancel-drawing-button").hide();
+                    $(".current-draw").removeClass("current-draw");
+                    $("#draw-points-button").text("Draw Points");
+
+                    drawing_points = false;
+                    last_point = null;
+                },
+                error : function(jqXHR, textStatus, errorThrown) {
+                    console.log(errorThrown);
+                    display_error_modal(textStatus, errorThrown);
+                    cancel_drawing();
+                },
+                async: true
+            });
+
+        }
     });
 
     $('#draw-lines-button').click(function() {
@@ -403,29 +660,89 @@ function initialize_openseadragon(tiles_url, channels, height, width) {
 
             last_point = null;
         } else {
-            $(".cancel-drawing-button").hide();
-            $(this).text("Draw Lines");
-            $(".current-draw").removeClass("current-draw");
+            //drawing finished
 
-            drawing_lines = false;
-            last_point = null;
-        }
-    });
+            var lines = [];
+            var line_elements = [];
+            $(".current-draw").each(function() {
+                line_elements.push($(this));
 
-    $('#draw-points-button').click(function() {
-        if ($(this).attr("aria-pressed") === "false") {
-            $(".cancel-drawing-button").show();
-            $(this).text("Save Points");
+                var x1 = $(this).attr("x1");
+                var x2 = $(this).attr("x2");
+                var y1 = $(this).attr("y1");
+                var y2 = $(this).attr("y2");
 
-            drawing_points = true;
-            drawing_polygon = false;
-            drawing_lines = false;
-        } else {
-            $(".cancel-drawing-button").hide();
-            $(".current-draw").removeClass("current-draw");
-            $(this).text("Draw Points");
+                console.log("line: " + x1 + ", " + x2 + ", " + y1 + ", " + y2);
 
-            drawing_points = false;
+                lines.push({
+                    x1 : x1,
+                    x2 : x2,
+                    y1 : y1,
+                    y2 : y2
+                });
+
+            });
+
+            //console.log(lines);
+            //console.log(line_elements);
+
+            var submission_data = {
+                request : "CREATE_LINES",
+                id_token : id_token,
+                mosaic_id : mosaic_id,
+                label_id : current_label_id,
+                lines : lines
+            };
+
+            $.ajax({
+                type: 'POST',
+                url: './request.php',
+                data : submission_data,
+                dataType : 'json',
+                success : function(response) {
+                    console.log("received response: ");
+                    console.log(response);
+                    //var response = JSON.parse(responseText);
+
+                    if (response.err_msg) {
+                        display_error_modal(response.err_title, response.err_msg);
+                        cancel_drawing();
+                        return;
+                    }
+
+                    var line_ids = response.line_ids;
+                    if (line_ids.length != line_elements.length) {
+                        display_error_modal("Create Points Error", "Internal server error. Number of returned lines is not equal to the number of saved lines. This should never happen, please contact the administrator");
+                        cancel_drawing();
+                        return;
+                    }
+
+                    var line_htmls = response.line_htmls;
+                    for (var i = 0; i < line_htmls.length; i++) {
+                        $("#marks-card").append(line_htmls[i]);
+                    }
+                    initialize_mark_buttons();
+
+                    for (var i = 0; i < line_ids.length; i++) {
+                        console.log("setting mark id for line (" + lines[i].cx + ", " + lines[i].cy + ", " + lines[i].radius + ") to " + line_ids[i]);
+                        line_elements[i].attr("line_id", line_ids[i]);
+                    }
+
+                    $(".cancel-drawing-button").hide();
+                    $(".current-draw").removeClass("current-draw");
+                    $("#draw-lines-button").text("Draw Lines");
+
+                    drawing_lines = false;
+                    last_point = null;
+                },
+                error : function(jqXHR, textStatus, errorThrown) {
+                    console.log(errorThrown);
+                    display_error_modal(textStatus, errorThrown);
+                    cancel_drawing();
+                },
+                async: true
+            });
+
         }
     });
 
@@ -439,9 +756,6 @@ function initialize_openseadragon(tiles_url, channels, height, width) {
             drawing_polygon = true;
             last_point = null;
         } else {
-            $(".cancel-drawing-button").hide();
-            $(".current-draw").removeClass("current-draw");
-            $(this).text("Draw Polygon");
 
             var points_str = "";
             for (var i = 0; i < polygon_points.length; i++) {
@@ -449,25 +763,71 @@ function initialize_openseadragon(tiles_url, channels, height, width) {
                 points_str += polygon_points[i].x + "," + polygon_points[i].y;
             }
 
-            console.log(points_str);
+            console.log("points_str: " + points_str);
 
-            var color = hexToRgb(current_label_color);
-            var d3Polygon = d3.select(overlay.node()).append("polygon")
-                .style('fill', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.25)')
-                .attr("id", "svg-polygon-" + drawn_polygons)
-                .attr("points", points_str)
-                .attr("stroke-width", 0.001)
-                .attr("class", "svg-polygon svg-item-" + current_label_id)
+            //console.log(polygons);
+            //console.log(polygon_elements);
 
-            drawn_polygons++;
+            var submission_data = {
+                request : "CREATE_POLYGON",
+                id_token : id_token,
+                mosaic_id : mosaic_id,
+                label_id : current_label_id,
+                points_str : points_str
+            };
 
-            $(".svg-polygon-line").remove();
-            $(".svg-polygon-circle").remove();
+            $.ajax({
+                type: 'POST',
+                url: './request.php',
+                data : submission_data,
+                dataType : 'json',
+                success : function(response) {
+                    console.log("received response: ");
+                    console.log(response);
+                    //var response = JSON.parse(responseText);
 
-            polygon_points = [];
+                    if (response.err_msg) {
+                        display_error_modal(response.err_title, response.err_msg);
+                        cancel_drawing();
+                        return;
+                    }
 
-            drawing_polygon = false;
-            last_point = null;
+                    var polygon_id = response.polygon_id;
+                    var points_str = response.points_str;
+
+                    $(".cancel-drawing-button").hide();
+                    $(".current-draw").removeClass("current-draw");
+                    $("#draw-polygon-button").text("Draw Polygon");
+
+                    var color = hexToRgb(current_label_color);
+                    var d3Polygon = d3.select(overlay.node()).append("polygon")
+                        .style('fill', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.25)')
+                        .attr("points", points_str)
+                        .attr("stroke-width", 0.001)
+                        .attr("label_id", current_label_id)
+                        .attr("polygon_id", polygon_id)
+                        .attr("class", "svg-polygon svg-item");
+
+                    $(".svg-polygon-line").remove();
+                    $(".svg-polygon-circle").remove();
+
+                    var polygon_html = response.polygon_html;
+                    $("#marks-card").append(polygon_html);
+                    initialize_mark_buttons();
+
+                    polygon_points = [];
+
+                    drawing_polygon = false;
+                    last_point = null;
+                },
+                error : function(jqXHR, textStatus, errorThrown) {
+                    console.log(errorThrown);
+                    display_error_modal(textStatus, errorThrown);
+                    cancel_drawing();
+                },
+                async: true
+            });
+
         }
     });
 }
@@ -508,8 +868,9 @@ function initialize_mosaic(responseText) {
         $("#navbar-content").html(response.navbar);
     }
 
-    initialize_openseadragon(response.mosaic_url, response.channels, response.height, response.width);
+    initialize_openseadragon(response.mosaic_url, response.channels, response.height, response.width, response.marks);
 
+    initialize_mark_buttons();
 
     $(".kernel-nav").click(function() {
         var kernel = $(this).attr("kernel");
@@ -813,7 +1174,11 @@ function initialize_mosaic(responseText) {
                     var label_id = response.label_id;
                     var label_name = response.label_name;
 
-                    $(".svg-item-" + label_id).remove();
+                    $(".line-mark[label_id='" + label_id + "']").remove();
+                    $(".point-mark[label_id='" + label_id + "']").remove();
+                    $(".polygon-mark[label_id='" + label_id + "']").remove();
+
+                    $(".svg-item[label_id='" + label_id + "']").remove();
                     $(".label-list-item[label_id='" + label_id + "']").remove();
 
                     if ($("#mark-label-select").val() == label_name) {
@@ -855,12 +1220,19 @@ function initialize_mosaic(responseText) {
         $("#lines-marking").hide();
         $("#points-marking").hide();
 
+        $(".point-mark").hide();
+        $(".line-mark").hide();
+        $(".polygon-mark").hide();
+
         if (current_label_type == 'POLYGON') {
             $("#polygon-marking").show();
+            $(".polygon-mark[label_id='" + current_label_id + "']").show();
         } else if (current_label_type == 'LINE') {
             $("#lines-marking").show();
+            $(".line-mark[label_id='" + current_label_id + "']").show();
         } else if (current_label_type == 'POINT') {
             $("#points-marking").show();
+            $(".point-mark[label_id='" + current_label_id + "']").show();
         }
         cancel_drawing();
         $(".cancel-drawing-button").hide();
@@ -868,11 +1240,11 @@ function initialize_mosaic(responseText) {
         console.log("previous label id: " + previous_label_id);
         //was the previous select also selected for viewing, if not hide it's elements
         if ( !$(".label-list-item[label_id=" + previous_label_id + "]").hasClass("active") ) {
-            $(".svg-item-" + previous_label_id).hide();
+            $(".svg-item[label_id='" + previous_label_id + "']").hide();
         }
 
         //show elements for this label
-        $(".svg-item-" + current_label_id).show();
+        $(".svg-item[label_id='" + current_label_id + "']").show();
     });
 }
 

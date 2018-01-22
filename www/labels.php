@@ -61,6 +61,20 @@ function remove_label($user_id, $mosaic_id, $label_id, $label_name) {
     $response['label_id'] = $label_id;
     $response['label_name'] = $label_name;
 
+    //also delete all marks associated with this label
+    $query = "DELETE FROM points WHERE label_id = $label_id AND mosaic_id = $mosaic_id AND owner_id = $user_id";
+    error_log($query);
+    $result = query_our_db($query);
+
+    $query = "DELETE FROM `lines` WHERE label_id = $label_id AND mosaic_id = $mosaic_id AND owner_id = $user_id";
+    error_log($query);
+    $result = query_our_db($query);
+
+    $query = "DELETE FROM polygons WHERE label_id = $label_id AND mosaic_id = $mosaic_id AND owner_id = $user_id";
+    error_log($query);
+    $result = query_our_db($query);
+
+
     echo json_encode($response);
 }
 

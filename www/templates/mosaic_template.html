@@ -4,7 +4,7 @@
 
             <div id='labels-card' class='card bg-light' {{^has_labels}}style='display:none'{{/has_labels}}>
                 <h5 style='padding: 5 5 5 5; margin: 0 0 0 0;'>View Labels</h5>
-                <div class="list-group" style='overflow-y: auto; min-height: calc(30vh); max-height: calc(30vh);'>
+                <div class="list-group" style='overflow-y: auto; min-height: calc(50vh - 226px); max-height: calc(50vh - 226px);'>
                     {{#labels}}
                     <a href="javascript:void(0);" label_id='{{label_id}}' label_type='{{label_type}}' label_name='{{label_name}}' label_color='{{label_color}}' class="label-list-item list-group-item list-group-item-action" style="margin: 0 0 0 0;" >{{label_name}}</a>
                     {{/labels}}
@@ -40,13 +40,19 @@
 
             </div>
 
+            <div id='marks-card' class='container bg-light' style='overflow-y: auto; min-height: calc(65vh - 226px); max-height: calc(65vh - 226px); padding:0 0 0 0'>
+                {{#points}}
+                {{{html}}}
+                {{/points}}
 
-            <!--
-            <button type='button' class='btn btn-block btn-outline-secondary' id='points-button'>Toggle Points</button>
-            <button type='button' class='btn btn-block btn-outline-secondary' id='lines-button'>Toggle Lines</button>
-            <button type='button' class='btn btn-block btn-outline-secondary' id='polygons-button'>Toggle Polygons</button>
-            -->
+                {{#lines}}
+                {{{html}}}
+                {{/lines}}
 
+                {{#polygons}}
+                {{{html}}}
+                {{/polygons}}
+            </div>
 
             <div style='position: absolute; bottom: 5; left: 5; width:100%; padding-right:11px;'>
                 <table class='table table-bordered table-condensed' style='margin:0 5 0 0; font-size:75%;'>

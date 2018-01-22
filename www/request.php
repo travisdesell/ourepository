@@ -194,4 +194,69 @@ if ($request_type == NULL || $request_type == "INDEX") {
     $label_name = $our_db->real_escape_string($_POST['label_name']);
 
     remove_label($user_id, $mosaic_id, $label_id, $label_name);
+
+} else if ($request_type == "CREATE_POINTS") {
+    require_once($cwd[__FILE__] . "/marks.php");
+
+    //error_log(print_r($_POST['points'], true));
+
+    $mosaic_id = $our_db->real_escape_string($_POST['mosaic_id']);
+    $label_id = $our_db->real_escape_string($_POST['label_id']);
+    //need to escape points in the create points function for each value    
+
+    create_points($user_id, $mosaic_id, $label_id, $_POST['points']);
+
+} else if ($request_type == "CREATE_LINES") {
+    require_once($cwd[__FILE__] . "/marks.php");
+
+    //error_log(print_r($_POST['points'], true));
+
+    $mosaic_id = $our_db->real_escape_string($_POST['mosaic_id']);
+    $label_id = $our_db->real_escape_string($_POST['label_id']);
+    //need to escape lines in the create lines function for each value    
+
+    create_lines($user_id, $mosaic_id, $label_id, $_POST['lines']);
+
+} else if ($request_type == "CREATE_POLYGON") {
+    require_once($cwd[__FILE__] . "/marks.php");
+
+    //error_log(print_r($_POST['points'], true));
+
+    $mosaic_id = $our_db->real_escape_string($_POST['mosaic_id']);
+    $label_id = $our_db->real_escape_string($_POST['label_id']);
+    $points_str = $our_db->real_escape_string($_POST['points_str']);
+
+    create_polygon($user_id, $mosaic_id, $label_id, $points_str);
+
+} else if ($request_type == "REMOVE_POINT") {
+    require_once($cwd[__FILE__] . "/marks.php");
+
+    //error_log(print_r($_POST['points'], true));
+
+    $mosaic_id = $our_db->real_escape_string($_POST['mosaic_id']);
+    $point_id = $our_db->real_escape_string($_POST['point_id']);
+
+    remove_point($user_id, $mosaic_id, $point_id);
+
+} else if ($request_type == "REMOVE_LINE") {
+    require_once($cwd[__FILE__] . "/marks.php");
+
+    //error_log(print_r($_POST['lines'], true));
+
+    $mosaic_id = $our_db->real_escape_string($_POST['mosaic_id']);
+    $line_id = $our_db->real_escape_string($_POST['line_id']);
+
+    remove_line($user_id, $mosaic_id, $line_id);
+
+} else if ($request_type == "REMOVE_POLYGON") {
+    require_once($cwd[__FILE__] . "/marks.php");
+
+    //error_log(print_r($_POST['polygons'], true));
+
+    $mosaic_id = $our_db->real_escape_string($_POST['mosaic_id']);
+    $polygon_id = $our_db->real_escape_string($_POST['polygon_id']);
+
+    remove_polygon($user_id, $mosaic_id, $polygon_id);
 }
+
+?>

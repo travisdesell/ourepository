@@ -16,8 +16,11 @@ if ($drop_tables) {
     query_our_db("DROP TABLE mosaic_progress");
     query_our_db("DROP TABLE folders");
     query_our_db("DROP TABLE folder_assignments");
+    query_our_db("DROP TABLE labels");
+    query_our_db("DROP TABLE points");
+    query_our_db("DROP TABLE lines");
+    query_our_db("DROP TABLE polygons");
 }
-query_our_db("DROP TABLE labels");
 
 $query = "CREATE TABLE `mosaics` (
 	`id` INT(11) NOT NULL AUTO_INCREMENT,
@@ -158,6 +161,46 @@ $query = "CREATE TABLE `labels` (
 
 query_our_db($query);
 
+$query = "CREATE TABLE `points` (
+    `point_id` INT(11) NOT NULL AUTO_INCREMENT,
+    `owner_id` INT(11) NOT NULL,
+    `mosaic_id` INT(11) NOT NULL,
+    `label_id` INT(11) NOT NULL,
+    `cx` double NOT NULL,
+    `cy` double NOT NULL,
+    `radius` double NOT NULL,
+
+    PRIMARY KEY (`point_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1";
+
+query_our_db($query);
+
+$query = "CREATE TABLE `lines` (
+    `line_id` INT(11) NOT NULL AUTO_INCREMENT,
+    `owner_id` INT(11) NOT NULL,
+    `mosaic_id` INT(11) NOT NULL,
+    `label_id` INT(11) NOT NULL,
+    `x1` double NOT NULL,
+    `x2` double NOT NULL,
+    `y1` double NOT NULL,
+    `y2` double NOT NULL,
+
+    PRIMARY KEY (`line_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1";
+
+query_our_db($query);
+
+$query = "CREATE TABLE `polygons` (
+    `polygon_id` INT(11) NOT NULL AUTO_INCREMENT,
+    `owner_id` INT(11) NOT NULL,
+    `mosaic_id` INT(11) NOT NULL,
+    `label_id` INT(11) NOT NULL,
+    `points_str` BLOB NOT NULL,
+
+    PRIMARY KEY (`polygon_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1";
+
+query_our_db($query);
 
 
 

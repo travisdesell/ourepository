@@ -6,6 +6,7 @@ $cwd[__FILE__] = dirname($cwd[__FILE__]);
 
 require_once($cwd[__FILE__] . "/../db/my_query.php");
 require_once($cwd[__FILE__] . "/upload.php"); //for rrmdir
+require_once($cwd[__FILE__] . "/marks.php"); //for create_polygon_points
 require_once($cwd[__FILE__] . "/../../Mustache.php/src/Mustache/Autoloader.php");
 Mustache_Autoloader::register();
 
@@ -260,17 +261,108 @@ function display_mosaic($user_id, $mosaic_id) {
         $mosaic['labels'][] = $row;
     }
 
+    $response['mosaic_info'] = $mosaic_row;
+
+    $points = array();
+    $query = "SELECT * FROM points WHERE mosaic_id = $mosaic_id AND owner_id = $user_id";
+    $result = query_our_db($query);
+    while (($row = $result->fetch_assoc()) != NULL) {
+        $label_id = $row['label_id'];
+
+        $label_query = "SELECT label_color FROM labels WHERE label_id = $label_id";
+        $label_result = query_our_db($label_query);
+        $label_row = $label_result->fetch_assoc();
+        $label_color = $label_row['label_color'];
+
+        $point = array(
+            'label_id' => $label_id,
+            'color' => $label_color,
+            'point_id' => $row['point_id'],
+            'cx' => $row['cx'],
+            'cy' => $row['cy'],
+            'radius' => $row['radius']
+        );
+
+        $point_template = file_get_contents($cwd[__FILE__] . "/templates/point_template.html");
+        $m = new Mustache_Engine;
+        $point['html'] = $m->render($point_template, $point);
+
+        $points[] = $point;
+    }
+    error_log("points that should be displayed: " . count($points));
+
+    $mosaic['points'] = $points;
+    $response['marks']['points'] = $points;
+
+    $lines = array();
+    //lines looks to be a reserved mysql word so we need to ` escape it
+    $query = "SELECT * FROM `lines` WHERE mosaic_id = $mosaic_id AND owner_id = $user_id";
+    $result = query_our_db($query);
+    while (($row = $result->fetch_assoc()) != NULL) {
+        $label_id = $row['label_id'];
+
+        $label_query = "SELECT label_color FROM labels WHERE label_id = $label_id";
+        $label_result = query_our_db($label_query);
+        $label_row = $label_result->fetch_assoc();
+        $label_color = $label_row['label_color'];
+
+        $line = array(
+            'label_id' => $label_id,
+            'color' => $label_color,
+            'line_id' => $row['line_id'],
+            'x1' => $row['x1'],
+            'x2' => $row['x2'],
+            'y1' => $row['y1'],
+            'y2' => $row['y2']
+        );
+
+        $line_template = file_get_contents($cwd[__FILE__] . "/templates/line_template.html");
+        $m = new Mustache_Engine;
+        $line['html'] = $m->render($line_template, $line);
+
+        $lines[] = $line;
+    }
+    $mosaic['lines'] = $lines;
+    $response['marks']['lines'] = $lines;
+
+    $polygons = array();
+    //polygons looks to be a reserved mysql word so we need to ` escape it
+    $query = "SELECT * FROM `polygons` WHERE mosaic_id = $mosaic_id AND owner_id = $user_id";
+    $result = query_our_db($query);
+    while (($row = $result->fetch_assoc()) != NULL) {
+        $label_id = $row['label_id'];
+
+        $label_query = "SELECT label_color FROM labels WHERE label_id = $label_id";
+        $label_result = query_our_db($label_query);
+        $label_row = $label_result->fetch_assoc();
+        $label_color = $label_row['label_color'];
+
+        $polygon = array(
+            'label_id' => $label_id,
+            'color' => $label_color,
+            'polygon_id' => $row['polygon_id'],
+            'points_str' => $row['points_str'],
+            'points' => create_polygon_points($row['points_str'])
+        );
+
+        $polygon_template = file_get_contents($cwd[__FILE__] . "/templates/polygon_template.html");
+        $m = new Mustache_Engine;
+        $polygon['html'] = $m->render($polygon_template, $polygon);
+
+        $lines[] = $line;
+
+        $polygons[] = $polygon;
+    }
+    $mosaic['polygons'] = $polygons;
+    $response['marks']['polygons'] = $polygons;
 
     $mosaic_template = file_get_contents($cwd[__FILE__] . "/templates/mosaic_template.html");
-
     $m = new Mustache_Engine;
     $response['html'] = $m->render($mosaic_template, $mosaic);
 
     $navbar_template = file_get_contents($cwd[__FILE__] . "/templates/mosaic_navbar.html");
     $m = new Mustache_Engine;
     $response['navbar'] = $m->render($navbar_template, $navbar);
-    $response['mosaic_info'] = $mosaic_row;
-
 
     echo json_encode($response);
 }
