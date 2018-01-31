@@ -31,7 +31,7 @@ if (isset($_POST['id_token'])) {
     $request_type = $_GET['request'];
 }
 
-//error_log("request is: $request_type");
+error_log("request is: $request_type");
 //error_log("id_token: '$id_token'");
 
 //Get our user ID for this email, create a new user if this user
@@ -61,7 +61,20 @@ if ($request_type == NULL || $request_type == "INDEX") {
 
     $name = $_GET['file'];
     $mosaic_id = $_GET['mosaic_id'];
-    //TODO: check and see if user has access to this mosaic
+
+    //check and see if user has access to this mosaic
+    $query = "SELECT owner_id FROM mosaics WHERE id = $mosaic_id";
+    $result = query_our_db($query);
+    $row = $result->fetch_assoc();
+    $owner_id = $row['owner_id'];
+    if ($owner_id != $user_id) {
+        $query = "SELECT user_id FROM mosaic_access WHERE mosaic_id = $mosaic_id AND user_id = $user_id";
+        $result = query_our_db($query);
+        $row = $result->fetch_assoc();
+        if ($row == NULL) {
+            exit;
+        }
+    }
 
     //error_log("got a request for a tile: '$name'");
     $fp = fopen($name, 'rb');
@@ -80,7 +93,20 @@ if ($request_type == NULL || $request_type == "INDEX") {
 
     $name = $_GET['file'];
     $mosaic_id = $_GET['mosaic_id'];
-    //TODO: check and see if user has access to this mosaic
+
+    //check and see if user has access to this mosaic
+    $query = "SELECT owner_id FROM mosaics WHERE id = $mosaic_id";
+    $result = query_our_db($query);
+    $row = $result->fetch_assoc();
+    $owner_id = $row['owner_id'];
+    if ($owner_id != $user_id) {
+        $query = "SELECT user_id FROM mosaic_access WHERE mosaic_id = $mosaic_id AND user_id = $user_id";
+        $result = query_our_db($query);
+        $row = $result->fetch_assoc();
+        if ($row == NULL) {
+            exit;
+        }
+    }
 
     //error_log("got a request for a tile: '$name'");
     $fp = fopen($name, 'rb');

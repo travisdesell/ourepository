@@ -184,10 +184,6 @@ function initialize_mosaics(responseText) {
 			}
         });
 
-        $('#add-mosaic-button').click(function(){
-            $('#mosaic-file-input').trigger('click');
-        });
-
         var mosaic_names = [];
         var mosaic_ids = [];
         var selected_emails = [];

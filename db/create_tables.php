@@ -41,6 +41,7 @@ $query = "CREATE TABLE `mosaics` (
     `geotiff` tinyint(1) NOT NULL,
     `coordinate_system` BLOB,
     `metadata` BLOB,
+    `image_metadata` BLOB,
     `bands` BLOB,
     `utm_zone` VARCHAR(4) DEFAULT NULL,
     `lat_upper_left` VARCHAR(16) DEFAULT NULL,

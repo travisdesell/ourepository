@@ -245,7 +245,7 @@ function display_mosaic($user_id, $mosaic_id) {
     if ($channels > 3) $mosaic['has_nir'] = true;
     if ($channels > 3) $navbar['has_nir'] = true;
 
-    $filename = substr($filename, 0, -4);
+    $filename = substr($filename, 0, strrpos($filename, "."));
     $response['mosaic_url'] = '/mosaics/' . $mosaic_row['owner_id'] . '/' . $filename . '_files/';
     $response['height'] = $height;
     $response['width'] = $width;

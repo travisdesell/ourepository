@@ -243,6 +243,40 @@ App = {
 
         });
 
+        /*
+        viewer.addHandler('canvas-drag', function(event) {
+            if (drawing_polygon || drawing_points || drawing_lines) {
+                console.log("doing canvas drag!");
+
+                var webPoint = event.position;
+                console.log(event);
+
+                var viewportPoint = viewer.viewport.pointFromPixel(webPoint);
+                var imagePoint = viewer.viewport.viewportToImageCoordinates(viewportPoint);
+
+                console.log("image point: " + imagePoint);
+
+                event.preventDefaultAction = true;
+            }
+        });
+
+        viewer.addHandler('canvas-drag-end', function(event) {
+            if (drawing_polygon || drawing_points || drawing_lines) {
+                console.log("doing canvas drag end!");
+
+                var webPoint = event.position;
+                console.log(event);
+
+                var viewportPoint = viewer.viewport.pointFromPixel(webPoint);
+                var imagePoint = viewer.viewport.viewportToImageCoordinates(viewportPoint);
+
+                console.log("image point: " + imagePoint);
+
+                event.preventDefaultAction = true;
+            }
+        });
+        */
+
         viewer.addHandler('canvas-click', function(event) {
             var color = hexToRgb(current_label_color);
 
@@ -272,7 +306,6 @@ App = {
                 polygon_points.push({"x": x, "y": y});
 
                 var radius = 0.0025;
-
 
                 var d3Circle = d3.select(overlay.node()).append("circle")
                     .style('fill', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.25)')
@@ -308,7 +341,6 @@ App = {
                 
                     last_point = viewportPoint;
                 }
-
 
                 event.preventDefaultAction = true;
 
@@ -762,6 +794,7 @@ function initialize_openseadragon(tiles_url, channels, height, width, marks) {
                         $("#marks-card").append(point_htmls[i]);
                     }
                     initialize_mark_buttons();
+                    set_mark_coordinates();
 
                     for (var i = 0; i < point_ids.length; i++) {
                         console.log("setting mark id for point (" + points[i].cx + ", " + points[i].cy + ", " + points[i].radius + ") to " + point_ids[i]);
@@ -859,6 +892,7 @@ function initialize_openseadragon(tiles_url, channels, height, width, marks) {
                         $("#marks-card").append(line_htmls[i]);
                     }
                     initialize_mark_buttons();
+                    set_mark_coordinates();
 
                     for (var i = 0; i < line_ids.length; i++) {
                         console.log("setting mark id for line (" + lines[i].cx + ", " + lines[i].cy + ", " + lines[i].radius + ") to " + line_ids[i]);
@@ -893,6 +927,8 @@ function initialize_openseadragon(tiles_url, channels, height, width, marks) {
             drawing_polygon = true;
             last_point = null;
         } else {
+            //TODO: no ajax query if polygon_points.length == 0
+            //probably should do the same for lines and points
 
             var points_str = "";
             for (var i = 0; i < polygon_points.length; i++) {
@@ -951,6 +987,7 @@ function initialize_openseadragon(tiles_url, channels, height, width, marks) {
                     var polygon_html = response.polygon_html;
                     $("#marks-card").append(polygon_html);
                     initialize_mark_buttons();
+                    set_mark_coordinates();
 
                     polygon_points = [];
 
@@ -1105,7 +1142,7 @@ function initialize_mosaic(responseText) {
 
         if (processors.length > 0) {
             viewer.setFilterOptions({
-                filters: {
+                filters : {
                     processors: processors
                 },
                 loadMode: 'sync'
