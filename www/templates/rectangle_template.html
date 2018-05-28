@@ -1,0 +1,29 @@
+<div label_id='{{label_id}}' rectangle_id='{{rectangle_id}}' class="rectangle-mark" style='width:100%; {{^visible}}display:none{{/visible}}'>
+    <table class='table table-bordered table-condensed' style='margin:0 5 0 0; font-size:75%;'>
+        <tbody class='pixel-pair' vy='{{y1}}' vx='{{x1}}'>
+            <tr>
+                <td style='width:35%;'>Y1</td>
+                <td rectangle_id='{{rectangle_id}}' class='pixel-y' style='text-align:right;'>{{y1}}</td>
+            </tr>
+            <tr>
+                <td style='width:35%;'>X1</td>
+                <td rectangle_id='{{rectangle_id}}' class='pixel-x' style='text-align:right;'>{{x1}}</td>
+            </tr>
+        </tbody>
+        <tbody class='pixel-pair' vy='{{y2}}' vx='{{x2}}'>
+            <tr>
+                <td style='width:35%;'>Y2</td>
+                <td rectangle_id='{{rectangle_id}}' class='pixel-y' style='text-align:right;'>{{y2}}</td>
+            </tr>
+            <tr>
+                <td style='width:35%;'>X2</td>
+                <td rectangle_id='{{rectangle_id}}' class='pixel-x' style='text-align:right;'>{{x2}}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="btn-group btn-block" style='margin-bottom:5px; width:100%;'>
+        <button type='button' rectangle_id='{{rectangle_id}}' class='btn btn-small btn-outline-secondary highlight-rectangle-button' style='width:50%;'>Highlight</button>
+        <button type='button' rectangle_id='{{rectangle_id}}' class='btn btn-small btn-outline-secondary remove-rectangle-button' style='width:50%;'>Remove</button>
+    </div>
+</div>

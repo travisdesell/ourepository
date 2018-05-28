@@ -1,0 +1,139 @@
+<div id='labels-content'>
+    {{#labels}}
+    <div class='label' data-sort='{{label_sort}}' label_name='{{label_name}}' label_id ='{{label_id}}'>
+        <div class='container-fluid' style='padding-top:15px;'>
+            <div class='row'>
+                <div class='col-sm-12'>
+
+                    <div class='card bg-light' style='vertical-align: middle; padding:4 4 4 16; margin-bottom:5px;'>
+                        <div class='row'>
+                            <div class='col-sm-6'>
+                                <h5 class='card-title' style='padding-top:7px; margin-bottom:0px;'>{{label_name}}</h5>
+                            </div>
+
+                            <div class='col-sm-6'>
+                                <button type="button" label_id='{{label_id}}' class="unselect-label-button btn btn-small btn-outline-secondary" style="padding: 2 12 2 12; margin-right:5px; display:none;">Unselect Folder</button>
+                                <button type="button" label_id='{{label_id}}' class="select-label-button btn btn-small btn-outline-secondary" style="padding: 2 12 2 12; margin-right:5px; display:none;">Select Folder</button>
+                                <button type="button" label_id='{{label_id}}' class="invert-label-button btn btn-small btn-outline-secondary" style='padding: 2 12 2 12; display:none;'>Invert</button>
+
+                                <button label_id='{{label_id}}' class="hide-label-button btn btn-outline-secondary float-right" showing='1'><i class='fa fa-angle-double-down'></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div> <!-- col-sm-12 -->
+            </div> <!-- row -->
+        </div> <!-- container -->
+
+        <div class='container-fluid cards-container'>
+            <div class='card'>
+                <div label_name='{{label_name}}' label_id='{{label_id}}' class='mosaic-card-row row' style='padding:16 16 4 16;'>
+                    <div class='col-md-3'>
+
+                        <p>Update label color:</p>
+                        <p>
+                        <input type="color" id="html5colorpicker" value="{{label_color}}" style="width:100%;">
+                        </p>
+
+                        <button type='button' class='btn btn-small btn-outline-secondary' style='float: left; width:50%;'>Reset</button>
+                        <button type='button' class='btn btn-small btn-outline-secondary' style='width:50%;'>Update</button>
+
+                        <br>
+                        <hr>
+
+                        <p>Update label name:</p>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id='label-name-text-input' placeholder="{{label_name}}" aria-label="{{label_name}}" aria-describedby="basic-addon2">
+                        </div>
+
+                        <hr>
+
+                        <p>Label Shared With:</p>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id='label-name-text-input' placeholder="{{label_name}}" aria-label="{{label_name}}" aria-describedby="basic-addon2">
+                        </div>
+
+                    </div>
+
+                    <div class='col-md-9'>
+
+                        <p>Used by Mosaics:</p>
+                        {{#folders}}
+                        <div class='folder' data-sort='{{folder_sort}}' folder_name='{{folder_name}}' folder_id ='{{folder_id}}' style='padding-top:10px'>
+                            <div class='container-fluid'>
+                                <div class='row'>
+                                    <div class='col-sm-12' style='padding: 0 0 0 0;'>
+
+                                        <div class='card bg-light' style='vertical-align: middle; padding:4 4 4 4; margin-bottom:5px;'>
+                                            <div class='row'>
+                                                <div class='col-sm-6'>
+                                                    <b class='card-title' style='padding-top:7px; margin-bottom:0px;'>{{folder_name}}</b>
+                                                </div>
+
+                                                <div class='col-sm-6'>
+                                                    <button type="button" folder_id='{{folder_id}}' class="unselect-folder-button btn btn-small btn-outline-secondary" style="padding: 2 12 2 12; margin-right:5px;">Unselect Folder</button>
+                                                    <button type="button" folder_id='{{folder_id}}' class="select-folder-button btn btn-small btn-outline-secondary" style="padding: 2 12 2 12; margin-right:5px;">Select Folder</button>
+                                                    <button type="button" folder_id='{{folder_id}}' class="invert-folder-button btn btn-small btn-outline-secondary" style='padding: 2 12 2 12;'>Invert</button>
+
+                                                    <button folder_id='{{folder_id}}' class="hide-folder-button btn btn-outline-secondary float-right" showing='1'><i class='fa fa-angle-double-down'></i></button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div> <!-- col-sm-12 -->
+                                </div> <!-- row -->
+
+                                {{#mosaics}}
+                                <div mosaic_name='{{filename}}' mosaic_id={{mosaic_id}} folder_id='{{folder_id}}' class='row' style='padding: 0px 10px 0px 10px;'>
+                                    <div class='col-sm-12' style='padding: 0 0 0 0;'>
+
+                                        <div class='card' style='vertical-align: middle; padding:4 4 4 4; margin-bottom:5px;'>
+                                            <div class='row'>
+                                                <div class='col-sm-6'>
+                                                    <b class='card-title' style='padding-top:7px; margin-bottom:0px;'>{{filename}}</b>
+                                                </div>
+
+                                                <div class='col-sm-6'>
+                                                    {{channels}} {{size_bytes}}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div> <!-- col-sm-12 -->
+
+                                </div> <!-- row -->
+                                {{/mosaics}}
+
+                            </div>
+                        </div> <!-- folder -->
+                        {{/folders}}
+
+                    </div>
+                </div>
+
+            </div> <!-- row -->
+        </div>
+    </div> <!-- label -->
+    {{/labels}}
+</div> <!-- label-content -->
+
+<div class='container-fluid' style='padding-top:15px;'>
+    <div class='row'>
+        <div class='col-sm-12'>
+
+            <div class='card bg-light' style='vertical-align: middle; padding:4 4 4 16; margin-bottom:5px;'>
+                <div class='row'>
+                    <div class='col-sm-4'>
+                    </div>
+
+                    <div class='col-sm-8'>
+                        <input id ="mosaic-file-input" type="file" style="display: none" />
+                        <button id="add-label-button" class="btn btn-primary float-right"><i class='fa fa-plus'></i> Create Label</button>
+
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- col-sm-12 -->
+    </div> <!-- row -->
+</div> <!-- container -->
