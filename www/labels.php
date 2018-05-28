@@ -271,55 +271,5 @@ function remove_label($user_id, $label_id) {
     echo json_encode($response);
 }
 
-function display_manage_labels($user_id) {
-    global $cwd;
-
-    $query = "SELECT * FROM labels WHERE owner_id = $user_id";
-    error_log($query);
-    $result = query_our_db($query);
-
-    $manage_labels = array();
-    while (($row = $result->fetch_assoc()) != NULL) {
-        $manage_labels['labels'][] = $row;
-        //error_log( print_r($row, true) );
-    }
-
-    $query = "SELECT * FROM folders WHERE owner_id = $user_id";
-    error_log($query);
-    $result = query_our_db($query);
-
-    while (($row = $result->fetch_assoc()) != NULL) {
-        $row['folder_name'] = $row['name'];
-
-        $assignments_query = "SELECT mosaic_id FROM folder_assignments WHERE folder_id = ". $row['folder_id'] . " AND owner_id = $user_id";
-        error_log($assignments_query);
-        $assignments_result = query_our_db($assignments_query);
-
-        while (($assignments_row = $assignments_result->fetch_assoc()) != NULL) {
-            $mosaic_query = "SELECT id, owner_id, filename, size_bytes, channels FROM mosaics WHERE id = " . $assignments_row['mosaic_id'];
-            error_log($mosaic_query);
-            $mosaic_result = query_our_db($mosaic_query);
-
-            $mosaic_row = $mosaic_result->fetch_assoc();
-            $row['mosaics'][] = $mosaic_row;
-        }
-
-
-        $manage_labels['folders'][] = $row;
-        //error_log( print_r($row, true) );
-    }
-
-
-
-    $manage_labels_template = file_get_contents($cwd[__FILE__] . "/templates/manage_labels_template.html");
-
-    $m = new Mustache_Engine;
-    $response['html'] = $m->render($manage_labels_template, $manage_labels);
-
-    $response['navbar'] = file_get_contents($cwd[__FILE__] . "/templates/index_navbar.html");
-
-    echo json_encode($response);
-}
-
 ?>
 
