@@ -23,24 +23,32 @@
                 </div>
 
                 <div id='polygon-marking' style='display:none;'>
+                    <button type='button' class='btn btn-block btn-outline-primary' id='import-polygons-button'>Import Polygons</button>
                     <button type='button' class='btn btn-block btn-outline-primary' id='draw-polygon-button' data-toggle='button' aria-pressed='false' autocomplete='off'>Draw Polygon</button>
                     <button type='button' class='btn btn-block btn-outline-secondary cancel-drawing-button'>Cancel</button>
                 </div>
 
+                <div id='rectangle-marking' style='display:none;'>
+                    <button type='button' class='btn btn-block btn-outline-primary' id='import-rectangles-button'>Import Rectangles</button>
+                    <button type='button' class='btn btn-block btn-outline-primary' id='draw-rectangles-button' data-toggle='button' aria-pressed='false' autocomplete='off'>Draw Rectangles</button>
+                    <button type='button' class='btn btn-block btn-outline-secondary cancel-drawing-button'>Cancel</button>
+                </div>
+
                 <div id='lines-marking' style='display:none;'>
+                    <button type='button' class='btn btn-block btn-outline-primary' id='import-lines-button'>Import Lines</button>
                     <button type='button' class='btn btn-block btn-outline-primary' id='draw-lines-button' data-toggle='button' aria-pressed='false' autocomplete='off'>Draw Lines</button>
                     <button type='button' class='btn btn-block btn-outline-secondary cancel-drawing-button'>Cancel</button>
                 </div>
 
                 <div id='points-marking' style='display:none;'>
+                    <button type='button' class='btn btn-block btn-outline-primary' id='import-points-button' data-toggle='button' aria-pressed='false' autocomplete='off'>Import Points</button>
                     <button type='button' class='btn btn-block btn-outline-primary' id='draw-points-button' data-toggle='button' aria-pressed='false' autocomplete='off'>Draw Points</button>
                     <button type='button' class='btn btn-block btn-outline-secondary cancel-drawing-button'>Cancel</button>
                 </div>
 
-
             </div>
 
-            <div id='marks-card' class='container bg-light' style='overflow-y: auto; min-height: calc(65vh - 226px); max-height: calc(65vh - 226px); padding:0 0 0 0'>
+            <div id='marks-card' class='container bg-light' style='overflow-y: auto; min-height: calc(65vh - 272px); max-height: calc(65vh - 272px); padding:0 0 0 0'>
                 {{#points}}
                 {{{html}}}
                 {{/points}}
@@ -48,6 +56,10 @@
                 {{#lines}}
                 {{{html}}}
                 {{/lines}}
+
+                {{#rectangles}}
+                {{{html}}}
+                {{/rectangles}}
 
                 {{#polygons}}
                 {{{html}}}
@@ -95,4 +107,206 @@
         </div>
     </div>
 </div>
+
+
+
+<div id='import-polygons-modal' class='modal' tabindex='-1' role='dialog'>
+    <div class='modal-dialog modal-lg' role='document'>
+        <div class='modal-content'>
+            <div class='modal-header'>
+                <h5 id='import-polygons-modal-title' class='modal-title'>Import Line</h5>
+                <button type='button' class='close' data-dismiss='modal' aria-label='Close'>
+                    <span aria-hidden='true'>&times;</span>
+                </button>
+            </div>
+            <div id='import-polygons-modal-body' class='modal-body'>
+                <div class="card text-center">
+
+                    <div class="card-header">
+                        <ul class="nav nav-tabs card-header-tabs">
+                            <li class="nav-item">
+                                <a class="nav-link polygons-nav-link" href="javascript:void(0);">CSV</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link polygons-nav-link active" href="javascript:void(0);">Shapefile</a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="card-body shapefile-modal">
+                        <div id='submit-polygons-shp-alert' class="alert alert-warning" role="alert" style="text-align:left;">Please select a .shp, .shx, and .dbf file to upload and import the polygons.</div>
+                        <input id="polygons-shapefile-upload-input" type="file" name="files[]" multiple="multiple">
+                    </div>
+
+                    <div class="card-body csv-modal" style='display:none;'>
+                        <p>Please enter X1,Y1 X2,Y2 ... Xn,Yn coordinates for each polygon, one polygon per line.</p>
+
+                        <div id='submit-polygons-alert' class="alert alert-warning" role="alert" ></div>
+
+                        <textarea id='submit-polygons-textarea' class="form-control" aria-label="With textarea" style='min-height:300px;'></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div id="import-polygons-csv-footer" class='modal-footer csv-modal' style='display:none;'>
+                <button type='button' id='submit-polygons-csv-modal-button' class='btn btn-primary' data-dismiss='modal'>Submit</button>
+                <button type='button' class='btn btn-secondary' data-dismiss='modal'>Close</button>
+            </div>
+            <div id="import-polygons-shapefile-footer" class='modal-footer shapefile-modal'>
+                <button type='button' id='submit-polygons-shapefile-modal-button' class='btn btn-primary disabled'>Upload</button>
+                <button type='button' class='btn btn-secondary' data-dismiss='modal'>Close</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<div id='import-rectangles-modal' class='modal' tabindex='-1' role='dialog'>
+    <div class='modal-dialog modal-lg' role='document'>
+        <div class='modal-content'>
+            <div class='modal-header'>
+                <h5 id='import-rectangles-modal-title' class='modal-title'>Import Line</h5>
+                <button type='button' class='close' data-dismiss='modal' aria-label='Close'>
+                    <span aria-hidden='true'>&times;</span>
+                </button>
+            </div>
+            <div id='import-rectangles-modal-body' class='modal-body'>
+                <p>Please enter X1,Y1,X2,Y2 coordinates for each rectangle, one rectangle per line.</p>
+
+                <div id='submit-rectangles-alert' class="alert alert-warning" role="alert" ></div>
+
+                <textarea id='submit-rectangles-textarea' class="form-control" aria-label="With textarea" style='min-height:300px;'></textarea>
+            </div>
+            <div class='modal-footer'>
+                <button type='button' id='submit-rectangles-modal-button' class='btn btn-primary' data-dismiss='modal'>Submit</button>
+                <button type='button' class='btn btn-secondary' data-dismiss='modal'>Close</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div id='import-lines-modal' class='modal' tabindex='-1' role='dialog'>
+    <div class='modal-dialog modal-lg' role='document'>
+        <div class='modal-content'>
+            <div class='modal-header'>
+                <h5 id='import-lines-modal-title' class='modal-title'>Import Line</h5>
+                <button type='button' class='close' data-dismiss='modal' aria-label='Close'>
+                    <span aria-hidden='true'>&times;</span>
+                </button>
+            </div>
+            <div id='import-lines-modal-body' class='modal-body'>
+                <div class="card text-center">
+
+                    <div class="card-header">
+                        <ul class="nav nav-tabs card-header-tabs">
+                            <li class="nav-item">
+                                <a class="nav-link lines-nav-link" href="javascript:void(0);">CSV</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link lines-nav-link active" href="javascript:void(0);">Shapefile</a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="card-body shapefile-modal">
+                        <div id='submit-lines-shp-alert' class="alert alert-warning" role="alert" style="text-align:left;">Please select a .shp, .shx, and .dbf file to upload and import the lines.</div>
+                        <input id="lines-shapefile-upload-input" type="file" name="files[]" multiple="multiple">
+                    </div>
+
+                    <div class="card-body csv-modal" style='display:none;'>
+                        <p>Please enter X1,Y1,X2,Y2 coordinates for each line, one line per line.</p>
+
+                        <div id='submit-lines-csv-alert' class="alert alert-warning" role="alert" ></div>
+
+                        <textarea id='submit-lines-textarea' class="form-control" aria-label="With textarea" style='min-height:300px;'></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div id="import-lines-csv-footer" class='modal-footer csv-modal' style='display:none;'>
+                <button type='button' id='submit-lines-csv-modal-button' class='btn btn-primary' data-dismiss='modal'>Submit</button>
+                <button type='button' class='btn btn-secondary' data-dismiss='modal'>Close</button>
+            </div>
+            <div id="import-lines-shapefile-footer" class='modal-footer shapefile-modal'>
+                <button type='button' id='submit-lines-shapefile-modal-button' class='btn btn-primary disabled'>Upload</button>
+                <button type='button' class='btn btn-secondary' data-dismiss='modal'>Close</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div id='import-points-modal' class='modal' tabindex='-1' role='dialog'>
+    <div class='modal-dialog modal-lg' role='document'>
+        <div class='modal-content'>
+            <div class='modal-header'>
+                <h5 id='import-points-modal-title' class='modal-title'>Import Points</h5>
+                <button type='button' class='close' data-dismiss='modal' aria-label='Close'>
+                    <span aria-hidden='true'>&times;</span>
+                </button>
+            </div>
+            <div id='import-points-modal-body' class='modal-body'>
+                <div class="card text-center">
+
+                    <div class="card-header">
+                        <ul class="nav nav-tabs card-header-tabs">
+                            <li class="nav-item">
+                                <a class="nav-link points-nav-link" href="javascript:void(0);">CSV</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link points-nav-link active" href="javascript:void(0);">Shapefile</a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="card-body shapefile-modal">
+                        <div id='submit-points-shp-alert' class="alert alert-warning" role="alert" style="text-align:left;">Please select a .shp, .shx, and .dbf file to upload and import the points.</div>
+                        <input id="points-shapefile-upload-input" type="file" name="files[]" multiple="multiple">
+                    </div>
+
+                    <div class="card-body csv-modal" style='display:none;'>
+                        <p>Please enter X,Y coordinates for each point, one point per line.</p>
+
+                        <div id='submit-points-alert' class="alert alert-warning" role="alert" ></div>
+
+                        <textarea id='submit-points-textarea' class="form-control" aria-label="With textarea" style='min-height:300px;'></textarea>
+
+                    </div>
+                </div>
+             </div>
+
+            <div id="import-points-csv-footer" class='modal-footer csv-modal' style='display:none;'>
+                <button type='button' id='submit-points-csv-modal-button' class='btn btn-primary' data-dismiss='modal'>Submit</button>
+                <button type='button' class='btn btn-secondary' data-dismiss='modal'>Close</button>
+            </div>
+            <div id="import-points-shapefile-footer" class='modal-footer shapefile-modal'>
+                <button type='button' id='submit-points-shapefile-modal-button' class='btn btn-primary disabled'>Upload</button>
+                <button type='button' class='btn btn-secondary' data-dismiss='modal'>Close</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div id='success-modal' class='modal' tabindex='-1' role='dialog'>
+    <div class='modal-dialog' role='document'>
+        <div class='modal-content'>
+            <div class='modal-header'>
+                <h5 id='success-modal-title' class='modal-title'>Error</h5>
+                <button type='button' class='close' data-dismiss='modal' aria-label='Close'>
+                    <span aria-hidden='true'>&times;</span>
+                </button>
+            </div>
+            <div id='success-modal-body' class='modal-body'>
+                <p>Modal body text goes here.</p>
+            </div>
+            <div class='modal-footer'>
+                <button type='button' class='btn btn-secondary' data-dismiss='modal'>Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 

@@ -1,3 +1,27 @@
+<div class='labels-content' style='display:none;'>
+    <div class='container-fluid' style='padding-top:15px;'>
+        <div class='row'>
+            <div class='col-sm-12'>
+
+                <div class='card bg-light' style='vertical-align: middle; padding:4 4 4 16; margin-bottom:5px;'>
+                    <div class='row'>
+                        <div class='col-sm-6'>
+                            <h5 class='card-title' style='padding-top:7px; margin-bottom:0px;'>Manage Labels</h5>
+                        </div>
+
+                        <div class='col-sm-6'>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class='col-sm-12'>
+                Stuff
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id='folder-content'>
     {{#folders}}
     <div class='folder' data-sort='{{folder_sort}}' folder_name='{{folder_name}}' folder_id ='{{folder_id}}'>
@@ -36,6 +60,8 @@
     {{/folders}}
 </div> <!-- folder-content -->
 
+
+
 <div class='container-fluid' style='padding-top:15px;'>
     <div class='row'>
         <div class='col-sm-12'>
@@ -48,7 +74,7 @@
 
                     <div class='col-sm-8'>
                         <input id ="mosaic-file-input" type="file" style="display: none" />
-                        <button id="add-mosaic-button" class="btn btn-primary float-right"><i class='fa fa-upload'></i> Mosaic</button>
+                        <button id="add-mosaic-button" class="btn btn-primary float-right"><i class='fa fa-upload'></i> Upload Mosaic</button>
 
                     </div>
                 </div>
@@ -163,7 +189,12 @@
                     </tbody>
                 </table>
                  <div class="input-group mb-3">
-                    <input type="text" class="form-control" id='share-modal-user-email' placeholder="Email Address" aria-label="Email Address" aria-describedby="basic-addon2">
+                    <input type="text" class="form-control" id='share-modal-user-email' placeholder="Email Address" aria-label="Email Address" aria-describedby="basic-addon2" list="share-mosaics-email-selector">
+                    <datalist id="share-mosaics-email-selector">
+                        {{#users}}
+                        <option value="{{email}}"></option>
+                        {{/users}}
+                    </datalist>
                     <div class="input-group-append">
                         <button id='share-modal-user-button' class="btn btn-outline-secondary" type="button" style='padding: 11 12 11 12;'><i class='fa fa-plus'></i></button>
                     </div>

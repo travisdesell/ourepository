@@ -23,10 +23,14 @@ var utm_n_lower_right;
 
 var drawn_polygons = 0;
 var drawn_lines = 0;
+var drawn_rectangles = 0;
 var drawn_points = 0;
+
+var POINT_RADIUS = 0.005;
 
 var drawing_points = false;
 var drawing_lines = false;
+var drawing_rectangles = false;
 var drawing_polygon = false;
 var last_point = null;
 var polygon_points = [];
@@ -47,6 +51,13 @@ function display_error_modal(title, message) {
     $("#error-modal-body").html(message);
     $("#error-modal").modal();
 }
+
+function display_success_modal(title, message) {
+    $("#success-modal-title").html(title);
+    $("#success-modal-body").html(message);
+    $("#success-modal").modal();
+}
+
 
 function toDegreesMinutesAndSeconds(coordinate) {
     var absolute = Math.abs(coordinate);
@@ -365,7 +376,7 @@ App = {
 
                 var x = viewportPoint.x;
                 var y = viewportPoint.y;
-                var radius = 0.005;
+                var radius = POINT_RADIUS;
 
                 var d3Circle = d3.select(overlay.node()).append("circle")
                     .style('fill', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.25)')
@@ -420,6 +431,66 @@ App = {
                 
                     drawn_lines++;
                     last_point = viewportPoint;
+                }
+
+                event.preventDefaultAction = true;
+
+            } else if (drawing_rectangles) {
+                // The canvas-click event gives us a position in web coordinates.
+                var webPoint = event.position;
+
+                // Convert that to viewport coordinates, the lingua franca of OpenSeadragon coordinates.
+                var viewportPoint = viewer.viewport.pointFromPixel(webPoint);
+
+                // Convert from viewport coordinates to image coordinates.
+                var imagePoint = viewer.viewport.viewportToImageCoordinates(viewportPoint);
+
+                // Show the results.
+                //$("#web-point").text("Web Point: " + webPoint.toString());
+                $("#web-point").text("Web Point: " + webPoint.x + ", " + webPoint.y);
+                $("#viewport-point").text("Viewport Point: " + viewportPoint.toString());
+                $("#image-point").text("Image Point: " + imagePoint.toString());
+
+                console.log(webPoint.toString(), viewportPoint.toString(), imagePoint.toString());
+                //console.log(viewer.world.getItemAt(0).source.dimensions);
+
+                if (last_point == null) {
+                    last_point = viewportPoint;
+                } else {
+                    var x1 = last_point.x;
+                    var y1 = last_point.y;
+                    var x2 = viewportPoint.x;
+                    var y2 = viewportPoint.y;
+
+                    if (x1 > x2) {
+                        var tmp = x1;
+                        x1 = x2;
+                        x2 = tmp;
+                    }
+
+                    if (y1 > y2) {
+                        var tmp = y1;
+                        y1 = y2;
+                        y2 = tmp;
+                    }
+
+                    var d3Rect = d3.select(overlay.node()).append("rect")
+                        .style('fill', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.25)')
+                        .attr("id", "svg-rectangle-" + drawn_rectangles)
+                        .attr("x", x1)
+                        .attr("y", y1)
+                        .attr("width", x2 - x1)
+                        .attr("height", y2 - y1)
+                        .attr("x1", x1)
+                        .attr("y1", y1)
+                        .attr("x2", x2)
+                        .attr("y2", y2)
+                        .attr("stroke-width", 0.001)
+                        .attr("label_id", current_label_id)
+                        .attr("class", "svg-rectangle current-draw svg-item");
+                
+                    drawn_rectangles++;
+                    last_point = null;
                 }
 
                 event.preventDefaultAction = true;
@@ -494,6 +565,22 @@ function initialize_mark_buttons() {
         }
     });
 
+    $(".highlight-rectangle-button:not(.bound)").addClass("bound").click(function() {
+        var rectangle_id = $(this).attr("rectangle_id");
+        var rectangle = d3.select(".svg-item[rectangle_id='" + rectangle_id + "']");
+        var fill = rectangle.style("fill");
+
+        if ($(this).hasClass("active")) {
+            $(this).removeClass("active");
+            fill = fill.replace(/[\d\.]+\)$/g, '0.25)');
+            rectangle.style("fill-width",0.001).style("fill", fill);
+        } else {
+            $(this).addClass("active");
+            fill = fill.replace(/[\d\.]+\)$/g, '0.75)');
+            rectangle.style("fill-width",0.003).style("fill", fill);
+        }
+    });
+
     $(".highlight-polygon-button:not(.bound)").addClass("bound").click(function() {
         var polygon_id = $(this).attr("polygon_id");
         var polygon = d3.select(".svg-item[polygon_id='" + polygon_id + "']");
@@ -513,10 +600,12 @@ function initialize_mark_buttons() {
 
     $(".remove-point-button:not(.bound)").addClass("bound").click(function() {
         var point_id = $(this).attr("point_id");
+        var label_id = $(this).parent().parent().attr("label_id");
 
         var submission_data = {
             request : "REMOVE_POINT",
             id_token : id_token,
+            label_id : label_id,
             mosaic_id : mosaic_id,
             point_id : point_id
         };
@@ -550,10 +639,12 @@ function initialize_mark_buttons() {
 
     $(".remove-line-button:not(.bound)").addClass("bound").click(function() {
         var line_id = $(this).attr("line_id");
+        var label_id = $(this).parent().parent().attr("label_id");
 
         var submission_data = {
             request : "REMOVE_LINE",
             id_token : id_token,
+            label_id : label_id,
             mosaic_id : mosaic_id,
             line_id : line_id
         };
@@ -585,12 +676,54 @@ function initialize_mark_buttons() {
         });
     });
 
+    $(".remove-rectangle-button:not(.bound)").addClass("bound").click(function() {
+        var rectangle_id = $(this).attr("rectangle_id");
+        var label_id = $(this).parent().parent().attr("label_id");
+
+        var submission_data = {
+            request : "REMOVE_RECTANGLE",
+            id_token : id_token,
+            label_id : label_id,
+            mosaic_id : mosaic_id,
+            rectangle_id : rectangle_id
+        };
+
+        $.ajax({
+            type: 'POST',
+            url: './request.php',
+            data : submission_data,
+            dataType : 'json',
+            success : function(response) {
+                console.log("received response: ");
+                console.log(response);
+
+                if (response.err_msg) {
+                    display_error_modal(response.err_title, response.err_msg);
+                    cancel_drawing();
+                    return;
+                }
+
+                $(".svg-item[rectangle_id='" + rectangle_id + "']").remove();
+                $(".rectangle-mark[rectangle_id='" + rectangle_id + "']").remove();
+
+            },
+            error : function(jqXHR, textStatus, errorThrown) {
+                console.log(errorThrown);
+                display_error_modal(textStatus, errorThrown);
+            },
+            async: true
+        });
+    });
+
+
     $(".remove-polygon-button:not(.bound)").addClass("bound").click(function() {
         var polygon_id = $(this).attr("polygon_id");
+        var label_id = $(this).parent().parent().attr("label_id");
 
         var submission_data = {
             request : "REMOVE_POLYGON",
             id_token : id_token,
+            label_id : label_id,
             mosaic_id : mosaic_id,
             polygon_id : polygon_id
         };
@@ -621,7 +754,6 @@ function initialize_mark_buttons() {
             async: true
         });
     });
-
 }
 
 function cancel_drawing() {
@@ -631,12 +763,15 @@ function cancel_drawing() {
     drawing_points = false;
     drawing_polygon = false;
     drawing_lines = false;
+    drawing_rectangles = false;
 
     polygon_points = [];
     last_point = null;
 
     if (current_label_type == "POLYGON") {
         $("#draw-polygon-button").text("Draw Polygon").attr("aria-pressed", "false").removeClass("active");
+    } else if (current_label_type == "RECTANGLE") {
+        $("#draw-rectangles-button").text("Draw Rectangles").attr("aria-pressed", "false").removeClass("active");
     } else if (current_label_type == "LINE") {
         $("#draw-lines-button").text("Draw Lines").attr("aria-pressed", "false").removeClass("active");
     } else if (current_label_type == "POINT") {
@@ -664,7 +799,7 @@ function initialize_openseadragon(tiles_url, channels, height, width, marks) {
 
     console.log("received points!");
     for (var i = 0; i < points.length; i++) {
-        console.log(points[i]);
+        //console.log(points[i]);
 
         var color = hexToRgb(points[i].color);
 
@@ -682,7 +817,7 @@ function initialize_openseadragon(tiles_url, channels, height, width, marks) {
 
     console.log("received lines!");
     for (var i = 0; i < lines.length; i++) {
-        console.log(lines[i]);
+        //console.log(lines[i]);
 
         var color = hexToRgb(lines[i].color);
 
@@ -698,11 +833,32 @@ function initialize_openseadragon(tiles_url, channels, height, width, marks) {
             .attr("class", "svg-line svg-item");
     }
 
+    var rectangles = marks.rectangles;
+
+    console.log("received rectangles!");
+    for (var i = 0; i < rectangles.length; i++) {
+        console.log(rectangles[i]);
+
+        var color = hexToRgb(rectangles[i].color);
+
+        var d3Rect = d3.select(overlay.node()).append("rect")
+            .style('fill', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.25)')
+            .attr("x", rectangles[i].x1)
+            .attr("y", rectangles[i].y1)
+            .attr("width", rectangles[i].x2 - rectangles[i].x1)
+            .attr("height", rectangles[i].y2 - rectangles[i].y1)
+            .attr("stroke-width", 0.0005)
+            .attr("label_id", rectangles[i].label_id)
+            .attr("rectangle_id", rectangles[i].rectangle_id)
+            .attr("class", "svg-rectangle svg-item");
+    }
+
+
     var polygons = marks.polygons;
 
     console.log("received polygons!");
     for (var i = 0; i < polygons.length; i++) {
-        console.log(polygons[i]);
+        //console.log(polygons[i]);
 
         var color = hexToRgb(polygons[i].color);
 
@@ -718,12 +874,1286 @@ function initialize_openseadragon(tiles_url, channels, height, width, marks) {
     //everything starts as hidden initially
     $(".svg-item").hide();
 
-
     initialize_labels();
 
     $(".cancel-drawing-button").click(function() {
         cancel_drawing();
     });
+
+    $(".polygons-nav-link").click(function() {
+        if ($(this).text() == "CSV") {
+            $(".csv-modal").show();
+            $(".shapefile-modal").hide();
+        } else if ($(this).text() == "Shapefile") {
+            $(".shapefile-modal").show();
+            $(".csv-modal").hide();
+
+            $("#submit-polygons-shp-alert").addClass("alert-warning");
+            $("#submit-polygons-shp-alert").removeClass("alert-success");
+            $("#submit-polygons-shp-alert").text("Please select a .shp, .shx and .dbf file to upload and import the polygons.");
+
+            $("#submit-polygons-shapefile-modal-button").addClass("disabled");
+        }
+
+        $(".polygons-nav-link").removeClass("active");
+        $(this).addClass("active");
+    });
+
+    $("#polygons-shapefile-upload-input").on("change", function() {
+        var files = this.files;
+
+        var err_msg = "";
+        var selected_files = "";
+        var valid_upload = true;
+        var shp_found = false;
+        var shx_found = false;
+        var dbf_found = false;
+
+        if (files.length != 3) {
+            err_msg = "Please select a .shp, .shx and .dbf file to upload and import the polygons.";
+
+        } else {
+            for (var i = 0; i < files.length; i++) {
+                var name = files[i].name;
+                console.log("selected files[" + i + "]: " + name);
+
+                if (i > 0) selected_files += "<br>";
+                selected_files += name;
+
+                var extension = name.substr(name.length - 4);
+                if (extension === ".shp") shp_found = true;
+                else if (extension === ".shx") shx_found = true;
+                else if (extension === ".dbf") dbf_found = true;
+                else valid_upload = false;
+            }
+        }
+
+        if (!shp_found) {
+            valid_upload = false;
+            err_msg = "A .shp file was not selected.";
+        } else if (!shx_found) {
+            valid_upload = false;
+            err_msg = "A .shx file was not selected.";
+        } else if (!dbf_found) {
+            valid_upload = false;
+            err_msg = "A .dbf file was not selected.";
+        }
+
+        if (valid_upload) {
+            $("#submit-polygons-shp-alert").removeClass("alert-warning");
+            $("#submit-polygons-shp-alert").addClass("alert-success");
+            $("#submit-polygons-shp-alert").html("Selected files are valid.<br>Selected files are:<br><br>" + selected_files);
+
+            $("#submit-polygons-shapefile-modal-button").removeClass("disabled");
+        } else {
+            $("#submit-polygons-shp-alert").addClass("alert-warning");
+            $("#submit-polygons-shp-alert").removeClass("alert-success");
+            $("#submit-polygons-shp-alert").html("Selected files are not valid.<br>Please select a .shp, .shx and .dbf file to upload and import the polygons.<br><br>Selected files were:<br>" + selected_files);
+
+            $("#submit-polygons-shapefile-modal-button").addClass("disabled");
+        }
+    });
+
+    $("#submit-polygons-shapefile-modal-button").click(function() {
+        if ($(this).hasClass("disabled")) return;
+
+		var xhr = new XMLHttpRequest();
+        xhr.open('POST', './request.php');
+        xhr.onload = function() {
+            console.log("New upload response: " + xhr.responseText);
+            var response = JSON.parse(xhr.responseText);
+
+            if (response.err_msg) {
+                display_error_modal(response.err_title, response.err_msg);
+                cancel_drawing();
+                return;
+            }
+
+            var color = hexToRgb(current_label_color);
+
+            var polygons = response.polygons;
+            for (var i = 0; i < polygons.length; i++) {
+                var polygon = polygons[i];
+
+                console.log("drawing polygon (" + polygon.cx + ", " + polygon.cy + ", " + polygon.radius + ")");
+
+                var d3Polygon = d3.select(overlay.node()).append("polygon")
+                    .style('fill', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.25)')
+                    .attr("id", "svg-polygon-" + drawn_polygons)
+                    .attr("points", polygon.points_str)
+                    .attr("stroke-width", 0.001)
+                    .attr("label_id", current_label_id)
+                    .attr("polygon_id", polygon.polygon_id)
+                    .attr("class", "svg-polygon current-draw svg-item");
+
+                drawn_polygons++;
+
+                $("#marks-card").append(polygon['html']);
+            }
+
+            initialize_mark_buttons();
+            set_mark_coordinates();
+
+            $(".cancel-drawing-button").hide();
+            $(".current-draw").removeClass("current-draw");
+            $("#draw-polygons-button").text("Draw Lines");
+
+			$('#import-polygons-modal').modal('hide');
+            display_success_modal("Shapefile Import Successful", "Imported " + polygons.length + " polygons from the shapefile.");
+
+            drawing_polygons = false;
+            last_polygon = null;
+        };  
+
+        var formData = new FormData();
+        formData.append("id_token", id_token);
+		formData.append("mosaic_id", mosaic_id);
+		formData.append("label_id", current_label_id);
+		formData.append("import_type", "POLYGONS");
+        formData.append("request", "SHAPEFILE_UPLOAD");
+
+		var files = document.getElementById("polygons-shapefile-upload-input").files;
+
+		for (var i = 0; i < files.length; i++) {
+			var name = files[i].name;
+			console.log("appending selected files[" + i + "]: " + name);
+
+			formData.append("files[]", files[i]);
+		}
+
+        xhr.send(formData);
+    });
+
+
+
+    $(".points-nav-link").click(function() {
+        if ($(this).text() == "CSV") {
+            $(".csv-modal").show();
+            $(".shapefile-modal").hide();
+        } else if ($(this).text() == "Shapefile") {
+            $(".shapefile-modal").show();
+            $(".csv-modal").hide();
+
+            $("#submit-points-shp-alert").addClass("alert-warning");
+            $("#submit-points-shp-alert").removeClass("alert-success");
+            $("#submit-points-shp-alert").text("Please select a .shp, .shx and .dbf file to upload and import the points.");
+
+            $("#submit-points-shapefile-modal-button").addClass("disabled");
+        }
+
+        $(".points-nav-link").removeClass("active");
+        $(this).addClass("active");
+    });
+
+    $("#points-shapefile-upload-input").on("change", function() {
+        var files = this.files;
+
+        var err_msg = "";
+        var selected_files = "";
+        var valid_upload = true;
+        var shp_found = false;
+        var shx_found = false;
+        var dbf_found = false;
+
+        if (files.length != 3) {
+            err_msg = "Please select a .shp, .shx and .dbf file to upload and import the points.";
+
+        } else {
+            for (var i = 0; i < files.length; i++) {
+                var name = files[i].name;
+                console.log("selected files[" + i + "]: " + name);
+
+                if (i > 0) selected_files += "<br>";
+                selected_files += name;
+
+                var extension = name.substr(name.length - 4);
+                if (extension === ".shp") shp_found = true;
+                else if (extension === ".shx") shx_found = true;
+                else if (extension === ".dbf") dbf_found = true;
+                else valid_upload = false;
+            }
+        }
+
+        if (!shp_found) {
+            valid_upload = false;
+            err_msg = "A .shp file was not selected.";
+        } else if (!shx_found) {
+            valid_upload = false;
+            err_msg = "A .shx file was not selected.";
+        } else if (!dbf_found) {
+            valid_upload = false;
+            err_msg = "A .dbf file was not selected.";
+        }
+
+        if (valid_upload) {
+            $("#submit-points-shp-alert").removeClass("alert-warning");
+            $("#submit-points-shp-alert").addClass("alert-success");
+            $("#submit-points-shp-alert").html("Selected files are valid.<br>Selected files are:<br><br>" + selected_files);
+
+            $("#submit-points-shapefile-modal-button").removeClass("disabled");
+        } else {
+            $("#submit-points-shp-alert").addClass("alert-warning");
+            $("#submit-points-shp-alert").removeClass("alert-success");
+            $("#submit-points-shp-alert").html("Selected files are not valid.<br>Please select a .shp, .shx and .dbf file to upload and import the points.<br><br>Selected files were:<br>" + selected_files);
+
+            $("#submit-points-shapefile-modal-button").addClass("disabled");
+        }
+    });
+
+    $("#submit-points-shapefile-modal-button").click(function() {
+        if ($(this).hasClass("disabled")) return;
+
+		var xhr = new XMLHttpRequest();
+        xhr.open('POST', './request.php');
+        xhr.onload = function() {
+            console.log("New upload response: " + xhr.responseText);
+            var response = JSON.parse(xhr.responseText);
+
+            if (response.err_msg) {
+                display_error_modal(response.err_title, response.err_msg);
+                cancel_drawing();
+                return;
+            }
+
+            var color = hexToRgb(current_label_color);
+
+            var points = response.points;
+            for (var i = 0; i < points.length; i++) {
+                var point = points[i];
+
+                console.log("drawing point (" + point.cx + ", " + point.cy + ", " + point.radius + ")");
+
+                var d3Circle = d3.select(overlay.node()).append("circle")
+                    .style('fill', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.25)')
+                    .attr("id", "svg-circle-" + drawn_points)
+                    .attr("cx", point.cx)
+                    .attr("cy", point.cy)
+                    .attr("r", point.radius)
+                    .attr("label_id", current_label_id)
+                    .attr("point_id", point.point_id)
+                    .attr("class", "svg-polygon-circle current-draw svg-item");
+
+                drawn_points++;
+
+                $("#marks-card").append(point['html']);
+            }
+
+            initialize_mark_buttons();
+            set_mark_coordinates();
+
+            $(".cancel-drawing-button").hide();
+            $(".current-draw").removeClass("current-draw");
+            $("#draw-points-button").text("Draw Lines");
+
+			$('#import-points-modal').modal('hide');
+            display_success_modal("Shapefile Import Successful", "Imported " + points.length + " points from the shapefile.");
+
+            drawing_points = false;
+            last_point = null;
+        };  
+
+        var formData = new FormData();
+        formData.append("id_token", id_token);
+		formData.append("mosaic_id", mosaic_id);
+		formData.append("label_id", current_label_id);
+		formData.append("import_type", "POINTS");
+        formData.append("request", "SHAPEFILE_UPLOAD");
+
+		var files = document.getElementById("points-shapefile-upload-input").files;
+
+		for (var i = 0; i < files.length; i++) {
+			var name = files[i].name;
+			console.log("appending selected files[" + i + "]: " + name);
+
+			formData.append("files[]", files[i]);
+		}
+
+        xhr.send(formData);
+    });
+
+
+    $(".lines-nav-link").click(function() {
+        if ($(this).text() == "CSV") {
+            $(".csv-modal").show();
+            $(".shapefile-modal").hide();
+        } else if ($(this).text() == "Shapefile") {
+            $(".shapefile-modal").show();
+            $(".csv-modal").hide();
+
+            $("#submit-lines-shp-alert").addClass("alert-warning");
+            $("#submit-lines-shp-alert").removeClass("alert-success");
+            $("#submit-lines-shp-alert").text("Please select a .shp, .shx and .dbf file to upload and import the lines.");
+
+            $("#submit-lines-shapefile-modal-button").addClass("disabled");
+        }
+
+        $(".lines-nav-link").removeClass("active");
+        $(this).addClass("active");
+    });
+
+    $("#lines-shapefile-upload-input").on("change", function() {
+        var files = this.files;
+
+        var err_msg = "";
+        var selected_files = "";
+        var valid_upload = true;
+        var shp_found = false;
+        var shx_found = false;
+        var dbf_found = false;
+
+        if (files.length != 3) {
+            err_msg = "Please select a .shp, .shx and .dbf file to upload and import the lines.";
+
+        } else {
+            for (var i = 0; i < files.length; i++) {
+                var name = files[i].name;
+                console.log("selected files[" + i + "]: " + name);
+
+                if (i > 0) selected_files += "<br>";
+                selected_files += name;
+
+                var extension = name.substr(name.length - 4);
+                if (extension === ".shp") shp_found = true;
+                else if (extension === ".shx") shx_found = true;
+                else if (extension === ".dbf") dbf_found = true;
+                else valid_upload = false;
+            }
+        }
+
+        if (!shp_found) {
+            valid_upload = false;
+            err_msg = "A .shp file was not selected.";
+        } else if (!shx_found) {
+            valid_upload = false;
+            err_msg = "A .shx file was not selected.";
+        } else if (!dbf_found) {
+            valid_upload = false;
+            err_msg = "A .dbf file was not selected.";
+        }
+
+        if (valid_upload) {
+            $("#submit-lines-shp-alert").removeClass("alert-warning");
+            $("#submit-lines-shp-alert").addClass("alert-success");
+            $("#submit-lines-shp-alert").html("Selected files are valid.<br>Selected files are:<br><br>" + selected_files);
+
+            $("#submit-lines-shapefile-modal-button").removeClass("disabled");
+        } else {
+            $("#submit-lines-shp-alert").addClass("alert-warning");
+            $("#submit-lines-shp-alert").removeClass("alert-success");
+            $("#submit-lines-shp-alert").html("Selected files are not valid.<br>Please select a .shp, .shx and .dbf file to upload and import the lines.<br><br>Selected files were:<br>" + selected_files);
+
+            $("#submit-lines-shapefile-modal-button").addClass("disabled");
+        }
+    });
+
+    $("#submit-lines-shapefile-modal-button").click(function() {
+        if ($(this).hasClass("disabled")) return;
+
+		var xhr = new XMLHttpRequest();
+        xhr.open('POST', './request.php');
+        xhr.onload = function() {
+            console.log("New upload response: " + xhr.responseText);
+            var response = JSON.parse(xhr.responseText);
+
+            if (response.err_msg) {
+                display_error_modal(response.err_title, response.err_msg);
+                cancel_drawing();
+                return;
+            }
+
+            var color = hexToRgb(current_label_color);
+
+            var lines = response.lines;
+            for (var i = 0; i < lines.length; i++) {
+                var line = lines[i];
+
+                console.log("drawing line (" + line.x1 + ", " + line.y2 + ", " + line.x2 + ", " + line.y2 + ") to " + line.line_id);
+
+                var d3Line = d3.select(overlay.node()).append("line")
+                    .style('stroke', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.25)')
+                    .attr("id", "svg-line-" + drawn_lines)
+                    .attr("x1", line.x1)
+                    .attr("y1", line.y1)
+                    .attr("x2", line.x2)
+                    .attr("y2", line.y2)
+                    .attr("stroke-width", 0.001)
+                    .attr("label_id", current_label_id)
+                    .attr("line_id", line.line_id)
+                    .attr("class", "svg-line current-draw svg-item");
+
+                drawn_lines++;
+
+                $("#marks-card").append(line['html']);
+            }
+
+            initialize_mark_buttons();
+            set_mark_coordinates();
+
+            $(".cancel-drawing-button").hide();
+            $(".current-draw").removeClass("current-draw");
+            $("#draw-lines-button").text("Draw Lines");
+
+			$('#import-lines-modal').modal('hide');
+            display_success_modal("Shapefile Import Successful", "Imported " + lines.length + " lines from the shapefile.");
+
+            drawing_lines = false;
+            last_line = null;
+        };  
+
+        var formData = new FormData();
+        formData.append("id_token", id_token);
+		formData.append("mosaic_id", mosaic_id);
+		formData.append("label_id", current_label_id);
+        formData.append("import_type", "LINES");
+        formData.append("request", "SHAPEFILE_UPLOAD");
+
+		var files = document.getElementById("lines-shapefile-upload-input").files;
+
+		for (var i = 0; i < files.length; i++) {
+			var name = files[i].name;
+			console.log("appending selected files[" + i + "]: " + name);
+
+			formData.append("files[]", files[i]);
+		}
+
+        xhr.send(formData);
+    });
+
+
+    $('#import-polygons-button').click(function() {
+        $("#submit-polygons-alert").removeClass("alert-success");
+        $("#submit-polygons-alert").addClass("alert-warning");
+        $("#submit-polygons-alert").html("No input found.");
+        $("#submit-polygons-csv-modal-button").addClass("disabled");
+        $("#submit-polygons-textarea").val("");
+        $("#submit-polygons-textarea").attr("placeholder","123,345 243,683 913,3333\n456,789 203,2983 142,2334 514,2342");
+
+        $('#import-polygons-modal').modal();
+    });
+
+    $('#import-polygons-modal').on('hidden.bs.modal', function () {
+        $("#import-polygons-button").removeClass("active");
+    });
+
+    $('#submit-polygons-csv-modal-button:not(.bound)').addClass("bound").click(function() {
+        if ($(this).hasClass("disabled")) return;
+
+        var valid_input = true;
+        var polygons = [];
+        var polygon_elements = [];
+
+        var color = hexToRgb(current_label_color);
+
+        var points_strs = [];
+
+        var input_polygons = [];
+        var text = $("#submit-polygons-textarea").val();
+
+        if (text.includes("\n")) {
+            input_polygons = text.split("\n");
+        } else {
+            input_polygons.push(text);
+        }
+
+        console.log("input_polygons: " + input_polygons);
+
+        for (var i = 0; i < input_polygons.length; i++) {
+            console.log("polygons[" + i + "]: " + input_polygons[i]);
+
+            var points_str = "";
+
+            var vals = input_polygons[i].split(/[\s,]+/);
+
+            if (vals.length < 4) {
+                valid_input = false;
+                error_msg = "polygon " + i + " did not have at least 4 integer values.";
+                break;
+            }
+
+            if (vals.length % 2 == 1) {
+                valid_input = false;
+                error_msg = "polygon " + i + " was missing a full x,y pair.";
+                break;
+            }
+
+            for (var j = 0; j < vals.length; j++) {
+                if ( !(Math.floor(vals[j]) == vals[j] && $.isNumeric(vals[j])) ) {
+                    error_msg =  "polygon " + i + ": value " + j + ": '" + vals[j] + "' was not an integer.";
+                    valid_input = false;
+                    break;
+                }
+
+                var v = vals[j] / Math.max(mosaic_width, mosaic_height);
+                if (j % 2 == 1) points_str += ",";
+                else if (j > 0) points_str += " ";
+
+                points_str += v;
+            }
+
+            if (!valid_input) break;
+
+            var d3Polygon = d3.select(overlay.node()).append("polygon")
+                .style('fill', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.25)')
+                .attr("id", "svg-polygon-" + drawn_polygons)
+                .attr("points", points_str)
+                .attr("stroke-width", 0.001)
+                .attr("label_id", current_label_id)
+                .attr("class", "svg-polygon current-draw svg-item");
+
+            polygon_elements.push(d3Polygon);
+            points_strs.push_back(points_str);
+
+            drawn_polygons++;
+        }
+        console.log("polygons: " + JSON.stringify(polygons));
+        console.log("points_str: " + points_str);
+
+        var submission_data = {
+            request : "CREATE_POLYGONS",
+            id_token : id_token,
+            mosaic_id : mosaic_id,
+            label_id : current_label_id,
+            points_strs : points_strs 
+        };
+
+        $.ajax({
+            type: 'POST',
+            url: './request.php',
+            data : submission_data,
+            dataType : 'json',
+            success : function(response) {
+                console.log("received response: ");
+                console.log(response);
+                //var response = JSON.parse(responseText);
+
+                if (response.err_msg) {
+                    display_error_modal(response.err_title, response.err_msg);
+                    cancel_drawing();
+                    return;
+                }
+
+                var polygon_ids = response.polygon_ids;
+                if (polygon_ids.length != polygon_elements.length) {
+                    display_error_modal("Create Polygons Error", "Internal server error. Number of returned polygons is not equal to the number of saved polygons. This should never happen, please contact the administrator");
+                    cancel_drawing();
+                    return;
+                }
+
+                var polygon_htmls = response.polygon_htmls;
+                for (var i = 0; i < polygon_htmls.length; i++) {
+                    $("#marks-card").append(polygon_htmls[i]);
+                }
+                initialize_mark_buttons();
+                set_mark_coordinates();
+
+                for (var i = 0; i < polygon_ids.length; i++) {
+                    console.log("setting mark id for polygon (" + polygons[i].x1 + ", " + polygons[i].y2 + ", " + polygons[i].x2 + ", " + polygons[i].y2 + ") to " + polygon_ids[i]);
+                    polygon_elements[i].attr("polygon_id", polygon_ids[i]);
+                }
+
+                $(".cancel-drawing-button").hide();
+                $(".current-draw").removeClass("current-draw");
+                $("#draw-polygons-button").text("Draw Polygons");
+
+                display_success_modal("Polygons Imported Successfully", "Successfully imported " + polygon_ids.length + " polygons.");
+
+                drawing_polygons = false;
+                last_polygon = null;
+            },
+            error : function(jqXHR, textStatus, errorThrown) {
+                console.log(errorThrown);
+                display_error_modal(textStatus, errorThrown);
+                cancel_drawing();
+            },
+            async: true
+        });
+
+
+    });
+
+    $("#submit-polygons-textarea:not(.bound)").addClass("bound").keyup(function() {
+        if ($(this).val() === "") {
+            $("#submit-polygons-alert").removeClass("alert-success");
+            $("#submit-polygons-alert").addClass("alert-warning");
+            $("#submit-polygons-alert").html("No inpuit found.");
+
+            $("#submit-polygons-csv-modal-button").addClass("disabled");
+        } else {
+            var valid_input = true;
+            var error_msg;
+
+            var input_polygons = $("#submit-polygons-textarea").val().split("\n");
+            for (var i = 0; i < input_polygons.length; i++) {
+                //console.log("polygons[" + i + "]: " + polygons[i]);
+
+                var vals = input_polygons[i].split(/[\s,]+/);
+
+                if (vals.length < 4) {
+                    valid_input = false;
+                    error_msg = "polygon " + i + " did not have at least 4 integer values.";
+                    break;
+                }
+
+                if (vals.length % 2 == 1) {
+                    valid_input = false;
+                    error_msg = "polygon " + i + " was missing a full x,y pair.";
+                    break;
+                }
+
+                for (var j = 0; j < vals.length; j++) {
+                    if ( !(Math.floor(vals[j]) == vals[j] && $.isNumeric(vals[j])) ) {
+                        error_msg = "polygon " + i + ": value " + j + ": '" + vals[j] + "' was not an integer.";
+                        valid_input = false;
+                        break;
+                    }
+                }
+
+                if (!valid_input) break;
+            }
+
+            if (valid_input) {
+                $("#submit-polygons-alert").removeClass("alert-warning");
+                $("#submit-polygons-alert").addClass("alert-success");
+                $("#submit-polygons-alert").html("Input is valid!");
+
+                $("#submit-polygons-csv-modal-button").removeClass("disabled");
+            } else {
+                $("#submit-polygons-alert").removeClass("alert-success");
+                $("#submit-polygons-alert").addClass("alert-warning");
+                $("#submit-polygons-alert").html(error_msg);
+
+                $("#submit-polygons-csv-modal-button").addClass("disabled");
+            }
+        }    
+    });  
+
+
+
+
+    $('#import-rectangles-button').click(function() {
+        $("#submit-rectangles-alert").removeClass("alert-success");
+        $("#submit-rectangles-alert").addClass("alert-warning");
+        $("#submit-rectangles-alert").html("No input found.");
+        $("#submit-rectangles-modal-button").addClass("disabled");
+        $("#submit-rectangles-textarea").val("");
+        $("#submit-rectangles-textarea").attr("placeholder","123,345,243,683\n456,789,203,2983\n678,234,2433,413");
+
+        $('#import-rectangles-modal').modal();
+    });
+
+    $('#import-rectangles-modal').on('hidden.bs.modal', function () {
+        $("#import-rectangles-button").removeClass("active");
+    });
+
+    $('#submit-rectangles-modal-button:not(.bound)').addClass("bound").click(function() {
+        if ($(this).hasClass("disabled")) return;
+
+        var valid_input = true;
+        var rectangles = [];
+        var rectangle_elements = [];
+
+        var color = hexToRgb(current_label_color);
+
+        var input_rectangles = $("#submit-rectangles-textarea").val().split("\n");
+        for (var i = 0; i < input_rectangles.length; i++) {
+            //console.log("rectangles[" + i + "]: " + rectangles[i]);
+
+            var vals = input_rectangles[i].split(",");
+
+            if (vals.length != 4) {
+                valid_input = false;
+                error_msg = "rectangle " + i + " did not have 4 integer values.";
+                break;
+            }
+
+            if ( !(Math.floor(vals[0]) == vals[0] && $.isNumeric(vals[0])) ) {
+                error_msg =  "rectangle " + i + ": first value '" + vals[0] + "' was not an integer.";
+                valid_input = false;
+                break;
+            }
+
+            if ( !(Math.floor(vals[1]) == vals[1] && $.isNumeric(vals[1])) ) {
+                error_msg =  "rectangle " + i + ": second value '" + vals[1] + "' was not an integer.";
+                valid_input = false;
+                break;
+            }
+
+            if ( !(Math.floor(vals[2]) == vals[2] && $.isNumeric(vals[2])) ) {
+                error_msg =  "rectangle " + i + ": third value '" + vals[2] + "' was not an integer.";
+                valid_input = false;
+                break;
+            }
+
+            if ( !(Math.floor(vals[3]) == vals[3] && $.isNumeric(vals[3])) ) {
+                error_msg =  "rectangle " + i + ": fourth value '" + vals[3] + "' was not an integer.";
+                valid_input = false;
+                break;
+            }
+
+            var x1 = vals[0] / Math.max(mosaic_width, mosaic_height);
+            var y1 = vals[1] / Math.max(mosaic_width, mosaic_height);
+            var x2 = vals[2] / Math.max(mosaic_width, mosaic_height);
+            var y2 = vals[3] / Math.max(mosaic_width, mosaic_height);
+
+            if (x1 > x2) {
+                var tmp = x1;
+                x1 = x2;
+                x2 = x1;
+            }
+
+            if (y1 > y2) {
+                var tmp = y1;
+                y1 = y2;
+                y2 = y1;
+            }
+
+            rectangles.push({x1 : x1, y1 : y1, x2 : x2, y2 : y2});
+
+            var d3Rect = d3.select(overlay.node()).append("rect")
+                .style('fill', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.25)')
+                .attr("id", "svg-rectangle-" + drawn_rectangles)
+                .attr("x", x1)
+                .attr("y", y1)
+                .attr("width", x2 - x1)
+                .attr("height", y2 - y1)
+                .attr("stroke-width", 0.001)
+                .attr("label_id", current_label_id)
+                .attr("class", "svg-rectangle current-draw svg-item");
+
+            rectangle_elements.push(d3Rect);
+
+            drawn_rectangles++;
+        }
+        console.log("rectangles: " + JSON.stringify(rectangles));
+
+        var submission_data = {
+            request : "CREATE_RECTANGLES",
+            id_token : id_token,
+            mosaic_id : mosaic_id,
+            label_id : current_label_id,
+            rectangles : rectangles
+        };
+
+        $.ajax({
+            type: 'POST',
+            url: './request.php',
+            data : submission_data,
+            dataType : 'json',
+            success : function(response) {
+                console.log("received response: ");
+                console.log(response);
+                //var response = JSON.parse(responseText);
+
+                if (response.err_msg) {
+                    display_error_modal(response.err_title, response.err_msg);
+                    cancel_drawing();
+                    return;
+                }
+
+                var rectangle_ids = response.rectangle_ids;
+                if (rectangle_ids.length != rectangle_elements.length) {
+                    display_error_modal("Create Rectangles Error", "Internal server error. Number of returned rectangles is not equal to the number of saved rectangles. This should never happen, please contact the administrator");
+                    cancel_drawing();
+                    return;
+                }
+
+                var rectangle_htmls = response.rectangle_htmls;
+                for (var i = 0; i < rectangle_htmls.length; i++) {
+                    $("#marks-card").append(rectangle_htmls[i]);
+                }
+                initialize_mark_buttons();
+                set_mark_coordinates();
+
+                for (var i = 0; i < rectangle_ids.length; i++) {
+                    console.log("setting mark id for rectangle (" + rectangles[i].x1 + ", " + rectangles[i].y2 + ", " + rectangles[i].x2 + ", " + rectangles[i].y2 + ") to " + rectangle_ids[i]);
+                    rectangle_elements[i].attr("rectangle_id", rectangle_ids[i]);
+                }
+
+                $(".cancel-drawing-button").hide();
+                $(".current-draw").removeClass("current-draw");
+                $("#draw-rectangles-button").text("Draw Rectangles");
+
+                drawing_rectangles = false;
+                last_rectangle = null;
+            },
+            error : function(jqXHR, textStatus, errorThrown) {
+                console.log(errorThrown);
+                display_error_modal(textStatus, errorThrown);
+                cancel_drawing();
+            },
+            async: true
+        });
+
+
+    });
+
+    $("#submit-rectangles-textarea:not(.bound)").addClass("bound").keyup(function() {
+        if ($(this).val() === "") {
+            $("#submit-rectangles-alert").removeClass("alert-success");
+            $("#submit-rectangles-alert").addClass("alert-warning");
+            $("#submit-rectangles-alert").html("No inpuit found.");
+
+            $("#submit-rectangles-modal-button").addClass("disabled");
+        } else {
+            var valid_input = true;
+            var error_msg;
+
+            var rectangles = $("#submit-rectangles-textarea").val().split("\n");
+            for (var i = 0; i < rectangles.length; i++) {
+                //console.log("rectangles[" + i + "]: " + rectangles[i]);
+
+                var vals = rectangles[i].split(",");
+
+                if (vals.length != 4) {
+                    valid_input = false;
+                    error_msg = "rectangle " + i + " did not have 4 integer values.";
+                    break;
+                }
+
+                if ( !(Math.floor(vals[0]) == vals[0] && $.isNumeric(vals[0])) ) {
+                    error_msg =  "rectangle " + i + ": first (x1) value '" + vals[0] + "' was not an integer.";
+                    valid_input = false;
+                    break;
+                }
+
+                if ( !(Math.floor(vals[1]) == vals[1] && $.isNumeric(vals[1])) ) {
+                    error_msg =  "rectangle " + i + ": second (y1) value '" + vals[1] + "' was not an integer.";
+                    valid_input = false;
+                    break;
+                }
+
+                if ( !(Math.floor(vals[2]) == vals[2] && $.isNumeric(vals[2])) ) {
+                    error_msg =  "rectangle " + i + ": third (x2) value '" + vals[2] + "' was not an integer.";
+                    valid_input = false;
+                    break;
+                }
+
+                if ( !(Math.floor(vals[3]) == vals[3] && $.isNumeric(vals[3])) ) {
+                    error_msg =  "rectangle " + i + ": fourth (y2) value '" + vals[3] + "' was not an integer.";
+                    valid_input = false;
+                    break;
+                }
+
+            }
+
+            if (valid_input) {
+                $("#submit-rectangles-alert").removeClass("alert-warning");
+                $("#submit-rectangles-alert").addClass("alert-success");
+                $("#submit-rectangles-alert").html("Input is valid!");
+
+                $("#submit-rectangles-modal-button").removeClass("disabled");
+            } else {
+                $("#submit-rectangles-alert").removeClass("alert-success");
+                $("#submit-rectangles-alert").addClass("alert-warning");
+                $("#submit-rectangles-alert").html(error_msg);
+
+                $("#submit-rectangles-modal-button").addClass("disabled");
+            }
+        }    
+    });  
+
+
+
+    $('#import-lines-button').click(function() {
+        $("#submit-lines-csv-alert").removeClass("alert-success");
+        $("#submit-lines-csv-alert").addClass("alert-warning");
+        $("#submit-lines-csv-alert").html("No input found.");
+        $("#submit-lines-csv-modal-button").addClass("disabled");
+        $("#submit-lines-textarea").val("");
+        $("#submit-lines-textarea").attr("placeholder","123,345,243,683\n456,789,203,2983\n678,234,2433,413");
+
+        $('#import-lines-modal').modal();
+
+    });
+
+    $('#import-lines-modal').on('hidden.bs.modal', function () {
+        $("#import-lines-button").removeClass("active");
+    });
+
+    $('#submit-lines-csv-modal-button:not(.bound)').addClass("bound").click(function() {
+        if ($(this).hasClass("disabled")) return;
+
+        var valid_input = true;
+        var lines = [];
+        var line_elements = [];
+
+        var color = hexToRgb(current_label_color);
+
+        var input_lines = $("#submit-lines-textarea").val().split("\n");
+        for (var i = 0; i < input_lines.length; i++) {
+            //console.log("lines[" + i + "]: " + lines[i]);
+
+            var vals = input_lines[i].split(",");
+
+            if (vals.length != 4) {
+                valid_input = false;
+                error_msg = "line " + i + " did not have 4 integer values.";
+                break;
+            }
+
+            if ( !(Math.floor(vals[0]) == vals[0] && $.isNumeric(vals[0])) ) {
+                error_msg =  "line " + i + ": first value '" + vals[0] + "' was not an integer.";
+                valid_input = false;
+                break;
+            }
+
+            if ( !(Math.floor(vals[1]) == vals[1] && $.isNumeric(vals[1])) ) {
+                error_msg =  "line " + i + ": second value '" + vals[1] + "' was not an integer.";
+                valid_input = false;
+                break;
+            }
+
+            if ( !(Math.floor(vals[2]) == vals[2] && $.isNumeric(vals[2])) ) {
+                error_msg =  "line " + i + ": third value '" + vals[2] + "' was not an integer.";
+                valid_input = false;
+                break;
+            }
+
+            if ( !(Math.floor(vals[3]) == vals[3] && $.isNumeric(vals[3])) ) {
+                error_msg =  "line " + i + ": fourth value '" + vals[3] + "' was not an integer.";
+                valid_input = false;
+                break;
+            }
+
+            var x1 = vals[0] / Math.max(mosaic_width, mosaic_height);
+            var y1 = vals[1] / Math.max(mosaic_width, mosaic_height);
+            var x2 = vals[2] / Math.max(mosaic_width, mosaic_height);
+            var y2 = vals[3] / Math.max(mosaic_width, mosaic_height);
+
+            lines.push({x1 : x1, y1 : y1, x2 : x2, y2 : y2});
+
+            var d3Line = d3.select(overlay.node()).append("line")
+                .style('stroke', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.25)')
+                .attr("id", "svg-line-" + drawn_lines)
+                .attr("x1", x1)
+                .attr("y1", y1)
+                .attr("x2", x2)
+                .attr("y2", y2)
+                .attr("stroke-width", 0.001)
+                .attr("label_id", current_label_id)
+                .attr("class", "svg-line current-draw svg-item");
+
+            line_elements.push(d3Line);
+
+            drawn_lines++;
+        }
+        console.log("lines: " + JSON.stringify(lines));
+
+        var submission_data = {
+            request : "CREATE_LINES",
+            id_token : id_token,
+            mosaic_id : mosaic_id,
+            label_id : current_label_id,
+            lines : lines
+        };
+
+        $.ajax({
+            type: 'POST',
+            url: './request.php',
+            data : submission_data,
+            dataType : 'json',
+            success : function(response) {
+                console.log("received response: ");
+                console.log(response);
+                //var response = JSON.parse(responseText);
+
+                if (response.err_msg) {
+                    display_error_modal(response.err_title, response.err_msg);
+                    cancel_drawing();
+                    return;
+                }
+
+                var line_ids = response.line_ids;
+                if (line_ids.length != line_elements.length) {
+                    display_error_modal("Create Points Error", "Internal server error. Number of returned lines is not equal to the number of saved lines. This should never happen, please contact the administrator");
+                    cancel_drawing();
+                    return;
+                }
+
+                var line_htmls = response.line_htmls;
+                for (var i = 0; i < line_htmls.length; i++) {
+                    $("#marks-card").append(line_htmls[i]);
+                }
+                initialize_mark_buttons();
+                set_mark_coordinates();
+
+                for (var i = 0; i < line_ids.length; i++) {
+                    console.log("setting mark id for line (" + lines[i].x1 + ", " + lines[i].y2 + ", " + lines[i].x2 + ", " + lines[i].y2 + ") to " + line_ids[i]);
+                    line_elements[i].attr("line_id", line_ids[i]);
+                }
+
+                $(".cancel-drawing-button").hide();
+                $(".current-draw").removeClass("current-draw");
+                $("#draw-lines-button").text("Draw Lines");
+
+                display_success_modal("Lines Imported Successfully", "Successfully imported " + line_ids.length + " lines.");
+
+                drawing_lines = false;
+                last_line = null;
+            },
+            error : function(jqXHR, textStatus, errorThrown) {
+                console.log(errorThrown);
+                display_error_modal(textStatus, errorThrown);
+                cancel_drawing();
+            },
+            async: true
+        });
+
+
+    });
+
+    $("#submit-lines-textarea:not(.bound)").addClass("bound").keyup(function() {
+        if ($(this).val() === "") {
+            $("#submit-lines-csv-alert").removeClass("alert-success");
+            $("#submit-lines-csv-alert").addClass("alert-warning");
+            $("#submit-lines-csv-alert").html("No inpuit found.");
+
+            $("#submit-lines-csv-modal-button").addClass("disabled");
+        } else {
+            var valid_input = true;
+            var error_msg;
+
+            var lines = $("#submit-lines-textarea").val().split("\n");
+            for (var i = 0; i < lines.length; i++) {
+                //console.log("lines[" + i + "]: " + lines[i]);
+
+                var vals = lines[i].split(",");
+
+                if (vals.length != 4) {
+                    valid_input = false;
+                    error_msg = "line " + i + " did not have 4 integer values.";
+                    break;
+                }
+
+                if ( !(Math.floor(vals[0]) == vals[0] && $.isNumeric(vals[0])) ) {
+                    error_msg =  "line " + i + ": first (x1) value '" + vals[0] + "' was not an integer.";
+                    valid_input = false;
+                    break;
+                }
+
+                if ( !(Math.floor(vals[1]) == vals[1] && $.isNumeric(vals[1])) ) {
+                    error_msg =  "line " + i + ": second (y1) value '" + vals[1] + "' was not an integer.";
+                    valid_input = false;
+                    break;
+                }
+
+                if ( !(Math.floor(vals[2]) == vals[2] && $.isNumeric(vals[2])) ) {
+                    error_msg =  "line " + i + ": third (x2) value '" + vals[2] + "' was not an integer.";
+                    valid_input = false;
+                    break;
+                }
+
+                if ( !(Math.floor(vals[3]) == vals[3] && $.isNumeric(vals[3])) ) {
+                    error_msg =  "line " + i + ": fourth (y2) value '" + vals[3] + "' was not an integer.";
+                    valid_input = false;
+                    break;
+                }
+
+            }
+
+            if (valid_input) {
+                $("#submit-lines-csv-alert").removeClass("alert-warning");
+                $("#submit-lines-csv-alert").addClass("alert-success");
+                $("#submit-lines-csv-alert").html("Input is valid!");
+
+                $("#submit-lines-csv-modal-button").removeClass("disabled");
+            } else {
+                $("#submit-lines-csv-alert").removeClass("alert-success");
+                $("#submit-lines-csv-alert").addClass("alert-warning");
+                $("#submit-lines-csv-alert").html(error_msg);
+
+                $("#submit-lines-csv-modal-button").addClass("disabled");
+            }
+        }    
+    });  
+
+
+    $('#import-points-button').click(function() {
+        $("#submit-points-alert").removeClass("alert-success");
+        $("#submit-points-alert").addClass("alert-warning");
+        $("#submit-points-alert").html("No input found.");
+        $("#submit-points-csv-modal-button").addClass("disabled");
+        $("#submit-points-textarea").val("");
+        $("#submit-points-textarea").attr("placeholder","123,345\n456,789\n678,234");
+
+        $('#import-points-modal').modal();
+
+    });
+
+    $('#import-points-modal').on('hidden.bs.modal', function () {
+        $("#import-points-button").removeClass("active");
+    });
+
+    $('#submit-points-csv-modal-button:not(.bound)').addClass("bound").click(function() {
+        if ($(this).hasClass("disabled")) return;
+
+        var valid_input = true;
+        var points = [];
+        var point_elements = [];
+
+        var color = hexToRgb(current_label_color);
+
+        var lines = $("#submit-points-textarea").val().split("\n");
+        for (var i = 0; i < lines.length; i++) {
+            //console.log("lines[" + i + "]: " + lines[i]);
+
+            var vals = lines[i].split(",");
+
+            if (vals.length != 2) {
+                valid_input = false;
+                error_msg = "line " + i + " did not have two integer values.";
+                break;
+            }
+
+            if ( !(Math.floor(vals[0]) == vals[0] && $.isNumeric(vals[0])) ) {
+                error_msg =  "line " + i + ": first value '" + vals[0] + "' was not an integer.";
+                valid_input = false;
+                break;
+            }
+
+            if ( !(Math.floor(vals[1]) == vals[1] && $.isNumeric(vals[1])) ) {
+                error_msg =  "line " + i + ": second value '" + vals[1] + "' was not an integer.";
+                valid_input = false;
+                break;
+            }
+            var cx = vals[0] / Math.max(mosaic_width, mosaic_height);
+            var cy = vals[1] / Math.max(mosaic_width, mosaic_height);
+            var radius = POINT_RADIUS;
+
+            points.push({cx : cx, cy : cy, radius : radius});
+
+            var d3Circle = d3.select(overlay.node()).append("circle")
+                .style('fill', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.25)')
+                .attr("id", "svg-circle-" + drawn_points)
+                .attr("cx", cx)
+                .attr("cy", cy)
+                .attr("r", radius)
+                .attr("label_id", current_label_id)
+                .attr("class", "svg-circle current-draw svg-item");
+
+            point_elements.push(d3Circle);
+
+            drawn_points++;
+        }
+        console.log("points: " + JSON.stringify(points));
+
+        var submission_data = {
+            request : "CREATE_POINTS",
+            id_token : id_token,
+            mosaic_id : mosaic_id,
+            label_id : current_label_id,
+            points : points
+        };
+
+        $.ajax({
+            type: 'POST',
+            url: './request.php',
+            data : submission_data,
+            dataType : 'json',
+            success : function(response) {
+                console.log("received response: ");
+                console.log(response);
+                //var response = JSON.parse(responseText);
+
+                if (response.err_msg) {
+                    display_error_modal(response.err_title, response.err_msg);
+                    cancel_drawing();
+                    return;
+                }
+
+                var point_ids = response.point_ids;
+                if (point_ids.length != point_elements.length) {
+                    display_error_modal("Create Points Error", "Internal server error. Number of returned points is not equal to the number of saved points. This should never happen, please contact the administrator");
+                    cancel_drawing();
+                    return;
+                }
+
+                var point_htmls = response.point_htmls;
+                for (var i = 0; i < point_htmls.length; i++) {
+                    $("#marks-card").append(point_htmls[i]);
+                }
+                initialize_mark_buttons();
+                set_mark_coordinates();
+
+                for (var i = 0; i < point_ids.length; i++) {
+                    console.log("setting mark id for point (" + points[i].cx + ", " + points[i].cy + ", " + points[i].radius + ") to " + point_ids[i]);
+                    point_elements[i].attr("point_id", point_ids[i]);
+                }
+
+                $(".cancel-drawing-button").hide();
+                $(".current-draw").removeClass("current-draw");
+                $("#draw-points-button").text("Draw Points");
+
+                display_success_modal("Points Imported Successfully", "Successfully imported " + point_ids.length + " points.");
+
+                drawing_points = false;
+                last_point = null;
+            },
+            error : function(jqXHR, textStatus, errorThrown) {
+                console.log(errorThrown);
+                display_error_modal(textStatus, errorThrown);
+                cancel_drawing();
+            },
+            async: true
+        });
+
+
+    });
+
+    $("#submit-points-textarea:not(.bound)").addClass("bound").keyup(function() {
+        if ($(this).val() === "") {
+            $("#submit-points-alert").removeClass("alert-success");
+            $("#submit-points-alert").addClass("alert-warning");
+            $("#submit-points-alert").html("No inpuit found.");
+
+            $("#submit-points-csv-modal-button").addClass("disabled");
+        } else {
+            var valid_input = true;
+            var error_msg;
+
+            var lines = $("#submit-points-textarea").val().split("\n");
+            for (var i = 0; i < lines.length; i++) {
+                //console.log("lines[" + i + "]: " + lines[i]);
+
+                var vals = lines[i].split(",");
+
+                if (vals.length != 2) {
+                    valid_input = false;
+                    error_msg = "line " + i + " did not have two integer values.";
+                    break;
+                }
+
+                if ( !(Math.floor(vals[0]) == vals[0] && $.isNumeric(vals[0])) ) {
+                    error_msg =  "line " + i + ": first value '" + vals[0] + "' was not an integer.";
+                    valid_input = false;
+                    break;
+                }
+
+                if ( !(Math.floor(vals[1]) == vals[1] && $.isNumeric(vals[1])) ) {
+                    error_msg =  "line " + i + ": second value '" + vals[1] + "' was not an integer.";
+                    valid_input = false;
+                    break;
+                }
+            }
+
+            if (valid_input) {
+                $("#submit-points-alert").removeClass("alert-warning");
+                $("#submit-points-alert").addClass("alert-success");
+                $("#submit-points-alert").html("Input is valid!");
+
+                $("#submit-points-csv-modal-button").removeClass("disabled");
+            } else {
+                $("#submit-points-alert").removeClass("alert-success");
+                $("#submit-points-alert").addClass("alert-warning");
+                $("#submit-points-alert").html(error_msg);
+
+                $("#submit-points-csv-modal-button").addClass("disabled");
+            }
+        }    
+    });  
+
+
+
 
     $('#draw-points-button').click(function() {
         if ($(this).attr("aria-pressed") === "false") {
@@ -895,7 +2325,7 @@ function initialize_openseadragon(tiles_url, channels, height, width, marks) {
                     set_mark_coordinates();
 
                     for (var i = 0; i < line_ids.length; i++) {
-                        console.log("setting mark id for line (" + lines[i].cx + ", " + lines[i].cy + ", " + lines[i].radius + ") to " + line_ids[i]);
+                        console.log("setting mark id for line (" + lines[i].x1 + ", " + lines[i].y2 + ", " + lines[i].x2 + ", " + lines[i].y2 + ") to " + line_ids[i]);
                         line_elements[i].attr("line_id", line_ids[i]);
                     }
 
@@ -916,6 +2346,105 @@ function initialize_openseadragon(tiles_url, channels, height, width, marks) {
 
         }
     });
+
+    $('#draw-rectangles-button').click(function() {
+        if ($(this).attr("aria-pressed") === "false") {
+            $(".cancel-drawing-button").show();
+            $(this).text("Save Rectangles");
+
+            drawing_points = false;
+            drawing_polygon = false;
+            drawing_rectangles = true;
+
+            last_point = null;
+        } else {
+            //drawing finished
+
+            var rectangles = [];
+            var rectangle_elements = [];
+            $(".current-draw").each(function() {
+                rectangle_elements.push($(this));
+
+                var x1 = $(this).attr("x1");
+                var x2 = $(this).attr("x2");
+                var y1 = $(this).attr("y1");
+                var y2 = $(this).attr("y2");
+
+                console.log("rectangle: " + x1 + ", " + x2 + ", " + y1 + ", " + y2);
+
+                rectangles.push({
+                    x1 : x1,
+                    x2 : x2,
+                    y1 : y1,
+                    y2 : y2
+                });
+
+            });
+
+            //console.log(rectangles);
+            //console.log(rectangle_elements);
+
+            var submission_data = {
+                request : "CREATE_RECTANGLES",
+                id_token : id_token,
+                mosaic_id : mosaic_id,
+                label_id : current_label_id,
+                rectangles : rectangles
+            };
+
+            $.ajax({
+                type: 'POST',
+                url: './request.php',
+                data : submission_data,
+                dataType : 'json',
+                success : function(response) {
+                    console.log("received response: ");
+                    console.log(response);
+                    //var response = JSON.parse(responseText);
+
+                    if (response.err_msg) {
+                        display_error_modal(response.err_title, response.err_msg);
+                        cancel_drawing();
+                        return;
+                    }
+
+                    var rectangle_ids = response.rectangle_ids;
+                    if (rectangle_ids.length != rectangle_elements.length) {
+                        display_error_modal("Create Rectangles Error", "Internal server error. Number of returned rectangles is not equal to the number of saved rectangles. This should never happen, please contact the administrator");
+                        cancel_drawing();
+                        return;
+                    }
+
+                    var rectangle_htmls = response.rectangle_htmls;
+                    for (var i = 0; i < rectangle_htmls.length; i++) {
+                        $("#marks-card").append(rectangle_htmls[i]);
+                    }
+                    initialize_mark_buttons();
+                    set_mark_coordinates();
+
+                    for (var i = 0; i < rectangle_ids.length; i++) {
+                        console.log("setting mark id for rectangle (" + rectangles[i].x1 + ", " + rectangles[i].y2 + ", " + rectangles[i].x2 + ", " + rectangles[i].y2 + ") to " + rectangle_ids[i]);
+                        rectangle_elements[i].attr("rectangle_id", rectangle_ids[i]);
+                    }
+
+                    $(".cancel-drawing-button").hide();
+                    $(".current-draw").removeClass("current-draw");
+                    $("#draw-rectangles-button").text("Draw Rectangles");
+
+                    drawing_rectangles = false;
+                    last_point = null;
+                },
+                error : function(jqXHR, textStatus, errorThrown) {
+                    console.log(errorThrown);
+                    display_error_modal(textStatus, errorThrown);
+                    cancel_drawing();
+                },
+                async: true
+            });
+
+        }
+    });
+
 
     $('#draw-polygon-button').click(function() {
         if ($(this).attr("aria-pressed") === "false") {
@@ -973,7 +2502,7 @@ function initialize_openseadragon(tiles_url, channels, height, width, marks) {
                     $("#draw-polygon-button").text("Draw Polygon");
 
                     var color = hexToRgb(current_label_color);
-                    var d3Polygon = d3.select(overlay.node()).append("polygon")
+                    var d3polygon = d3.select(overlay.node()).append("polygon")
                         .style('fill', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.25)')
                         .attr("points", points_str)
                         .attr("stroke-width", 0.001)
@@ -1013,6 +2542,9 @@ function initialize_mosaic(responseText) {
     console.log("received initialize mosaic response: " + responseText);
     var response = JSON.parse(responseText);
 
+    console.log("SETTING BRAND TO: " + response.mosaic_name);
+    $("a#brand").text(response.mosaic_name);
+
     var mosaic_info = response.mosaic_info;
     console.log(mosaic_info);
     utm_zone = mosaic_info.utm_zone;
@@ -1041,6 +2573,9 @@ function initialize_mosaic(responseText) {
         console.log("SETTING NAVBAR CONTENT");
         $("#navbar-content").html(response.navbar);
     }
+
+    mosaic_height = response.height;
+    mosaic_width = response.width;
 
     initialize_openseadragon(response.mosaic_url, response.channels, response.height, response.width, response.marks);
 
@@ -1187,200 +2722,6 @@ function initialize_mosaic(responseText) {
         set_mark_coordinates();
     });
 
-    $(".create-label-nav").click(function() {
-        $("#create-label-modal-button").addClass("disabled");
-        $(".label-type-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
-        $("#create-label-modal").modal();
-    });
-
-    $(".label-type-button").click(function() {
-        $(".label-type-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
-        $(this).addClass("active").addClass("btn-secondary").removeClass("btn-outline-secondary");
-
-        var val = $.trim( $("#label-name-text-input").val() );
-        if (val != "") {
-            $("#create-label-modal-button").removeClass("disabled");
-        } else {
-            $("#create-label-modal-button").addClass("disabled");
-        }
-    });
-
-    $("#label-name-text-input").on("propertychange change click keyup input paste", function() {
-        var val = $.trim( $(this).val() );
-
-        if (val != "" && $(".label-type-button.active").length ) {
-            $("#create-label-modal-button").removeClass("disabled");
-        } else {
-            $("#create-label-modal-button").addClass("disabled");
-        }
-    });
-
-    $("#create-label-modal-button").click(function() {
-        if ($(this).hasClass("disabled")) return;
-        $(this).addClass("disabled");
-
-        var name = $.trim( $("#label-name-text-input").val() );
-        var type = $(".label-type-button.active").text().toUpperCase().slice(0,-1);
-        var color = $("#html5colorpicker").val();
-
-        console.log("name: '" + name + "'");
-        console.log("type: '" + type + "'");
-        console.log("color: '" + color + "'");
-
-        var submission_data = {
-            request : "CREATE_LABEL",
-            id_token : id_token,
-            mosaic_id : mosaic_id,
-            label_name : name,
-            label_type : type,
-            label_color : color
-        };
-
-        $.ajax({
-            type: 'POST',
-            url: './request.php',
-            data : submission_data,
-            dataType : 'text',
-            success : function(responseText) {
-                console.log("received response: " + responseText);
-                var response = JSON.parse(responseText);
-
-                $("#create-label-modal").modal('hide');
-
-                if (response.err_msg) {
-                    display_error_modal(response.err_title, response.err_msg);
-                } else {
-                    var label_id = response.label_id;
-                    var label_name = response.label_name;
-                    var label_type = response.label_type;
-                    var label_color = response.label_color;
-
-                    $("#labels-card").show();
-
-                    var list_html = "<a href='javascript:void(0);' label_id='" + label_id + "' label_type='" + label_type + "' label_name='" + label_name + "' label_color='" + label_color + "' class='label-list-item list-group-item list-group-item-action' style='margin: 0 -1 0 -1;' >" + label_name + "</a>";
-                    $("#labels-card > .list-group").append(list_html);
-
-                    var option_html = "<option label_id='" + label_id + "' label_type='" + label_type + "' label_name='" + label_name + "' label_color='" + label_color + "'>" + label_name + "</option>";
-                    $("#mark-label-select").append(option_html);
-                    initialize_labels();
-                }
-
-            },
-            error : function(jqXHR, textStatus, errorThrown) {
-                console.log(errorThrown);
-                display_error_modal(textStatus, errorThrown);
-
-            },
-            async: true
-        });
-    });
-
-    $(".remove-label-nav").click(function() {
-        $("#remove-label-modal-button").addClass("disabled");
-
-        var buttons_html = "";
-
-        $(".label-list-item").each(function() {
-            var label_id = $(this).attr("label_id");
-            var label_name = $(this).attr("label_name");
-            var label_color = $(this).attr("label_color");
-
-            buttons_html += "<button type='button' label_id='" + label_id + "' label_name='" + label_name + "' label_color='" + label_color + "' class='remove-label-group-button label-type-button btn btn-small btn-outline-secondary' data-toggle='button' aria-pressed='false'>" + label_name + "</button>";
-        });
-        $("#remove-modal-button-group").html(buttons_html);
-
-        //initialize the buttons
-        $(".remove-label-group-button:not(.bound)").addClass("bound").click(function() {
-            $(".remove-label-group-button").removeClass("active");
-            $(this).addClass("active");
-            $("#remove-label-modal-button").removeClass("disabled");
-
-            $(".remove-label-group-button").css("background-color", "#fff");
-            $(".remove-label-group-button").css("border-color", 'rgba(0,0,0,0.125)');
-            $(".remove-label-group-button").css("color", "#495057")
-
-            var color = hexToRgb($(this).attr("label_color"));
-            $(this).css("background-color", 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.25)');
-            $(this).css("border-color", 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',1)');
-            $(this).css("color", "#495057")
-        });
-
-        $(".remove-label-group-button").hover(function() {
-            var color = hexToRgb($(this).attr("label_color"));
-            $(this).css("background-color", 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.25)');
-            $(this).css("border-color", 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',1)');
-            $(this).css("color", "#495057")
-        }, function() {
-            if (!$(this).hasClass("active")) {
-                $(this).css("background-color", "#fff");
-                $(this).css("border-color", 'rgba(0,0,0,0.125)');
-                $(this).css("color", "#495057")
-            }
-        });
-
-        $(".remove-label-group-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
-        $("#remove-label-modal").modal();
-    });
-
-    $("#remove-label-modal-button").click(function() {
-        if ($(this).hasClass("disabled")) return;
-
-        var label_id = $(".remove-label-group-button.active").attr("label_id");
-        var label_name = $(".remove-label-group-button.active").attr("label_name");
-        console.log("removing label with id: " + label_id);
-
-        var submission_data = {
-            request : "REMOVE_LABEL",
-            id_token : id_token,
-            mosaic_id : mosaic_id,
-            label_id : label_id,
-            label_name : label_name
-        };
-
-        $.ajax({
-            type: 'POST',
-            url: './request.php',
-            data : submission_data,
-            dataType : 'text',
-            success : function(responseText) {
-                console.log("received response: " + responseText);
-                var response = JSON.parse(responseText);
-
-                $("#remove-label-modal").modal('hide');
-
-                if (response.err_msg) {
-                    display_error_modal(response.err_title, response.err_msg);
-                } else {
-                    var label_id = response.label_id;
-                    var label_name = response.label_name;
-
-                    $(".line-mark[label_id='" + label_id + "']").remove();
-                    $(".point-mark[label_id='" + label_id + "']").remove();
-                    $(".polygon-mark[label_id='" + label_id + "']").remove();
-
-                    $(".svg-item[label_id='" + label_id + "']").remove();
-                    $(".label-list-item[label_id='" + label_id + "']").remove();
-
-                    if ($("#mark-label-select").val() == label_name) {
-                        cancel_drawing();
-                        $("#polygon-marking").hide();
-                        $("#lines-marking").hide();
-                        $("#points-marking").hide();
-                    }
-                    $("#mark-label-select > option[label_id='" + label_id + "']").remove();
-                }
-
-            },
-            error : function(jqXHR, textStatus, errorThrown) {
-                console.log(errorThrown);
-                display_error_modal(textStatus, errorThrown);
-
-            },
-            async: true
-        });
-    });
-
-
     $("#mark-label-select").change(function() {
         var label_name = this.value;
         console.log("changed mark-label-select to: " + label_name);
@@ -1397,16 +2738,21 @@ function initialize_mosaic(responseText) {
         console.log("selected label " + current_label_id + ", '" + current_label_name + "', " + current_label_type + ", " + current_label_color);
 
         $("#polygon-marking").hide();
+        $("#rectangle-marking").hide();
         $("#lines-marking").hide();
         $("#points-marking").hide();
 
         $(".point-mark").hide();
         $(".line-mark").hide();
+        $(".rectangle-mark").hide();
         $(".polygon-mark").hide();
 
         if (current_label_type == 'POLYGON') {
             $("#polygon-marking").show();
             $(".polygon-mark[label_id='" + current_label_id + "']").show();
+        } else if (current_label_type == 'RECTANGLE') {
+            $("#rectangle-marking").show();
+            $(".rectangle-mark[label_id='" + current_label_id + "']").show();
         } else if (current_label_type == 'LINE') {
             $("#lines-marking").show();
             $(".line-mark[label_id='" + current_label_id + "']").show();

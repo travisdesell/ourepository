@@ -21,6 +21,111 @@
         <ul class="navbar-nav">
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="actionsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Labels
+                </a>
+                <!--
+                <a id="dLabel" role="button" data-toggle="dropdown" class="nav-link dropdown-toggle" data-target="#" href="#">
+                    Dropdown <span class="caret"></span>
+                </a>
+                -->
+                <ul class="dropdown-menu multi-level" role="menu" aria-labelledby="dropdownMenu">
+                    <li> <a id="create-label-nav" class="dropdown-item" href="javascript:void(0)">Create Label</a> </li>
+
+                    <li class="dropdown-submenu"><a class="dropdown-item dropdown-toggle" href="#">Modify Label</a>
+                        <ul class="dropdown-menu scrollable-menu">
+                            <h6 class="dropdown-header">Points</h6>
+
+                            <div class="dropdown-points-labels modify-label">
+                                {{#points}}
+                                {{#writeable}}
+                                <a href="javascript:void(0);" label_id='{{label_id}}' label_type='{{label_type}}' label_name='{{label_name}}' label_color='{{label_color}}' class="modify-label-nav dropdown-item" style="margin: 0 0 0 0; background-color:rgba({{color_r}},{{color_g}},{{color_b}},0.25); border-color:rgba({{color_r}},{{color_g}},{{color_b}},1);" >{{label_name}}</a> 
+                                {{/writeable}}
+                                {{/points}}
+                            </div>
+
+                            <div class="dropdown-divider"></div>
+                            <h6 class="dropdown-header">Lines</h6>
+
+                            <div class="dropdown-lines-labels modify-label">
+                                {{#lines}}
+                                {{#writeable}}
+                                <a href="javascript:void(0);" label_id='{{label_id}}' label_type='{{label_type}}' label_name='{{label_name}}' label_color='{{label_color}}' class="modify-label-nav dropdown-item" style="margin: 0 0 0 0; background-color:rgba({{color_r}},{{color_g}},{{color_b}},0.25); border-color:rgba({{color_r}},{{color_g}},{{color_b}},1);" >{{label_name}}</a>
+                                {{/writeable}}
+                                {{/lines}}
+                            </div>
+
+                            <div class="dropdown-divider"></div>
+                            <h6 class="dropdown-header">Rectangles</h6>
+
+                            <div class="dropdown-rectangles-labels modify-label">
+                                {{#rectangles}}
+                                {{#writeable}}
+                                <a href="javascript:void(0);" label_id='{{label_id}}' label_type='{{label_type}}' label_name='{{label_name}}' label_color='{{label_color}}' class="modify-label-nav dropdown-item" style="margin: 0 0 0 0; background-color:rgba({{color_r}},{{color_g}},{{color_b}},0.25); border-color:rgba({{color_r}},{{color_g}},{{color_b}},1);" >{{label_name}}</a>
+                                {{/writeable}}
+                                {{/rectangles}}
+                            </div>
+
+                            <div class="dropdown-divider"></div>
+                            <h6 class="dropdown-header">Polygons</h6>
+
+                            <div class="dropdown-polygons-labels modify-label">
+                                {{#polygons}}
+                                {{#writeable}}
+                                <a href="javascript:void(0);" label_id='{{label_id}}' label_type='{{label_type}}' label_name='{{label_name}}' label_color='{{label_color}}' class="modify-label-nav dropdown-item" style="margin: 0 0 0 0; background-color:rgba({{color_r}},{{color_g}},{{color_b}},0.25); border-color:rgba({{color_r}},{{color_g}},{{color_b}},1);" >{{label_name}}</a>
+                                {{/writeable}}
+                                {{/polygons}}
+                            </div>
+
+                        </ul>
+                    </li>
+
+                    <li class="dropdown-submenu"><a class="dropdown-item dropdown-toggle" href="#">Remove Label</a>
+                        <ul class="dropdown-menu scrollable-menu">
+                            <h6 class="dropdown-header">Points</h6>
+
+                            <div class="dropdown-points-labels remove-label">
+                                {{#points}}
+                                <a href="javascript:void(0);" label_id='{{label_id}}' label_type='{{label_type}}' label_name='{{label_name}}' label_color='{{label_color}}' class="remove-label-nav dropdown-item" style="margin: 0 0 0 0; background-color:rgba({{color_r}},{{color_g}},{{color_b}},0.25); border-color:rgba({{color_r}},{{color_g}},{{color_b}},1);" >{{label_name}}</a> 
+                                {{/points}}
+                            </div>
+
+                            <div class="dropdown-divider"></div>
+                            <h6 class="dropdown-header">Lines</h6>
+
+                            <div class="dropdown-lines-labels remove-label">
+                                {{#lines}}
+                                <a href="javascript:void(0);" label_id='{{label_id}}' label_type='{{label_type}}' label_name='{{label_name}}' label_color='{{label_color}}' class="remove-label-nav dropdown-item" style="margin: 0 0 0 0; background-color:rgba({{color_r}},{{color_g}},{{color_b}},0.25); border-color:rgba({{color_r}},{{color_g}},{{color_b}},1);" >{{label_name}}</a>
+                                {{/lines}}
+                            </div>
+
+                            <div class="dropdown-divider"></div>
+                            <h6 class="dropdown-header">Rectangles</h6>
+
+                            <div class="dropdown-rectangles-labels remove-label">
+                                {{#rectangles}}
+                                <a href="javascript:void(0);" label_id='{{label_id}}' label_type='{{label_type}}' label_name='{{label_name}}' label_color='{{label_color}}' class="remove-label-nav dropdown-item" style="margin: 0 0 0 0; background-color:rgba({{color_r}},{{color_g}},{{color_b}},0.25); border-color:rgba({{color_r}},{{color_g}},{{color_b}},1);" >{{label_name}}</a>
+                                {{/rectangles}}
+                            </div>
+
+                            <div class="dropdown-divider"></div>
+                            <h6 class="dropdown-header">Polygons</h6>
+
+                            <div class="dropdown-polygons-labels remove-label">
+                                {{#polygons}}
+                                <a href="javascript:void(0);" label_id='{{label_id}}' label_type='{{label_type}}' label_name='{{label_name}}' label_color='{{label_color}}' class="remove-label-nav dropdown-item" style="margin: 0 0 0 0; background-color:rgba({{color_r}},{{color_g}},{{color_b}},0.25); border-color:rgba({{color_r}},{{color_g}},{{color_b}},1);" >{{label_name}}</a>
+                                {{/polygons}}
+                            </div>
+
+                        </ul>
+                    </li>
+
+
+                </ul>
+            </li>
+
+ 
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="actionsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     Organize
                 </a>
                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="actionsDropdown">
@@ -32,7 +137,7 @@
 
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="actionsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    Actions
+                    Sharing
                 </a>
                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="actionsDropdown">
                     <a id="share-card-nav" class="dropdown-item" href="javascript:void(0)">Share</a>
@@ -48,6 +153,144 @@
  
     </div>
 </nav>
+
+<div id='remove-label-modal' class='modal' tabindex='-1' role='dialog'>
+    <div class='modal-dialog' role='document'>
+        <div class='modal-content'>
+            <div class='modal-header'>
+                <h5 id='remove-label-modal-title' class='modal-title'>Remove Label Access</h5>
+                <button type='button' class='close' data-dismiss='modal' aria-label='Close'>
+                    <span aria-hidden='true'>&times;</span>
+                </button>
+            </div>
+            <div id='remove-label-modal-body' class='modal-body'>
+                <p>Modal body text goes here.</p>
+            </div>
+            <div class='modal-footer'>
+                <button id="remove-label-modal-button" type='button' class='btn btn-danger pull-right' data-dismiss='modal'>Remove</button>
+                <button type='button' class='btn btn-secondary' data-dismiss='modal'>Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="submit-label-message" class='container-fluid fixed-message' style='padding-top:15px; display:none;'>
+    <div class='row'>
+        <div class='col-sm-12'>
+
+            <div class='card border-info text-info' style='vertical-align: middle; padding:4 8 8 8; margin-bottom:5px;'>
+                <div class='row' style='padding-top:5px;'>
+                    <div class='col-sm-6'>
+
+                        <div class='container-fluid'>
+                            <div class='row'>
+                                <div class='col-sm-2' style='padding:7 0 0 0;'>
+                                    Name:
+                                </div>
+                                <div class='col-sm-10' style='padding:0;'>
+                                    <input type="text" class="form-control" id='submit-label-name-text-input' placeholder="New Label Name" aria-label="{{label_name}}" aria-describedby="basic-addon2" style='width:100%;'>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr style='margin:8 0 8 0;'>
+
+                        <div class='container-fluid'>
+                            <div class='row'>
+                                <div class='col-sm-2' style='padding:7 0 0 0;'>
+                                    Type:
+                                </div>
+                                <div class='col-sm-10' style='padding:0;'>
+                                    <div class="btn-group btn-group-toggle d-flex" role="group">
+                                        <button type='radio' id='submit-label-type-point' type="button" class="btn submit-label-select-type btn-outline-secondary w-100">Points</button>
+                                        <button type='radio' id='submit-label-type-line' type="button" class="btn submit-label-select-type btn-outline-secondary w-100">Lines</button>
+                                        <button type='radio' id='submit-label-type-rectangle' type="button" class="btn submit-label-select-type btn-outline-secondary w-100">Rectangles</button>
+                                        <button type='radio' id='submit-label-type-polygon'type="button" class="btn submit-label-select-type btn-outline-secondary w-100">Polygons</button>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr style='margin:8 0 8 0;'>
+
+                        <div class='container-fluid'>
+                            <div class='row'>
+                                <div class='col-sm-2' style='padding:0;'>
+                                    Color:
+                                </div>
+                                <div class='col-sm-10' style='padding:0;'>
+                                    <input type="color" id="submit-label-color-picker" style="width:100%;"/>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+
+                    <div class='col-sm-6'>
+
+                        <div class='container-fluid'>
+                            <div class='row'>
+                                <div class='col-sm-2' style='padding:7 0 0 0;'>
+                                    Share with:
+                                </div>
+                                <div class='col-sm-10' style='padding:0;'>
+                                    <div class="input-group mb-3">
+                                        <input type="text" id="submit-label-share-text-input" class="form-control" placeholder="Recipient's E-mail" aria-label="Recipient's username" aria-describedby="basic-addon2" list="email-list-selector">
+
+                                        <datalist id="email-list-selector">
+                                            {{#users}}
+                                            <option value="{{email}}"></option>
+                                            {{/users}}
+                                        </datalist>
+
+                                        <div class="input-group-append">
+                                            <button id="submit-label-add-email-button" class="btn btn-outline-secondary" type="button" style='padding:10 12 10 12;'>
+                                                <i class='fa fa-plus'></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+
+                                    <ul id="submit-label-email-list" email-count='0' class="list-group">
+                                    </ul>
+
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div> <!-- row -->
+
+                <div class='row'>
+                    <div class='col-sm-12'>
+                        <hr style='margin:8 0 8 0;'>
+                   </div>
+                </div>
+
+                <div class='row'>
+
+                    <div class='col-sm-6'>
+                        <h5 id='help-message' class='card-title' style='padding-top:7px; margin-bottom:0px;'>Select mosaics this label applies to:</h5>
+                    </div>
+
+                    <div class='col-sm-6'>
+                        <button type="button" class="unselect-all-button btn btn-small btn-secondary" data-toggle="button" aria-pressed="false" style="margin-right:5px;">Unselect All</button>
+                        <button type="button" class="select-all-button btn btn-small btn-secondary" data-toggle="button" aria-pressed="false" style="margin-right:5px;">Select All</button>
+                        <button type="button" class="invert-select-button btn btn-small btn-secondary" data-toggle="button" aria-pressed="false">Invert</button>
+
+                        <button type="button" class="cancel-select-button btn btn-small btn-secondary pull-right" data-toggle="button" aria-pressed="false">Cancel</button>
+                        <button type="button" id="submit-label-button" class="btn btn-small btn-primary pull-right disabled" data-toggle="button" aria-pressed="false" style="margin-right:10px;">Create</button>
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- col-sm-12 -->
+    </div> <!-- row -->
+</div> <!-- container -->
 
 
 <div id="share-message" class='container-fluid fixed-message' style='padding-top:15px; display:none;'>

@@ -78,6 +78,44 @@ function create_lines($user_id, $mosaic_id, $label_id, $lines) {
     echo json_encode($response);
 }
 
+function create_rectangles($user_id, $mosaic_id, $label_id, $rectangles) {
+    global $our_db, $cwd;
+
+    $rectangle_ids = array();
+    foreach ($rectangles as $rectangle) {
+        $x1 = $our_db->real_escape_string($rectangle['x1']);
+        $x2 = $our_db->real_escape_string($rectangle['x2']);
+        $y1 = $our_db->real_escape_string($rectangle['y1']);
+        $y2 = $our_db->real_escape_string($rectangle['y2']);
+
+        //seems like rectangles is a reserved word in mysql so we have to ` escape it
+        $query = "INSERT INTO `rectangles` SET owner_id = $user_id, mosaic_id = $mosaic_id, label_id = $label_id, x1 = $x1, x2 = $x2, y1 = $y1, y2 = $y2";
+        error_log($query);
+        query_our_db($query);
+        $rectangle_id = $our_db->insert_id;
+        $rectangle_ids[] = $rectangle_id;
+
+        $rectangle = array(
+            'label_id' => $label_id,
+            'rectangle_id' => $rectangle_id,
+            'x1' => $x1,
+            'y1' => $y1,
+            'x2' => $x2,
+            'y2' => $y2,
+            'visible' => true
+        );
+        $rectangle_template = file_get_contents($cwd[__FILE__] . "/templates/rectangle_template.html");
+        $m = new Mustache_Engine;
+        $rectangle_htmls[] = $m->render($rectangle_template, $rectangle);
+    }
+
+    $response['rectangle_ids'] = $rectangle_ids;
+    $response['rectangle_htmls'] = $rectangle_htmls;
+
+    echo json_encode($response);
+}
+
+
 function create_polygon_points($points_str) {
     $points = array();
 
@@ -85,6 +123,8 @@ function create_polygon_points($points_str) {
 
     $n = 1;
     foreach($p_array as $p) {
+        if ($p == '') continue;
+
         $vals = explode(',', $p);
         $x = $vals[0];
         $y = $vals[1];
@@ -126,10 +166,35 @@ function create_polygon($user_id, $mosaic_id, $label_id, $points_str) {
     echo json_encode($response);
 }
 
-function remove_point($user_id, $mosaic_id, $point_id) {
+function check_label_access($user_id, $label_id, $type) {
+    $query = "SELECT access FROM label_access WHERE label_id = $label_id AND user_id = $user_id";
+    error_log($query);
+    $result = query_our_db($query);
+    $row = $result->fetch_assoc();
+
+    if ($row == NULL) {
+        $response['err_title'] = "Remove " . ucwords($type) . " Error";
+        $response['err_msg'] = "Could not remove the $type because you do not have access to this label.";
+        echo json_encode($response);
+        return false;
+    }
+
+    if ($row['access'] != "O" && $row['access'] != "RW") {
+        $response['err_title'] = "Remove " . ucwords($type) . " Error";
+        $response['err_msg'] = "Could not remove the $type because you do not have write access to this label.";
+        echo json_encode($response);
+        return false;
+    }
+
+    return true;
+}
+
+function remove_point($user_id, $label_id, $mosaic_id, $point_id) {
     global $our_db, $cwd;
 
-    $query = "DELETE FROM points WHERE owner_id = $user_id AND mosaic_id = $mosaic_id AND point_id = $point_id";
+    if (!check_label_access($user_id, $label_id, "point")) return;
+
+    $query = "DELETE FROM points WHERE mosaic_id = $mosaic_id AND point_id = $point_id";
     error_log($query);
     query_our_db($query);
 
@@ -138,10 +203,12 @@ function remove_point($user_id, $mosaic_id, $point_id) {
     echo json_encode($response);
 }
 
-function remove_line($user_id, $mosaic_id, $line_id) {
+function remove_line($user_id, $label_id, $mosaic_id, $line_id) {
     global $our_db, $cwd;
 
-    $query = "DELETE FROM `lines` WHERE owner_id = $user_id AND mosaic_id = $mosaic_id AND line_id = $line_id";
+    if (!check_label_access($user_id, $label_id, "line")) return;
+
+    $query = "DELETE FROM `lines` WHERE mosaic_id = $mosaic_id AND line_id = $line_id";
     error_log($query);
     query_our_db($query);
 
@@ -150,10 +217,27 @@ function remove_line($user_id, $mosaic_id, $line_id) {
     echo json_encode($response);
 }
 
-function remove_polygon($user_id, $mosaic_id, $polygon_id) {
+function remove_rectangle($user_id, $label_id, $mosaic_id, $rectangle_id) {
     global $our_db, $cwd;
 
-    $query = "DELETE FROM polygons WHERE owner_id = $user_id AND mosaic_id = $mosaic_id AND polygon_id = $polygon_id";
+    if (!check_label_access($user_id, $label_id, "rectangle")) return;
+
+    $query = "DELETE FROM `rectangles` WHERE mosaic_id = $mosaic_id AND rectangle_id = $rectangle_id";
+    error_log($query);
+    query_our_db($query);
+
+    $response['success'] = true;
+
+    echo json_encode($response);
+}
+
+
+function remove_polygon($user_id, $label_id, $mosaic_id, $polygon_id) {
+    global $our_db, $cwd;
+
+    if (!check_label_access($user_id, $label_id, "polygon")) return;
+
+    $query = "DELETE FROM polygons WHERE mosaic_id = $mosaic_id AND polygon_id = $polygon_id";
     error_log($query);
     query_our_db($query);
 

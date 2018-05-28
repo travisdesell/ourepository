@@ -207,13 +207,106 @@ function display_index($user_id) {
         $projects['all_mosaics'][] = $mosaic_row;
     }
 
+    $projects['users'] = array();
+
+    $users_result = query_our_db("SELECT email FROM users");
+    while (($users_row = $users_result->fetch_assoc()) != NULL) {
+        $projects['users'][] = $users_row;
+    }
+
+
     $projects_template = file_get_contents($cwd[__FILE__] . "/templates/mosaics_template.html");
 
     $m = new Mustache_Engine;
     $response['html'] = $m->render($projects_template, $projects);
     $response['mosaics'] = $projects['all_mosaics'];
 
-    $response['navbar'] = file_get_contents($cwd[__FILE__] . "/templates/index_navbar.html");
+    $navbar_template = file_get_contents($cwd[__FILE__] . "/templates/index_navbar.html");
+    $navbar_info['points'] = array();
+
+    $labels_result = query_our_db("SELECT labels.* FROM labels INNER JOIN label_access WHERE label_access.label_id = labels.label_id AND label_access.user_id = $user_id AND labels.label_type = 'POINT' ORDER BY labels.label_name");
+    while (($labels_row = $labels_result->fetch_assoc()) != NULL) {
+        if ($labels_row['access'] != "R") $labels_row['writeable'] = 1;
+
+        $color_r = hexdec( substr($labels_row['label_color'], 1, 2) );
+        $color_g = hexdec( substr($labels_row['label_color'], 3, 2) );
+        $color_b = hexdec( substr($labels_row['label_color'], 5, 2) );
+
+        error_log("color " . $labels_row['label_color'] . ", r: $color_r, g: $color_g, b: $color_b");
+
+        $labels_row['color_r'] = $color_r;
+        $labels_row['color_g'] = $color_g;
+        $labels_row['color_b'] = $color_b;
+
+        $navbar_info['points'][] = $labels_row;
+    }
+
+    $navbar_info['lines'] = array();
+
+    $labels_result = query_our_db("SELECT labels.* FROM labels INNER JOIN label_access WHERE label_access.label_id = labels.label_id AND label_access.user_id = $user_id AND labels.label_type = 'LINE' ORDER BY labels.label_name");
+    while (($labels_row = $labels_result->fetch_assoc()) != NULL) {
+        if ($labels_row['access'] != "R") $labels_row['writeable'] = 1;
+
+        $color_r = hexdec( substr($labels_row['label_color'], 1, 2) );
+        $color_g = hexdec( substr($labels_row['label_color'], 3, 2) );
+        $color_b = hexdec( substr($labels_row['label_color'], 5, 2) );
+
+        error_log("color " . $labels_row['label_color'] . ", r: $color_r, g: $color_g, b: $color_b");
+
+        $labels_row['color_r'] = $color_r;
+        $labels_row['color_g'] = $color_g;
+        $labels_row['color_b'] = $color_b;
+
+        $navbar_info['lines'][] = $labels_row;
+    }
+
+    $navbar_info['rectangles'] = array();
+
+    $labels_result = query_our_db("SELECT labels.* FROM labels INNER JOIN label_access WHERE label_access.label_id = labels.label_id AND label_access.user_id = $user_id AND labels.label_type = 'RECTANGLE' ORDER BY labels.label_name");
+    while (($labels_row = $labels_result->fetch_assoc()) != NULL) {
+        if ($labels_row['access'] != "R") $labels_row['writeable'] = 1;
+
+        $color_r = hexdec( substr($labels_row['label_color'], 1, 2) );
+        $color_g = hexdec( substr($labels_row['label_color'], 3, 2) );
+        $color_b = hexdec( substr($labels_row['label_color'], 5, 2) );
+
+        error_log("color " . $labels_row['label_color'] . ", r: $color_r, g: $color_g, b: $color_b");
+
+        $labels_row['color_r'] = $color_r;
+        $labels_row['color_g'] = $color_g;
+        $labels_row['color_b'] = $color_b;
+
+        $navbar_info['rectangles'][] = $labels_row;
+    }
+
+
+    $navbar_info['polygons'] = array();
+
+    $labels_result = query_our_db("SELECT labels.* FROM labels INNER JOIN label_access WHERE label_access.label_id = labels.label_id AND label_access.user_id = $user_id AND labels.label_type = 'POLYGON' ORDER BY labels.label_name");
+    while (($labels_row = $labels_result->fetch_assoc()) != NULL) {
+        if ($labels_row['access'] != "R") $labels_row['writeable'] = 1;
+
+        $color_r = hexdec( substr($labels_row['label_color'], 1, 2) );
+        $color_g = hexdec( substr($labels_row['label_color'], 3, 2) );
+        $color_b = hexdec( substr($labels_row['label_color'], 5, 2) );
+
+        error_log("color " . $labels_row['label_color'] . ", r: $color_r, g: $color_g, b: $color_b");
+
+        $labels_row['color_r'] = $color_r;
+        $labels_row['color_g'] = $color_g;
+        $labels_row['color_b'] = $color_b;
+
+        $navbar_info['polygons'][] = $labels_row;
+    }
+
+    $navbar_info['users'] = array();
+
+    $users_result = query_our_db("SELECT email FROM users");
+    while (($users_row = $users_result->fetch_assoc()) != NULL) {
+        $navbar_info['users'][] = $users_row;
+    }
+
+    $response['navbar'] = $m->render($navbar_template, $navbar_info);
 
     echo json_encode($response);
 }
@@ -255,7 +348,7 @@ function display_mosaic($user_id, $mosaic_id) {
     $mosaic['mosaic_name'] = $filename;
 
     $mosaic['labels'] = array();
-    $query = "SELECT * FROM labels WHERE owner_id = $user_id AND mosaic_id = $mosaic_id";
+    $query = "SELECT labels.* FROM labels INNER JOIN label_mosaics ON labels.label_id = label_mosaics.label_id AND label_mosaics.mosaic_id = $mosaic_id INNER JOIN label_access ON labels.label_id = label_access.label_id AND label_access.user_id = $user_id";
     $result = query_our_db($query);
     while (($row = $result->fetch_assoc()) != NULL) {
         $mosaic['has_labels'] = true;
@@ -265,7 +358,11 @@ function display_mosaic($user_id, $mosaic_id) {
     $response['mosaic_info'] = $mosaic_row;
 
     $points = array();
-    $query = "SELECT * FROM points WHERE mosaic_id = $mosaic_id AND owner_id = $user_id";
+    //$query = "SELECT * FROM points WHERE mosaic_id = $mosaic_id AND owner_id = $user_id";
+    //$query = "SELECT points.* FROM points INNER JOIN label_mosaics ON points.label_id = label_mosaics.label_id AND label_mosaics.mosaic_id = $mosaic_id INNER JOIN label_access ON points.label_id = label_access.label_id AND label_access.user_id = $user_id";
+
+    $query = "SELECT points.* FROM points INNER JOIN label_access ON points.label_id = label_access.label_id AND label_access.user_id = $user_id AND points.mosaic_id = $mosaic_id";
+    error_log($query);
     $result = query_our_db($query);
     while (($row = $result->fetch_assoc()) != NULL) {
         $label_id = $row['label_id'];
@@ -297,7 +394,8 @@ function display_mosaic($user_id, $mosaic_id) {
 
     $lines = array();
     //lines looks to be a reserved mysql word so we need to ` escape it
-    $query = "SELECT * FROM `lines` WHERE mosaic_id = $mosaic_id AND owner_id = $user_id";
+    $query = "SELECT `lines`.* FROM `lines` INNER JOIN label_access ON `lines`.label_id = label_access.label_id AND label_access.user_id = $user_id AND `lines`.mosaic_id = $mosaic_id";
+    error_log($query);
     $result = query_our_db($query);
     while (($row = $result->fetch_assoc()) != NULL) {
         $label_id = $row['label_id'];
@@ -326,9 +424,43 @@ function display_mosaic($user_id, $mosaic_id) {
     $mosaic['lines'] = $lines;
     $response['marks']['lines'] = $lines;
 
+    $rectangles = array();
+    //rectangles looks to be a reserved mysql word so we need to ` escape it
+    $query = "SELECT rectangles.* FROM rectangles INNER JOIN label_access ON rectangles.label_id = label_access.label_id AND label_access.user_id = $user_id AND rectangles.mosaic_id = $mosaic_id";
+    error_log($query);
+    $result = query_our_db($query);
+    while (($row = $result->fetch_assoc()) != NULL) {
+        $label_id = $row['label_id'];
+
+        $label_query = "SELECT label_color FROM labels WHERE label_id = $label_id";
+        $label_result = query_our_db($label_query);
+        $label_row = $label_result->fetch_assoc();
+        $label_color = $label_row['label_color'];
+
+        $rectangle = array(
+            'label_id' => $label_id,
+            'color' => $label_color,
+            'rectangle_id' => $row['rectangle_id'],
+            'x1' => $row['x1'],
+            'x2' => $row['x2'],
+            'y1' => $row['y1'],
+            'y2' => $row['y2']
+        );
+
+        $rectangle_template = file_get_contents($cwd[__FILE__] . "/templates/rectangle_template.html");
+        $m = new Mustache_Engine;
+        $rectangle['html'] = $m->render($rectangle_template, $rectangle);
+
+        $rectangles[] = $rectangle;
+    }
+    $mosaic['rectangles'] = $rectangles;
+    $response['marks']['rectangles'] = $rectangles;
+
+
     $polygons = array();
     //polygons looks to be a reserved mysql word so we need to ` escape it
-    $query = "SELECT * FROM `polygons` WHERE mosaic_id = $mosaic_id AND owner_id = $user_id";
+    $query = "SELECT polygons.* FROM polygons INNER JOIN label_access ON polygons.label_id = label_access.label_id AND label_access.user_id = $user_id AND polygons.mosaic_id = $mosaic_id";
+    error_log($query);
     $result = query_our_db($query);
     while (($row = $result->fetch_assoc()) != NULL) {
         $label_id = $row['label_id'];
@@ -357,10 +489,12 @@ function display_mosaic($user_id, $mosaic_id) {
     $mosaic['polygons'] = $polygons;
     $response['marks']['polygons'] = $polygons;
 
+
     $mosaic_template = file_get_contents($cwd[__FILE__] . "/templates/mosaic_template.html");
     $m = new Mustache_Engine;
     $response['html'] = $m->render($mosaic_template, $mosaic);
 
+    $navbar['mosaic_name'] = $filename;
     $navbar_template = file_get_contents($cwd[__FILE__] . "/templates/mosaic_navbar.html");
     $m = new Mustache_Engine;
     $response['navbar'] = $m->render($navbar_template, $navbar);

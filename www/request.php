@@ -222,24 +222,46 @@ if ($request_type == NULL || $request_type == "INDEX") {
 
     remove_folder($user_id, $folder_id);
 
+} else if ($request_type == "MODIFY_NAV_REQUEST") {
+    require_once($cwd[__FILE__] . "/labels.php");
+
+    $label_id = $our_db->real_escape_string($_POST['label_id']);
+
+    label_nav_info($user_id, $label_id);
+
+} else if ($request_type == "MODIFY_LABEL") {
+    require_once($cwd[__FILE__] . "/labels.php");
+
+    $label_id = $our_db->real_escape_string($_POST['label_id']);
+    $label_name = $our_db->real_escape_string($_POST['label_name']);
+    $label_type = $our_db->real_escape_string($_POST['label_type']);
+    $label_color = $our_db->real_escape_string($_POST['label_color']);
+
+    $share_with = $_POST['share_with'];
+    $selected_mosaics = $_POST['selected_mosaics'];
+
+
+    modify_label($user_id, $label_id, $label_name, $label_type, $label_color, $share_with, $selected_mosaics);
+
 } else if ($request_type == "CREATE_LABEL") {
     require_once($cwd[__FILE__] . "/labels.php");
 
-    $mosaic_id = $our_db->real_escape_string($_POST['mosaic_id']);
     $label_name = $our_db->real_escape_string($_POST['label_name']);
-    $label_color = $our_db->real_escape_string($_POST['label_color']);
     $label_type = $our_db->real_escape_string($_POST['label_type']);
+    $label_color = $our_db->real_escape_string($_POST['label_color']);
 
-    create_label($user_id, $mosaic_id, $label_name, $label_type, $label_color);
+    $share_with = $_POST['share_with'];
+    $selected_mosaics = $_POST['selected_mosaics'];
+
+
+    create_label($user_id, $label_name, $label_type, $label_color, $share_with, $selected_mosaics);
 
 } else if ($request_type == "REMOVE_LABEL") {
     require_once($cwd[__FILE__] . "/labels.php");
 
-    $mosaic_id = $our_db->real_escape_string($_POST['mosaic_id']);
     $label_id = $our_db->real_escape_string($_POST['label_id']);
-    $label_name = $our_db->real_escape_string($_POST['label_name']);
 
-    remove_label($user_id, $mosaic_id, $label_id, $label_name);
+    remove_label($user_id, $label_id);
 
 } else if ($request_type == "CREATE_POINTS") {
     require_once($cwd[__FILE__] . "/marks.php");
@@ -263,6 +285,29 @@ if ($request_type == NULL || $request_type == "INDEX") {
 
     create_lines($user_id, $mosaic_id, $label_id, $_POST['lines']);
 
+} else if ($request_type == "CREATE_RECTANGLES") {
+    require_once($cwd[__FILE__] . "/marks.php");
+
+    //error_log(print_r($_POST['points'], true));
+
+    $mosaic_id = $our_db->real_escape_string($_POST['mosaic_id']);
+    $label_id = $our_db->real_escape_string($_POST['label_id']);
+    //need to escape rectangles in the create rectangles function for each value    
+
+    create_rectangles($user_id, $mosaic_id, $label_id, $_POST['rectangles']);
+
+
+} else if ($request_type == "CREATE_POLYGONS") {
+    require_once($cwd[__FILE__] . "/marks.php");
+
+    //error_log(print_r($_POST['points'], true));
+
+    $mosaic_id = $our_db->real_escape_string($_POST['mosaic_id']);
+    $label_id = $our_db->real_escape_string($_POST['label_id']);
+    $points_strs = $_POST['points_strs'];
+
+    create_polygons($user_id, $mosaic_id, $label_id, $points_strs);
+
 } else if ($request_type == "CREATE_POLYGON") {
     require_once($cwd[__FILE__] . "/marks.php");
 
@@ -280,9 +325,10 @@ if ($request_type == NULL || $request_type == "INDEX") {
     //error_log(print_r($_POST['points'], true));
 
     $mosaic_id = $our_db->real_escape_string($_POST['mosaic_id']);
+    $label_id = $our_db->real_escape_string($_POST['label_id']);
     $point_id = $our_db->real_escape_string($_POST['point_id']);
 
-    remove_point($user_id, $mosaic_id, $point_id);
+    remove_point($user_id, $label_id, $mosaic_id, $point_id);
 
 } else if ($request_type == "REMOVE_LINE") {
     require_once($cwd[__FILE__] . "/marks.php");
@@ -290,9 +336,22 @@ if ($request_type == NULL || $request_type == "INDEX") {
     //error_log(print_r($_POST['lines'], true));
 
     $mosaic_id = $our_db->real_escape_string($_POST['mosaic_id']);
+    $label_id = $our_db->real_escape_string($_POST['label_id']);
     $line_id = $our_db->real_escape_string($_POST['line_id']);
 
-    remove_line($user_id, $mosaic_id, $line_id);
+    remove_line($user_id, $label_id, $mosaic_id, $line_id);
+
+} else if ($request_type == "REMOVE_RECTANGLE") {
+    require_once($cwd[__FILE__] . "/marks.php");
+
+    //error_log(print_r($_POST['rectangles'], true));
+
+    $mosaic_id = $our_db->real_escape_string($_POST['mosaic_id']);
+    $label_id = $our_db->real_escape_string($_POST['label_id']);
+    $rectangle_id = $our_db->real_escape_string($_POST['rectangle_id']);
+
+    remove_rectangle($user_id, $label_id, $mosaic_id, $rectangle_id);
+
 
 } else if ($request_type == "REMOVE_POLYGON") {
     require_once($cwd[__FILE__] . "/marks.php");
@@ -300,9 +359,60 @@ if ($request_type == NULL || $request_type == "INDEX") {
     //error_log(print_r($_POST['polygons'], true));
 
     $mosaic_id = $our_db->real_escape_string($_POST['mosaic_id']);
+    $label_id = $our_db->real_escape_string($_POST['label_id']);
     $polygon_id = $our_db->real_escape_string($_POST['polygon_id']);
 
-    remove_polygon($user_id, $mosaic_id, $polygon_id);
+    remove_polygon($user_id, $label_id, $mosaic_id, $polygon_id);
+
+} else if ($request_type == "SHAPEFILE_UPLOAD") {
+    require_once ($cwd[__FILE__] . "/gis/parse_shapefile.php");
+
+    $mosaic_id = $our_db->real_escape_string($_POST['mosaic_id']);
+    $label_id = $our_db->real_escape_string($_POST['label_id']);
+    $import_type = $our_db->real_escape_string($_POST['import_type']);
+
+    //get the uploaded dbf and shp files
+    $dbf_file = "";
+    $shp_file = "";
+    $shx_file = "";
+
+    $count = count($_FILES['files']['name']);
+    for ($i = 0; $i < $count; $i++) {
+        $file = $_FILES['files'];
+
+        error_log('name: ' . $file['name'][$i]);
+        error_log('name: ' . $file['tmp_name'][$i]);
+        //move_uploaded_file($file['tmp_name'], $target);
+        error_log("size: " . filesize($file['tmp_name'][$i]));
+
+        if (substr($file['name'][$i], -4) == ".dbf") $dbf_file = $file['tmp_name'][$i];
+        if (substr($file['name'][$i], -4) == ".shp") $shp_file = $file['tmp_name'][$i];
+        if (substr($file['name'][$i], -4) == ".shx") $shx_file = $file['tmp_name'][$i];
+    }
+
+    error_log("dbf file: $dbf_file");
+    error_log("shp file: $shp_file");
+    error_log("shx file: $shx_file");
+
+    if ($dbf_file == "") {
+        $response['err_title'] = "DBF File Not Uploaded";
+        $response['err_msg'] = "A .dbf file is required to be uploaded so the shapefile can be parsed, and one was not uploaded.";
+        return;
+    }
+
+    if ($shp_file == "") {
+        $response['err_title'] = "DBF File Not Uploaded";
+        $response['err_msg'] = "A .shp file is required to be uploaded so the shapefile can be parsed, and one was not uploaded.";
+        return;
+    }
+
+    if ($shx_file == "") {
+        $response['err_title'] = "DBF File Not Uploaded";
+        $response['err_msg'] = "A .shx file is required to be uploaded so the shapefile can be parsed, and one was not uploaded.";
+        return;
+    }
+
+    import_shapefile($user_id, $mosaic_id, $label_id, $dbf_file, $shp_file, $shx_file, $import_type);
 }
 
 ?>

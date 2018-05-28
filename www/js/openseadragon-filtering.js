@@ -373,11 +373,17 @@
                     //pixels[i] = 0;
                     //pixels[i + 1] = 0;
                     var nir = pixels[i + 3];
+                    /*
                     nir = colortable(nir);
 
                     pixels[i] = nir.r;
                     pixels[i + 1] = nir.g;
                     pixels[i + 2] = nir.b;
+                    */
+                    pixels[i] = nir;
+                    pixels[i + 1] = nir;
+                    pixels[i + 2] = nir;
+
                     pixels[i + 3] = 255;
                 }
                 context.putImageData(imgData, 0, 0);
@@ -425,12 +431,14 @@
                     } else {
                         ndvi = Math.trunc((((nir - red) / (nir + red)) + 1.0) * (127.5));
                     }
+                    ndvi = colortable(nir);
+
 
                     //ndvi = colortable(ndvi);
 
-                    pixels[i] = ndvi;
-                    pixels[i + 1] = ndvi;
-                    pixels[i + 2] = ndvi; 
+                    pixels[i] = ndvi.r;
+                    pixels[i + 1] = ndvi.g;
+                    pixels[i + 2] = ndvi.b; 
                     pixels[i + 3] = 255;
                 }
                 context.putImageData(imgData, 0, 0);
