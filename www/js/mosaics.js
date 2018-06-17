@@ -80,11 +80,11 @@ function hexToRgb(hex) {
 
 
 function get_mark_coordinates(viewportPoint, type) {
-    console.log("viewportPoint: " + viewportPoint);
+    //console.log("viewportPoint: " + viewportPoint);
 
     var imagePoint = viewer.viewport.viewportToImageCoordinates(viewportPoint);
 
-    console.log("imagePoint: " + imagePoint);
+    //console.log("imagePoint: " + imagePoint);
 
     var pixel_y = Math.round(imagePoint.y);
     var pixel_x = Math.round(imagePoint.x);
@@ -151,7 +151,7 @@ function set_mark_coordinates() {
 
         var new_coords = get_mark_coordinates(point, type);
 
-        console.log("result " + new_coords.y + ", " + new_coords.x + " in " + type);
+        //console.log("result " + new_coords.y + ", " + new_coords.x + " in " + type);
 
         $(this).find(".pixel-y").text(new_coords.y);
         $(this).find(".pixel-x").text(new_coords.x);
@@ -2833,6 +2833,7 @@ function login() {
     gapi.load('auth2', function() {
         gapi.auth2.init({
             client_id: '913778561877-7vmnbjvuc9c2g3c3qejgckjdtdivg9n1.apps.googleusercontent.com',
+            //client_id: '899820780374-k8v4ou4ii34nc82e2uu0cqad88k6blpa.apps.googleusercontent.com',
         }).then(function(){
             auth2 = gapi.auth2.getAuthInstance();
             //console.log("SIGNED IN?" + auth2.isSignedIn.get()); //now this always returns correctly        

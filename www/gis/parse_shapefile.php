@@ -274,6 +274,7 @@ function import_shapefile($user_id, $mosaic_id, $label_id, $dbf_file, $shp_file,
                     'point_id' => $point_id,
                     'cx' => $cx,
                     'cy' => $cy,
+                    'radius' => $radius,
                     'visible' => true
                 );
 
