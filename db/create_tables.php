@@ -20,7 +20,11 @@ if ($drop_tables) {
     query_our_db("DROP TABLE points");
     query_our_db("DROP TABLE lines");
     query_our_db("DROP TABLE polygons");
+    query_our_db("DROP TABLE mark_attributes");
 }
+
+query_our_db("DROP TABLE jobs");
+query_our_db("DROP TABLE prediction");
 
 $query = "CREATE TABLE `mosaics` (
 	`id` INT(11) NOT NULL AUTO_INCREMENT,
@@ -234,6 +238,45 @@ $query = "CREATE TABLE `polygons` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1";
 
 query_our_db($query);
+
+$query = "CREATE TABLE `mark_attributes` (
+    `mark_id` int(11) NOT NULL,
+    `attribute_key` varchar(125) NOT NULL,
+    `attribute_value` varchar(125) NOT NULL,
+
+    KEY `mark_id` (`mark_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1";
+
+query_our_db($query);
+
+
+$query = "CREATE TABLE `jobs` (
+    `job_id` INT(11) NOT NULL AUTO_INCREMENT,
+    `owner_id` INT(11) NOT NULL,
+    `mosaic_id` INT(11) NOT NULL,
+    `label_id` INT(11) NOT NULL,
+    `name` VARCHAR(128) NOT NULL,
+
+    PRIMARY KEY (`job_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1";
+
+query_our_db($query);
+
+$query = "CREATE TABLE `prediction` (
+    `prediction_id` INT(11) NOT NULL AUTO_INCREMENT,
+    `job_id` INT(11) NOT NULL,
+    `owner_id` INT(11) NOT NULL,
+    `mosaic_id` INT(11) NOT NULL,
+    `label_id` INT(11) NOT NULL,
+    `mark_id` INT(11) NOT NULL,
+    `prediction` double NOT NULL,
+ 
+    PRIMARY KEY (`prediction_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1";
+
+query_our_db($query);
+
+
 
 
 

@@ -36,7 +36,21 @@ function point($coords, $mosaic){
     return relative_coords($utm->getX(), $utm->getY(), $mosaic['left'], $mosaic['right'], $mosaic['top'], $mosaic['bot']); 
 }
 
-function insert_shape($mosaic, $label_id, $points, $type, $label_name, $user_id, $shapefile_id, $attr){
+function insert_attributes($attrs, $mark_id){
+    $query = "INSERT INTO mark_attributes (mark_id, attribute_key, attribute_value) VALUES ";
+    foreach($attrs as $key => $val){
+        if($val != NULL){
+            //echo $key."=>".$attrs[$key];
+            $query.= "($mark_id, '$key', '$val'), ";
+        }
+    }
+    $query = substr($query, 0, -2);
+    //echo $query."\n";
+    query_our_db($query);
+}
+
+
+function insert_shape($mosaic, $label_id, $points, $type, $label_name, $user_id, $shapefile_id, $attr) {
     
     $mosaic_id = $mosaic['id'];
 
@@ -51,11 +65,11 @@ function insert_shape($mosaic, $label_id, $points, $type, $label_name, $user_id,
         $p = array(array("cx"=>$coords[0], "cy"=>$coords[1], "radius"=>0.005));
 
         $label_type = "POINT";
-        $shape_id = create_points($user_id, $mosaic_id, $label_id, $p);
+        $mark_id = create_points($user_id, $mosaic_id, $label_id, $p);
 
-        //$query = "INSERT INTO shapefile_shapes (shapefile_id, shape_id) VALUES ($shapefile_id, $shape_id)";    
+        //$query = "INSERT INTO shapefile_shapes (shapefile_id, mark_id) VALUES ($shapefile_id, $mark_id)";    
         //query_our_db($query);
-        //insert_attributes($attr, $shape_id);
+        insert_attributes($attr, $mark_id);
 
         //echo "Mosaic Id: ".$mosaic['id']."\n";
         //echo "Relative Coords: ".$coord_str."\n";
@@ -74,11 +88,11 @@ function insert_shape($mosaic, $label_id, $points, $type, $label_name, $user_id,
             $line['x2']=$p2[0];
             $line['y2']=$p2[1];
 
-            $shape_id = create_lines($user_id, $mosaic_id, $label_id, array($line));
-            //$query = "INSERT INTO shapefile_shapes (shapefile_id, shape_id) VALUES ($shapefile_id, $shape_id)";    
+            $mark_id = create_lines($user_id, $mosaic_id, $label_id, array($line));
+            //$query = "INSERT INTO shapefile_shapes(shapefile_id, mark_id) VALUES ($shapefile_id, $mark_id)";
             //query_our_db($query);
 
-            //insert_attributes($attr, $shape_id);
+            insert_attributes($attr, $mark_id);
         }
     } else if ($type=='Polygon') {
         exit(1);
@@ -91,12 +105,12 @@ function insert_shape($mosaic, $label_id, $points, $type, $label_name, $user_id,
 
         $lable_type = "POLYGON";
         $label_id = create_label($user_id, $mosaic_id, $label_name, $label_type, $color);
-        $shape_id = create_polygon($user_id, $mosaic_id, $label_id, $coord_str);
+        $mark_id = create_polygon($user_id, $mosaic_id, $label_id, $coord_str);
 
-        $query = "INSERT INTO shapefile_shapes (shapefile_id, shape_id) VALUES ($shapefile_id, $shape_id)";    
+        $query = "INSERT INTO shapefile_shapes (shapefile_id, mark_id) VALUES ($shapefile_id, $mark_id)";    
         query_our_db($query);
 
-        //insert_attributes($attr, $shape_id);
+        insert_attributes($attr, $mark_id);
         //echo "Relative Coords: ".$coord_str."\n";
         //echo "Mosaic Id: ".$mosaic['id']."\n";
     }
@@ -105,33 +119,12 @@ function insert_shape($mosaic, $label_id, $points, $type, $label_name, $user_id,
     return;
 }
 
-function find_mosaics($user_id){    
-    $query = "SELECT id, utm_e_upper_left AS `left`, utm_e_upper_right as `right`, utm_n_upper_left as `top`, utm_n_lower_right as `bot`, utm_zone as `zone` ";
-    $query.= "FROM mosaics JOIN mosaic_access ON mosaic_access.mosaic_id = mosaics.id ";
-    $query.= "WHERE utm_zone IS NOT NULL ";
-    $query.= "AND (user_id = $user_id OR mosaics.owner_id = $user_id) ";
-    return query_our_db($query);
-}
-
 function coords($zone, $x, $y){
     $UTMref = new UTMRef($x, $y, 0, substr($zone,-1,1), (int)substr($zone,0,2));
     $p0 = $UTMref->toLatLng();
     $lat = $p0->getLat();
     $lon = $p0->getLng();
     return "$lon $lat";
-}
-
-function insert_attributes($attrs, $shape_id){
-    $query = "INSERT INTO shape_attributes (shape_id, attribute_key, attribute_value) VALUES ";
-    foreach($attrs as $key => $val){
-        if($val != NULL){
-            //echo $key."=>".$attrs[$key];
-            $query.= "($shape_id, '$key', '$val'), ";
-        }
-    }
-    $query = substr($query, 0, -2);
-    //echo $query."\n";
-    query_our_db($query);
 }
 
 function insert_shapefile($shapefile, $user_id){
@@ -197,6 +190,8 @@ function import_shapefile($user_id, $mosaic_id, $label_id, $dbf_file, $shp_file,
         // Check if the record is deleted
         if ($record['dbf']['_deleted']) continue;
 
+        $attrs = $record['dbf'];
+
         // Load well known text format into a geoPHP object
         $shape = geoPHP::load($record['shp'],'wkt');
         //echo "SHAPE:\n";
@@ -238,6 +233,8 @@ function import_shapefile($user_id, $mosaic_id, $label_id, $dbf_file, $shp_file,
                     $line_id = $our_db->insert_id;
                     $line_ids[] = $line_id;
 
+                    insert_attributes($attrs, $line_id);
+
                     $line = array(
                         'label_id' => $label_id,
                         'line_id' => $line_id,
@@ -269,6 +266,8 @@ function import_shapefile($user_id, $mosaic_id, $label_id, $dbf_file, $shp_file,
                 query_our_db($query);
                 $point_id = $our_db->insert_id;
 
+                insert_attributes($attrs, $point_id);
+
                 $point = array(
                     'label_id' => $label_id,
                     'point_id' => $point_id,
@@ -295,6 +294,9 @@ function import_shapefile($user_id, $mosaic_id, $label_id, $dbf_file, $shp_file,
                 error_log($query);
                 query_our_db($query);
                 $polygon_id = $our_db->insert_id;
+
+                insert_attributes($attrs, $polygon_id);
+
 
                 $polygon = array(
                     'label_id' => $label_id,
