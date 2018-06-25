@@ -80,11 +80,11 @@ function hexToRgb(hex) {
 
 
 function get_mark_coordinates(viewportPoint, type) {
-    console.log("viewportPoint: " + viewportPoint);
+    //console.log("viewportPoint: " + viewportPoint);
 
     var imagePoint = viewer.viewport.viewportToImageCoordinates(viewportPoint);
 
-    console.log("imagePoint: " + imagePoint);
+    //console.log("imagePoint: " + imagePoint);
 
     var pixel_y = Math.round(imagePoint.y);
     var pixel_x = Math.round(imagePoint.x);
@@ -151,7 +151,7 @@ function set_mark_coordinates() {
 
         var new_coords = get_mark_coordinates(point, type);
 
-        console.log("result " + new_coords.y + ", " + new_coords.x + " in " + type);
+        //console.log("result " + new_coords.y + ", " + new_coords.x + " in " + type);
 
         $(this).find(".pixel-y").text(new_coords.y);
         $(this).find(".pixel-x").text(new_coords.x);
