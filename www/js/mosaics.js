@@ -46,6 +46,12 @@ var filter_func = null;
 var mosaic_width;
 var mosaic_height;
 
+var selected_prediction;
+var has_mark_attributes = false;
+var current_prediction_type = null;
+var current_mark_attributes = null;
+var current_predictions = null;
+
 function display_error_modal(title, message) {
     $("#error-modal-title").html(title);
     $("#error-modal-body").html(message);
@@ -168,6 +174,8 @@ App = {
         viewer = OpenSeadragon({
             id: 'map',
             prefixUrl: './images/',
+            showNavigator:  true,
+            navigatorPosition:   "BOTTOM_LEFT",
             tileSources: [{
                 "Image": {
                     "xmlns":    "http://schemas.microsoft.com/deepzoom/2008",
@@ -338,7 +346,7 @@ App = {
                     var y2 = viewportPoint.y;
 
                     var d3Line = d3.select(overlay.node()).append("line")
-                        .style('stroke', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.75)')
+                        .style('stroke', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.25)')
                         .attr("id", "svg-polygon-line-" + drawn_lines)
                         .attr("x1", x1)
                         .attr("y1", y1)
@@ -532,69 +540,88 @@ function initialize_labels() {
     });
 }
 
+function highlight_point(point_id) {
+    var point = d3.select(".svg-item[point_id='" + point_id + "']");
+    var fill = point.style("fill");
+    var element = $(".highlight-point-button[point_id=" + point_id + "]");
+
+    if (element.hasClass("active")) {
+        fill = fill.replace(/[\d\.]+\)$/g, '0.25)');
+        point.attr("r", "0.005").style("fill", fill);
+    } else {
+        fill = fill.replace(/[\d\.]+\)$/g, '0.75)');
+        point.attr("r", "0.015").style("fill", fill);
+    }
+
+    element.toggleClass("active");
+}
+
+function highlight_line(line_id) {
+    var line = d3.select(".svg-item[line_id='" + line_id + "']");
+    var stroke = line.style("stroke");
+    var element = $(".highlight-line-button[line_id=" + line_id + "]");
+
+    if (element.hasClass("active")) {
+        stroke = stroke.replace(/[\d\.]+\)$/g, '0.25)');
+        line.attr("stroke-width",0.001).style("stroke", stroke);
+    } else {
+        stroke = stroke.replace(/[\d\.]+\)$/g, '0.75)');
+        line.attr("stroke-width",0.003).style("stroke", stroke);
+    }
+
+    element.toggleClass("active");
+}
+
+function highlight_rectangle(rectangle_id) {
+    var rectangle = d3.select(".svg-item[rectangle_id='" + rectangle_id + "']");
+    var fill = rectangle.style("fill");
+    var element = $(".highlight-rectangle-button[rectangle_id=" + rectangle_id + "]");
+
+    if (element.hasClass("active")) {
+        fill = fill.replace(/[\d\.]+\)$/g, '0.25)');
+        rectangle.style("fill-width",0.001).style("fill", fill);
+    } else {
+        fill = fill.replace(/[\d\.]+\)$/g, '0.75)');
+        rectangle.style("fill-width",0.003).style("fill", fill);
+    }
+
+    element.toggleClass("active");
+}
+
+function highlight_polygon(polygon_id) {
+    var polygon = d3.select(".svg-item[polygon_id='" + polygon_id + "']");
+    var fill = polygon.style("fill");
+    var element = $(".highlight-polygon-button[polygon_id=" + polygon_id + "]");
+
+    if (element.hasClass("active")) {
+        fill = fill.replace(/[\d\.]+\)$/g, '0.25)');
+        polygon.style("fill", fill);
+    } else {
+        fill = fill.replace(/[\d\.]+\)$/g, '0.75)');
+        polygon.style("fill", fill);
+    }
+    element.toggleClass("active");
+}
+
 function initialize_mark_buttons() {
     $(".highlight-point-button:not(.bound)").addClass("bound").click(function() {
         var point_id = $(this).attr("point_id");
-        var point = d3.select(".svg-item[point_id='" + point_id + "']");
-        var fill = point.style("fill");
-
-        if ($(this).hasClass("active")) {
-            $(this).removeClass("active");
-            fill = fill.replace(/[\d\.]+\)$/g, '0.25)');
-            point.attr("r", "0.005").style("fill", fill);
-        } else {
-            $(this).addClass("active");
-            fill = fill.replace(/[\d\.]+\)$/g, '0.75)');
-            point.attr("r", "0.015").style("fill", fill);
-        }
+        highlight_point(point_id);
     });
 
     $(".highlight-line-button:not(.bound)").addClass("bound").click(function() {
         var line_id = $(this).attr("line_id");
-        var line = d3.select(".svg-item[line_id='" + line_id + "']");
-        var stroke = line.style("stroke");
-
-        if ($(this).hasClass("active")) {
-            $(this).removeClass("active");
-            stroke = stroke.replace(/[\d\.]+\)$/g, '0.25)');
-            line.attr("stroke-width",0.001).style("stroke", stroke);
-        } else {
-            $(this).addClass("active");
-            stroke = stroke.replace(/[\d\.]+\)$/g, '0.75)');
-            line.attr("stroke-width",0.003).style("stroke", stroke);
-        }
+        highlight_line(line_id);
     });
 
     $(".highlight-rectangle-button:not(.bound)").addClass("bound").click(function() {
         var rectangle_id = $(this).attr("rectangle_id");
-        var rectangle = d3.select(".svg-item[rectangle_id='" + rectangle_id + "']");
-        var fill = rectangle.style("fill");
-
-        if ($(this).hasClass("active")) {
-            $(this).removeClass("active");
-            fill = fill.replace(/[\d\.]+\)$/g, '0.25)');
-            rectangle.style("fill-width",0.001).style("fill", fill);
-        } else {
-            $(this).addClass("active");
-            fill = fill.replace(/[\d\.]+\)$/g, '0.75)');
-            rectangle.style("fill-width",0.003).style("fill", fill);
-        }
+        highlight_rectangle(rectangle_id);
     });
 
     $(".highlight-polygon-button:not(.bound)").addClass("bound").click(function() {
         var polygon_id = $(this).attr("polygon_id");
-        var polygon = d3.select(".svg-item[polygon_id='" + polygon_id + "']");
-        var fill = polygon.style("fill");
-
-        if ($(this).hasClass("active")) {
-            $(this).removeClass("active");
-            fill = fill.replace(/[\d\.]+\)$/g, '0.25)');
-            polygon.style("fill", fill);
-        } else {
-            $(this).addClass("active");
-            fill = fill.replace(/[\d\.]+\)$/g, '0.75)');
-            polygon.style("fill", fill);
-        }
+        highlight_polygon(polygon_id);
     });
 
 
@@ -822,7 +849,7 @@ function initialize_openseadragon(tiles_url, channels, height, width, marks) {
         var color = hexToRgb(lines[i].color);
 
         var d3Line = d3.select(overlay.node()).append("line")
-            .style('stroke', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.75)')
+            .style('stroke', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.25)')
             .attr("x1", lines[i].x1)
             .attr("y1", lines[i].y1)
             .attr("x2", lines[i].x2)
@@ -996,7 +1023,7 @@ function initialize_openseadragon(tiles_url, channels, height, width, marks) {
 
             $(".cancel-drawing-button").hide();
             $(".current-draw").removeClass("current-draw");
-            $("#draw-polygons-button").text("Draw Lines");
+            $("#draw-polygons-button").text("Draw Polygons");
 
 			$('#import-polygons-modal').modal('hide');
             display_success_modal("Shapefile Import Successful", "Imported " + polygons.length + " polygons from the shapefile.");
@@ -1143,7 +1170,7 @@ function initialize_openseadragon(tiles_url, channels, height, width, marks) {
 
             $(".cancel-drawing-button").hide();
             $(".current-draw").removeClass("current-draw");
-            $("#draw-points-button").text("Draw Lines");
+            $("#draw-points-button").text("Draw Points");
 
 			$('#import-points-modal').modal('hide');
             display_success_modal("Shapefile Import Successful", "Imported " + points.length + " points from the shapefile.");
@@ -2581,6 +2608,200 @@ function initialize_mosaic(responseText) {
 
     initialize_mark_buttons();
 
+    function highlight_prediction() {
+        if (current_predictions == null) return;
+
+        var prediction = current_predictions[selected_prediction];
+
+        if (current_prediction_type == "LINE") {
+            highlight_line(prediction.mark_id, false);
+        } else if (current_prediction_type == "POINT") {
+            highlight_point(prediction.mark_id, false);
+        }
+    }
+
+    function unhighlight_prediction() {
+        if (current_predictions == null) return;
+
+        var prediction = current_predictions[selected_prediction];
+
+        if (current_prediction_type == "LINE") {
+            highlight_line(prediction.mark_id, true);
+        } else if (current_prediction_type == "POINT") {
+            highlight_point(prediction.mark_id, true);
+        }
+    }
+
+
+    function display_prediction() {
+        console.log("displaying prediction: " + selected_prediction);
+
+        var prediction = current_predictions[selected_prediction];
+
+        console.log("prediction.mark_id: " + prediction.mark_id);
+
+        var mark_attributes = current_mark_attributes[prediction.mark_id];
+        console.log(mark_attributes);
+
+        console.log("current_prediction_type: '" + current_prediction_type + "'");
+
+        if (current_prediction_type == "LINE") {
+            $("#prediction-line-img").attr("src", "./jobs/" + prediction.owner_id + "/" + prediction.job_id + "/line_" + prediction.mosaic_id + "_" + prediction.label_id + "_" + prediction.mark_id + ".png");
+
+        } else if (current_prediction_type == "POINT") {
+            var filename = "./jobs/" + prediction.owner_id + "/" + prediction.job_id + "/point_" + prediction.mosaic_id + "_" + prediction.label_id + "_" + prediction.mark_id;
+
+            $("#prediction-point-img-original").attr("src", filename + "_original.png");
+            $("#prediction-point-img-merged").attr("src", filename + "_merged.png");
+            $("#prediction-point-img-predictions").attr("src", filename + "_predictions.png");
+        }
+
+        var likelihood = parseFloat(100.0 - (prediction.prediction * 100)).toFixed(2);
+
+        $("#prediction-likelihood").html("<b>Damage Likelihood: " + likelihood + "%</b>");
+
+        var attribute_html = "<div class='d-flex flex-column bd-highlight mb-3'>";
+        for (var i = 0; i < mark_attributes.length; i++) {
+            attribute_html += "<div class='p-1 bd-highlight'>" + mark_attributes[i].attribute_key + " : " + mark_attributes[i].attribute_value + "</div>";
+        }
+        attribute_html += "</div>";
+
+        $("#prediction-attributes").html(attribute_html);
+
+        if (current_prediction_type == "LINE") {
+            console.log("prediction.x1: " + prediction.x1 + ", prediction.y1: " + prediction.y1 + ", prediction.x2: " + prediction.x2 + ", prediction.y2: " + prediction.y2);
+
+            var x = Math.min(prediction.x1, prediction.x2);
+            var width = Math.abs(prediction.x1 - prediction.x2);
+            var y = Math.min(prediction.y1, prediction.y2);
+            var height = Math.abs(prediction.y1 - prediction.y2);
+
+            console.log("x: " + x  + ", y: " + y + ", width: " + width + ", height: " + height);
+            viewer.viewport.fitBoundsWithConstraints(new OpenSeadragon.Rect(x, y, width, height));
+        } else if (current_prediction_type == "POINT") {
+            var cx = parseFloat(prediction.cx);
+            var cy = parseFloat(prediction.cy);
+
+            console.log("cx: " + cx + ", cy: " + cy);
+            viewer.viewport.fitBoundsWithConstraints(new OpenSeadragon.Rect(cx - 0.01, cy - 0.01, 0.01, 0.01));
+        }
+    }
+
+    $("#right-prediction-image-button").click(function() {
+        unhighlight_prediction();
+
+        selected_prediction = selected_prediction + 1;
+        if (selected_prediction >= current_predictions.length) selected_prediction = 0;
+
+        display_prediction();
+        highlight_prediction();
+    });
+
+    $("#left-prediction-image-button").click(function() {
+        unhighlight_prediction();
+
+        selected_prediction = selected_prediction - 1;
+        if (selected_prediction < 0) selected_prediction = current_predictions.length - 1;
+
+        display_prediction();
+        highlight_prediction();
+    });
+
+    $(".close-predictions-nav").click(function() {
+        unhighlight_prediction();
+        selected_prediction = 0;
+        current_predictions = null;
+        current_mark_attributes = null;
+        current_prediction_type = null;
+        $("#prediction-inspector").hide();
+        $("#prediction-attributes").hide();
+        $("#map-div").addClass("col-sm-10");
+        $("#map-div").removeClass("col-sm-7");
+        $(".toggle-attributes-nav").hide();
+    });
+
+    $(".toggle-attributes-nav").click(function() {
+        if (has_mark_attributes == true) {
+            if ($("#prediction-attributes").css('display') == 'none') {
+                $("#prediction-attributes").show();
+                $("#map-div").removeClass("col-sm-10");
+                $("#map-div").addClass("col-sm-7");
+            } else {
+                $("#prediction-attributes").hide();
+                $("#map-div").addClass("col-sm-10");
+                $("#map-div").removeClass("col-sm-7");
+            }
+        }
+    });
+
+
+    $(".prediction-nav").click(function() {
+        var type = $(this).attr("job_id");
+        var job_id = $(this).attr("job_id");
+        var label_id = $(this).attr("label_id");
+        var label_type = $(this).attr("label_type");
+
+        var submission_data = {
+            request : "GET_PREDICTIONS",
+            id_token : id_token,
+            job_id : job_id,
+            label_id : label_id,
+            mosaic_id : mosaic_id
+        };
+
+        $.ajax({
+            type: 'POST',
+            url: './request.php',
+            data : submission_data,
+            dataType : 'json',
+            success : function(response) {
+                console.log("received response: ");
+                console.log(response);
+
+                unhighlight_prediction();
+
+                has_mark_attributes = response.has_mark_attributes;
+                current_prediction_type = label_type;
+                selected_prediction = 0;
+                current_predictions = response.predictions;
+                current_mark_attributes = response.mark_attributes;
+
+                if (!$(".label-list-item[label_id=" + label_id + "]").hasClass("active")) {
+                    $(".label-list-item[label_id=" + label_id + "]").click();
+                }
+
+                $("#prediction-inspector").show();
+                if (has_mark_attributes == true) {
+                    $("#prediction-attributes").show();
+                    $("#map-div").removeClass("col-sm-10");
+                    $("#map-div").addClass("col-sm-7");
+                    $(".toggle-attributes-nav").show();
+                } else {
+                    $("#prediction-attributes").hide();
+                    $("#map-div").addClass("col-sm-10");
+                    $("#map-div").removeClass("col-sm-7");
+                    $(".toggle-attributes-nav").hide();
+                }
+
+                display_prediction(selected_prediction);
+                highlight_prediction();
+
+                if (label_type == "LINE") {
+                    $("#prediction-point-div").hide();
+                    $("#prediction-line-div").show();
+                } else if (label_type == "POINT") {
+                    $("#prediction-line-div").hide();
+                    $("#prediction-point-div").show();
+                }
+            },
+            error : function(jqXHR, textStatus, errorThrown) {
+                console.log(errorThrown);
+                display_error_modal(textStatus, errorThrown);
+            },
+            async: true
+        });
+    });
+
     $(".kernel-nav").click(function() {
         var kernel = $(this).attr("kernel");
         console.log("clicked kernel nav with kernel : '" + kernel + "', active? " + $(this).hasClass("active"));
@@ -2833,6 +3054,7 @@ function login() {
     gapi.load('auth2', function() {
         gapi.auth2.init({
             client_id: '913778561877-7vmnbjvuc9c2g3c3qejgckjdtdivg9n1.apps.googleusercontent.com',
+            //client_id: '899820780374-k8v4ou4ii34nc82e2uu0cqad88k6blpa.apps.googleusercontent.com',
         }).then(function(){
             auth2 = gapi.auth2.getAuthInstance();
             //console.log("SIGNED IN?" + auth2.isSignedIn.get()); //now this always returns correctly        

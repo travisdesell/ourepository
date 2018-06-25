@@ -222,6 +222,7 @@ function display_index($user_id) {
     $response['mosaics'] = $projects['all_mosaics'];
 
     $navbar_template = file_get_contents($cwd[__FILE__] . "/templates/index_navbar.html");
+
     $navbar_info['points'] = array();
 
     $labels_result = query_our_db("SELECT labels.* FROM labels INNER JOIN label_access WHERE label_access.label_id = labels.label_id AND label_access.user_id = $user_id AND labels.label_type = 'POINT' ORDER BY labels.label_name");
@@ -493,6 +494,16 @@ function display_mosaic($user_id, $mosaic_id) {
     $mosaic_template = file_get_contents($cwd[__FILE__] . "/templates/mosaic_template.html");
     $m = new Mustache_Engine;
     $response['html'] = $m->render($mosaic_template, $mosaic);
+
+    $navbar['prediction_jobs'] = array();
+    $jobs_result = query_our_db("SELECT jobs.*, labels.label_type FROM jobs, labels WHERE owner_id = $user_id AND mosaic_id = $mosaic_id AND jobs.label_id = labels.label_id ORDER BY jobs.name");
+    while (($jobs_row = $jobs_result->fetch_assoc()) != NULL) {
+        $navbar['prediction_jobs'][] = $jobs_row;
+    }
+
+    if (count($navbar['prediction_jobs']) > 0) {
+        $navbar['has_predictions'] = true;
+    }
 
     $navbar['mosaic_name'] = $filename;
     $navbar_template = file_get_contents($cwd[__FILE__] . "/templates/mosaic_navbar.html");

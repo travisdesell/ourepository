@@ -413,6 +413,16 @@ if ($request_type == NULL || $request_type == "INDEX") {
     }
 
     import_shapefile($user_id, $mosaic_id, $label_id, $dbf_file, $shp_file, $shx_file, $import_type);
+
+} else if ($request_type == "GET_PREDICTIONS") {
+    require_once($cwd[__FILE__] . "/predictions.php");
+
+
+    $job_id = $our_db->real_escape_string($_POST['job_id']);
+    $mosaic_id = $our_db->real_escape_string($_POST['mosaic_id']);
+    $label_id = $our_db->real_escape_string($_POST['label_id']);
+
+    get_predictions($user_id, $job_id, $mosaic_id, $label_id);
 }
 
 ?>
