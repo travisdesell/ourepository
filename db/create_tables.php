@@ -7,10 +7,11 @@ require_once($cwd[__FILE__] . "/my_query.php");
 
 $drop_tables = false;
 
+query_our_db("DROP TABLE mosaics");
+
 if ($drop_tables) {
 	query_our_db("DROP TABLE users");
 	query_our_db("DROP TABLE projects");
-    query_our_db("DROP TABLE mosaics");
     query_our_db("DROP TABLE mosaics");
     query_our_db("DROP TABLE tiling_trace");
     query_our_db("DROP TABLE mosaic_progress");
@@ -42,7 +43,7 @@ $query = "CREATE TABLE `mosaics` (
 	`height` INT(11),
 	`width` INT(11),
     `channels` INT(11),
-    `geotiff` tinyint(1) NOT NULL,
+    `geotiff` tinyint(1),
     `coordinate_system` BLOB,
     `metadata` BLOB,
     `image_metadata` BLOB,

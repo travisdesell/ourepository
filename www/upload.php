@@ -1,5 +1,8 @@
 <?php
 
+$UPLOAD_DIRECTORY = "/mnt/imagery/mosaic_uploads";
+
+
 /**
  * 
  * Delete a directory RECURSIVELY
@@ -45,7 +48,7 @@ function get_mosaic_info($owner_id, $md5_hash) {
 }
 
 function initiate_upload($owner_id) {
-    global $our_db;
+    global $our_db, $UPLOAD_DIRECTORY;
 
     $filename = $our_db->real_escape_string($_POST['filename']);
     $identifier = $our_db->real_escape_string($_POST['identifier']);
@@ -127,7 +130,7 @@ function initiate_upload($owner_id) {
 }
 
 function process_chunk($owner_id) {
-    global $our_db;
+    global $our_db, $UPLOAD_DIRECTORY;
 
     if (count($_FILES) == 0) {
         error_log("ERROR, no files attached to upload!");
@@ -178,7 +181,7 @@ function process_chunk($owner_id) {
         error_log("working with file: " . json_encode($file));
 
         //overwrite chunk if it already exists due to some issue
-        $target = "/mosaic_uploads/$owner_id/$identifier";
+        $target = "$UPLOAD_DIRECTORY/$owner_id/$identifier";
         mkdir($target, 0777, true); //make the parent directory if it does not exist
         $target .= "/$chunk.part";
 
@@ -227,12 +230,12 @@ function process_chunk($owner_id) {
         $db_md5_hash = $response['mosaic_info']['md5_hash'];
 
         //create the final file
-        $target = "/mosaic_uploads/$owner_id/$db_filename";
+        $target = "$UPLOAD_DIRECTORY/$owner_id/$db_filename";
         error_log("attempting to write file to '$target'");
 
         if (($fp = fopen($target, 'w')) !== false) {
             for ($i = 0; $i < $db_number_chunks; $i++) {
-                $source = "/mosaic_uploads/$owner_id/$identifier/$i.part";
+                $source = "$UPLOAD_DIRECTORY/$owner_id/$identifier/$i.part";
                 error_log("appending file: '$source'");
                 fwrite($fp, file_get_contents($source));
             }   
@@ -251,7 +254,7 @@ function process_chunk($owner_id) {
                 //we're golden
                 //TODO: delete the directory and parts
 
-                $upload_dir = "/mosaic_uploads/$owner_id/$identifier";
+                $upload_dir = "$UPLOAD_DIRECTORY/$owner_id/$identifier";
                 error_log("removing directory: '$upload_dir'");
                 // rename the temporary directory (to avoid access from other 
                 // concurrent chunks uploads) and than delete it

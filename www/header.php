@@ -25,7 +25,7 @@ function print_header($additional_css, $additional_js) {
 
 
     <script src='https://apis.google.com/js/platform.js' async defer></script>
-    <meta name='google-signin-client_id' content='913778561877-7vmnbjvuc9c2g3c3qejgckjdtdivg9n1.apps.googleusercontent.com'>
+    <meta name='google-signin-client_id' content='622383762900-m8b72f0igfesluenorhpogv46i8or3va.apps.googleusercontent.com'>
 ";
 
 

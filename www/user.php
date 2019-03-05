@@ -23,7 +23,11 @@ function get_user_id($id_token) {
 
     //Validate the ID with google authentication to make sure we're not
     //getting scammed.
-    $CLIENT_ID = "913778561877-7vmnbjvuc9c2g3c3qejgckjdtdivg9n1.apps.googleusercontent.com";
+    //ourepository:
+    //$CLIENT_ID = "913778561877-7vmnbjvuc9c2g3c3qejgckjdtdivg9n1.apps.googleusercontent.com";
+
+    //airtonomy:
+    $CLIENT_ID = "622383762900-m8b72f0igfesluenorhpogv46i8or3va.apps.googleusercontent.com";
     //error_log("CLIENT ID: $CLIENT_ID");
 
     $client = new Google_Client(['client_id' => $CLIENT_ID]);
