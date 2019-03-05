@@ -20,9 +20,9 @@ if ($drop_tables) {
     query_our_db("DROP TABLE points");
     query_our_db("DROP TABLE lines");
     query_our_db("DROP TABLE polygons");
-    query_our_db("DROP TABLE mark_attributes");
 }
 
+query_our_db("DROP TABLE mark_attributes");
 query_our_db("DROP TABLE jobs");
 query_our_db("DROP TABLE prediction");
 

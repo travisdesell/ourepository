@@ -39,10 +39,12 @@ function generate_thumbnail($owner_id, $mosaic_id) {
     echo "thumbnail filename: '$thumbnail_filename'\n";
 
     $command = "convert '/mosaic_uploads/$owner_id/$filename' -resize '350x350^' -gravity center -alpha off -crop 350x350+0+0 +repage '/mosaics/$owner_id/$thumbnail_filename'";
+    //$command = "vipsthumbnail '/mosaic_uploads/$owner_id/$filename' --size '350x350' '/mosaics/$owner_id/$thumbnail_filename'";
     echo "command: '$command'\n";
     $output = shell_exec($command);
 
     $command = "convert '/mosaic_uploads/$owner_id/$filename' -resize 1000 -alpha off '/mosaics/$owner_id/$preview_filename'";
+    //$command = "vipsthumbnail '/mosaic_uploads/$owner_id/$filename' --size 1000 '/mosaics/$owner_id/$preview_filename'";
     echo "command: '$command'\n";
     $output = shell_exec($command);
 
@@ -272,7 +274,8 @@ function split_mosaic($owner_id, $mosaic_id) {
     error_log($query);
     query_our_db($query);
 
-    $command = "../scripts/magick-slicer.sh -v3 -e png -mid $mosaic_id '/mosaic_uploads/$owner_id/$filename' '/mosaics/$owner_id/$filename_base'";
+    //$command = "../scripts/magick-slicer.sh -v3 -e png -mid $mosaic_id '/mosaic_uploads/$owner_id/$filename' '/mosaics/$owner_id/$filename_base'";
+    $command = "vips dzsave --suffix .png '/mosaic_uploads/$owner_id/$filename' '/mosaics/$owner_id/$filename_base'";
     echo "command: '$command'\n";
     $output = shell_exec($command);
 
@@ -280,7 +283,7 @@ function split_mosaic($owner_id, $mosaic_id) {
 
     $output = $our_db->real_escape_string($output);
 
-    $query = "UPDATE mosaic_progress SET trace = '$output'";
+    $query = "UPDATE tiling_trace SET trace = '$output' WHERE mosaic_id = $mosaic_id";
     query_our_db($query);
 
     $i = 0;
