@@ -6,6 +6,7 @@ $cwd[__FILE__] = dirname($cwd[__FILE__]);
 
 require_once($cwd[__FILE__] . "/../db/my_query.php");
 require_once($cwd[__FILE__] . "/user.php");
+require_once($cwd[__FILE__] . "/settings.php");
 
 /*
 error_log("BEFORE GET USER ID!");
@@ -108,7 +109,9 @@ if ($request_type == NULL || $request_type == "INDEX") {
         }
     }
 
-    //error_log("got a request for a tile: '$name'");
+    $name = "$BASE_DIRECTORY$name";
+
+    error_log("got a request for a tile: '$name'");
     $fp = fopen($name, 'rb');
     
     // send the right headers

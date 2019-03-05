@@ -7,6 +7,7 @@ $cwd[__FILE__] = dirname($cwd[__FILE__]);
 require_once($cwd[__FILE__] . "/../db/my_query.php");
 require_once($cwd[__FILE__] . "/upload.php"); //for rrmdir
 require_once($cwd[__FILE__] . "/marks.php"); //for create_polygon_points
+require_once($cwd[__FILE__] . "/settings.php"); //for mosaic directories
 require_once($cwd[__FILE__] . "/../../Mustache.php/src/Mustache/Autoloader.php");
 Mustache_Autoloader::register();
 
@@ -313,7 +314,7 @@ function display_index($user_id) {
 }
 
 function display_mosaic($user_id, $mosaic_id) {
-    global $cwd;
+    global $cwd, $ARCHIVE_DIRECTORY;
 
     //check and see if the mosaic exists
     $mosaic_result = query_our_db("SELECT * FROM mosaics WHERE id = $mosaic_id");
@@ -340,7 +341,7 @@ function display_mosaic($user_id, $mosaic_id) {
     if ($channels > 3) $navbar['has_nir'] = true;
 
     $filename = substr($filename, 0, strrpos($filename, "."));
-    $response['mosaic_url'] = '/mosaics/' . $mosaic_row['owner_id'] . '/' . $filename . '_files/';
+    $response['mosaic_url'] = "$ARCHIVE_DIRECTORY/" . $mosaic_row['owner_id'] . '/' . $filename . '_files/';
     $response['height'] = $height;
     $response['width'] = $width;
     $response['channels'] = $channels;
@@ -765,6 +766,8 @@ function unshare_mosaics($user_id, $mosaic_ids, $mosaic_names, $emails) {
 }
 
 function delete_mosaic($user_id, $mosaic_id) {
+    global $UPLOAD_DIRECTORY, $ARCHIVE_DIRECTORY;
+
     $query = "SELECT filename, identifier FROM mosaics WHERE owner_id = $user_id AND id = '$mosaic_id'";
     error_log($query);
     $result = query_our_db($query);
@@ -772,20 +775,20 @@ function delete_mosaic($user_id, $mosaic_id) {
 
     $filename = $row['filename'];
     $identifier = $row['identifier'];
-    $upload_dir = "/mosaic_uploads/$user_id/$identifier/";
+    $upload_dir = "$UPLOAD_DIRECTORY/$user_id/$identifier/";
 
     error_log("recursively deleting directory $upload_dir");
     rrmdir($upload_dir);
-    error_log("unlinking file: '/mosaic_uploads/$user_id/$filename'");
-    unlink("/mosaic_uploads/$user_id/$filename");
+    error_log("unlinking file: '$UPLOAD_DIRECTORY/$user_id/$filename'");
+    unlink("$UPLOAD_DIRECTORY/$user_id/$filename");
 
     $filename_base = substr($filename, 0, strrpos($filename, "."));
     $thumbnail_filename = $filename_base . "_thumbnail.png";
 
-    $tile_dir = "/mosaics/$user_id/$filename_base" . "_files";
+    $tile_dir = "$ARCHIVE_DIRECTORY/$user_id/$filename_base" . "_files";
     rrmdir($tile_dir);
-    unlink("/mosaics/$user_id/$filename_base" . ".dzi");
-    unlink("/mosaics/$user_id/$filename_base" . "_thumbnail.png");
+    unlink("$ARCHIVE_DIRECTORY/$user_id/$filename_base" . ".dzi");
+    unlink("$ARCHIVE_DIRECTORY/$user_id/$filename_base" . "_thumbnail.png");
 
     $query = "DELETE FROM mosaics WHERE owner_id = $user_id AND id = '$mosaic_id'";
     error_log($query);

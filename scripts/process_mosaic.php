@@ -7,6 +7,8 @@ $cwd[__FILE__] = dirname($cwd[__FILE__]);
 require_once($cwd[__FILE__] . "/../db/my_query.php");
 //require_once($cwd[__FILE__] . "/../www/user.php");
 
+require_once($cwd[__FILE__] . "/../www/settings.php");
+
 function get_lat_lon($str, &$lat, &$lon) {
     $lat = substr($str, 41, 14);
     $lon = substr($str, 56, 14);
@@ -23,7 +25,7 @@ function get_utm($str, &$east, &$north) {
 
 
 function generate_thumbnail($owner_id, $mosaic_id) {
-    global $our_db;
+    global $our_db, $UPLOAD_DIRECTORY, $ARCHIVE_DIRECTORY;
 
     //get filename from mosiac_id
     $query = "SELECT filename FROM mosaics WHERE owner_id = $owner_id AND id = $mosaic_id";
@@ -38,13 +40,13 @@ function generate_thumbnail($owner_id, $mosaic_id) {
     $preview_filename = $filename_base . "_preview.png";
     echo "thumbnail filename: '$thumbnail_filename'\n";
 
-    $command = "convert '/mosaic_uploads/$owner_id/$filename' -resize '350x350^' -gravity center -alpha off -crop 350x350+0+0 +repage '/mosaics/$owner_id/$thumbnail_filename'";
-    //$command = "vipsthumbnail '/mosaic_uploads/$owner_id/$filename' --size '350x350' '/mosaics/$owner_id/$thumbnail_filename'";
+    //$command = "convert '$UPLOAD_DIRECTORY/$owner_id/$filename' -resize '350x350^' -gravity center -alpha off -crop 350x350+0+0 +repage '$ARCHIVE_DIRECTORY/$owner_id/$thumbnail_filename'";
+    $command = "vipsthumbnail '$UPLOAD_DIRECTORY/$owner_id/$filename' --size 350x350 --crop -o '$ARCHIVE_DIRECTORY/$owner_id/$thumbnail_filename'";
     echo "command: '$command'\n";
     $output = shell_exec($command);
 
-    $command = "convert '/mosaic_uploads/$owner_id/$filename' -resize 1000 -alpha off '/mosaics/$owner_id/$preview_filename'";
-    //$command = "vipsthumbnail '/mosaic_uploads/$owner_id/$filename' --size 1000 '/mosaics/$owner_id/$preview_filename'";
+    //$command = "convert '$UPLOAD_DIRECTORY/$owner_id/$filename' -resize 1000 -alpha off '$ARCHIVE_DIRECTORY/$owner_id/$preview_filename'";
+    $command = "vipsthumbnail '$UPLOAD_DIRECTORY/$owner_id/$filename' --size 1000 -o '$ARCHIVE_DIRECTORY/$owner_id/$preview_filename'";
     echo "command: '$command'\n";
     $output = shell_exec($command);
 
@@ -52,7 +54,7 @@ function generate_thumbnail($owner_id, $mosaic_id) {
 }
 
 function update_mosaic_metadata($owner_id, $mosaic_id) {
-    global $our_db;
+    global $our_db, $UPLOAD_DIRECTORY, $ARCHIVE_DIRECTORY;
 
     //get filename from mosiac_id
     $query = "SELECT filename FROM mosaics WHERE owner_id = $owner_id AND id = $mosaic_id";
@@ -60,7 +62,7 @@ function update_mosaic_metadata($owner_id, $mosaic_id) {
     $row = $result->fetch_assoc();
     $filename = $row["filename"];
 
-    $command = "gdalinfo '/mosaic_uploads/$owner_id/$filename'";
+    $command = "gdalinfo '$UPLOAD_DIRECTORY/$owner_id/$filename'";
     $output = shell_exec($command);
 
     echo $output . "\n";
@@ -252,7 +254,7 @@ function update_mosaic_metadata($owner_id, $mosaic_id) {
 }
 
 function split_mosaic($owner_id, $mosaic_id) {
-    global $our_db;
+    global $our_db, $UPLOAD_DIRECTORY, $ARCHIVE_DIRECTORY;
 
     //get filename from mosiac_id
     $query = "SELECT filename FROM mosaics WHERE owner_id = $owner_id AND id = $mosaic_id";
@@ -264,7 +266,7 @@ function split_mosaic($owner_id, $mosaic_id) {
     $filename_base = substr($filename, 0, strrpos($filename, "."));
     echo "filename base: '$filename_base'\n";
 
-    mkdir("/mosaics/$owner_id", 0777, true);
+    mkdir("$ARCHIVE_DIRECTORY/$owner_id", 0777, true);
 
     $query = "UPDATE mosaics SET status = 'TILING' WHERE id = $mosaic_id";
     error_log($query);
@@ -274,8 +276,8 @@ function split_mosaic($owner_id, $mosaic_id) {
     error_log($query);
     query_our_db($query);
 
-    //$command = "../scripts/magick-slicer.sh -v3 -e png -mid $mosaic_id '/mosaic_uploads/$owner_id/$filename' '/mosaics/$owner_id/$filename_base'";
-    $command = "vips dzsave --suffix .png '/mosaic_uploads/$owner_id/$filename' '/mosaics/$owner_id/$filename_base'";
+    //$command = "../scripts/magick-slicer.sh -v3 -e png -mid $mosaic_id '$UPLOAD_DIRECTORY/$owner_id/$filename' '$ARCHIVE_DIRECTORY/$owner_id/$filename_base'";
+    $command = "vips dzsave --suffix .png '$UPLOAD_DIRECTORY/$owner_id/$filename' '$ARCHIVE_DIRECTORY/$owner_id/$filename_base'";
     echo "command: '$command'\n";
     $output = shell_exec($command);
 
@@ -292,15 +294,17 @@ function split_mosaic($owner_id, $mosaic_id) {
         $i++;
     }
 
-    if (strpos($lines[count($lines) - 3], "complete") !== false) {
+    //if (strpos($lines[count($lines) - 3], "complete") !== false) {
         $query = "UPDATE mosaics SET status = 'TILED' WHERE id = $mosaic_id";
         error_log($query);
         query_our_db($query);
+        /*
     } else {
         $query = "UPDATE mosaics SET status = 'ERROR' WHERE id = $mosaic_id";
         error_log($query);
         query_our_db($query);
     }
+         */
 }
 
 
