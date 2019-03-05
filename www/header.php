@@ -1,6 +1,15 @@
 <?php
 
+$cwd[__FILE__] = __FILE__;
+if (is_link($cwd[__FILE__])) $cwd[__FILE__] = readlink($cwd[__FILE__]);
+$cwd[__FILE__] = dirname($cwd[__FILE__]);
+
+require_once($cwd[__FILE__] . "/settings.php");
+
+
 function print_header($additional_css, $additional_js) {
+    global $CLIENT_ID;
+
     echo "
 <html>
 <head>
@@ -25,7 +34,8 @@ function print_header($additional_css, $additional_js) {
 
 
     <script src='https://apis.google.com/js/platform.js' async defer></script>
-    <meta name='google-signin-client_id' content='622383762900-m8b72f0igfesluenorhpogv46i8or3va.apps.googleusercontent.com'>
+    <meta name='google-signin-client_id' content='$CLIENT_ID'>
+    <script>var CLIENT_ID = '$CLIENT_ID';</script>
 ";
 
 

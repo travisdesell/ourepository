@@ -7,10 +7,11 @@ if (is_link($cwd[__FILE__])) $cwd[__FILE__] = readlink($cwd[__FILE__]);
 $cwd[__FILE__] = dirname($cwd[__FILE__]);
 
 require_once($cwd[__FILE__] . "/../db/my_query.php");
+require_once($cwd[__FILE__] . "/settings.php");
 
 
 function get_user_id($id_token) {
-    global $our_db, $cwd;
+    global $our_db, $cwd, $CLIENT_ID;
 
     //An ID token will be passed if there is a logged in user, otherwise display
     //the splash screen
@@ -20,14 +21,6 @@ function get_user_id($id_token) {
         echo json_encode($response);
         exit();
     }
-
-    //Validate the ID with google authentication to make sure we're not
-    //getting scammed.
-    //ourepository:
-    //$CLIENT_ID = "913778561877-7vmnbjvuc9c2g3c3qejgckjdtdivg9n1.apps.googleusercontent.com";
-
-    //airtonomy:
-    $CLIENT_ID = "622383762900-m8b72f0igfesluenorhpogv46i8or3va.apps.googleusercontent.com";
     //error_log("CLIENT ID: $CLIENT_ID");
 
     $client = new Google_Client(['client_id' => $CLIENT_ID]);
