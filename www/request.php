@@ -77,7 +77,7 @@ if ($request_type == NULL || $request_type == "INDEX") {
         }
     }
 
-    //error_log("got a request for a tile: '$name'");
+    error_log("got a request for a tile: '$name'");
     $fp = fopen($name, 'rb');
     
     // send the right headers
@@ -113,6 +113,13 @@ if ($request_type == NULL || $request_type == "INDEX") {
 
     error_log("got a request for a tile: '$name'");
     $fp = fopen($name, 'rb');
+    if ( !$fp ) {
+        error_log('fopen failed. reason: ', $php_errormsg);
+    } else {
+        error_log("success!");
+        error_log("filesize:" . filesize($name));
+    }
+
     
     // send the right headers
     header("Content-Type: image/png");
@@ -122,6 +129,24 @@ if ($request_type == NULL || $request_type == "INDEX") {
     fpassthru($fp);
     exit;
 
+} else if ($request_type == "EXPORT_LABEL_CSV") {
+    require_once($cwd[__FILE__] . "/export_labels.php");
+
+    $label_id = $our_db->real_escape_string($_GET['label_id']);
+    $mosaic_id = $our_db->real_escape_string($_GET['mosaic_id']);
+    $export_type = $our_db->real_escape_string($_GET['export_type']);
+
+    error_log("exporting label csv!");
+
+    if ($export_type == "POLYGONS") {
+        export_polygons($label_id, $mosaic_id);
+    } else if ($export_type == "RECTANGLES") {
+        export_rectangles($label_id, $mosaic_id);
+    } else if ($export_type == "LINES") {
+        export_lines($label_id, $mosaic_id);
+    } else if ($export_type == "POINTS") {
+        export_points($label_id, $mosaic_id);
+    }
 
 } else if ($request_type == "MOSAIC_CARD") {
     require_once($cwd[__FILE__] . "/mosaics.php");

@@ -1346,6 +1346,26 @@ function initialize_openseadragon(tiles_url, channels, height, width, marks) {
         xhr.send(formData);
     });
 
+    $("#export-polygons-button").click(function() {
+        var win = window.open("./request.php?request=EXPORT_LABEL_CSV&id_token=" + id_token + "&mosaic_id=" + mosaic_id + "&label_id=" + current_label_id + "&export_type=POLYGONS", '_blank');
+        win.focus();
+    });
+
+    $("#export-rectangles-button").click(function() {
+        var win = window.open("./request.php?request=EXPORT_LABEL_CSV&id_token=" + id_token + "&mosaic_id=" + mosaic_id + "&label_id=" + current_label_id + "&export_type=RECTANGLES", '_blank');
+        win.focus();
+    });
+
+    $("#export-lines-button").click(function() {
+        var win = window.open("./request.php?request=EXPORT_LABEL_CSV&id_token=" + id_token + "&mosaic_id=" + mosaic_id + "&label_id=" + current_label_id + "&export_type=LINES", '_blank');
+        win.focus();
+    });
+
+    $("#export-points-button").click(function() {
+        var win = window.open("./request.php?request=EXPORT_LABEL_CSV&id_token=" + id_token + "&mosaic_id=" + mosaic_id + "&label_id=" + current_label_id + "&export_type=POINTS", '_blank');
+        win.focus();
+    });
+
 
     $('#import-polygons-button').click(function() {
         $("#submit-polygons-alert").removeClass("alert-success");
