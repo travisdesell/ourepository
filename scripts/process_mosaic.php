@@ -92,6 +92,12 @@ function update_mosaic_metadata($owner_id, $mosaic_id) {
             break;
         }
 
+        if ($lines[$i] == 'Image Structure Metadata:') {
+            //in this case there's no metadatat
+            $metadata_start = $i;
+            break;
+        }
+
         if ($i != 4) $coordinate_system .= "\n";
         else {
             $pos = strpos($lines[$i], "UTM zone");
