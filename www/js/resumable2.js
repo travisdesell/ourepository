@@ -112,6 +112,44 @@ function initialize_mosaic_dropdowns() {
 
         $("#confirm-delete-modal-body").html("<p><b>Are you sure you wish to delete '" + filename + "'?</b></p><p>This action cannot be undone. To get the mosaic back in OURepository it will need to be re-uploaded.</p>");
         $("#confirm-delete-modal").modal();
+
+        var mosaic_ids = [ mosaic.id ];
+        var mosaic_names = [ filename ];
+        $('#confirm-delete-modal-button:not(.bound)').addClass('bound').click(function() {
+            console.log(mosaic_ids);
+            console.log(mosaic_names);
+
+            var submission_data = {
+                request : "REMOVE_MOSAICS",
+                id_token : id_token,
+                mosaic_ids : mosaic_ids,
+                mosaic_names : mosaic_names
+            };
+
+            $.ajax({
+                type: 'POST',
+                url: './request.php',
+                data : submission_data,
+                dataType : 'text',
+                success : function(responseText) {
+                    console.log("received response: " + responseText);
+                    var response = JSON.parse(responseText);
+
+                    $("#confirm-delete-modal").modal('hide');
+                    display_error_modal(response.title, response.message);
+
+                    $("#uploading-mosaic-row-" + mosaic.identifier).remove();
+                },
+                error : function(jqXHR, textStatus, errorThrown) {
+                    console.log(errorThrown);
+                    $("#confirm-delete-modal").modal('hide');
+                },
+                async: true
+            });
+
+
+        });
+
     });
 
 }
