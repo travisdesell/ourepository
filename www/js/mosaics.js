@@ -2666,10 +2666,11 @@ function initialize_mosaic(responseText) {
         console.log("current_prediction_type: '" + current_prediction_type + "'");
 
         if (current_prediction_type == "LINE") {
-            $("#prediction-line-img").attr("src", "./jobs/" + prediction.owner_id + "/" + prediction.job_id + "/line_" + prediction.mosaic_id + "_" + prediction.label_id + "_" + prediction.mark_id + ".png");
+            let base = "./request.php?request=IMAGE&id_token=" + id_token + "&mosaic_id=" + mosaic_id + "&file="
+            $("#prediction-line-img").attr("src", base + "/jobs/" + prediction.owner_id + "/" + prediction.job_id + "/line_" + prediction.mosaic_id + "_" + prediction.label_id + "_" + prediction.mark_id + ".png");
 
         } else if (current_prediction_type == "POINT") {
-            var filename = "./jobs/" + prediction.owner_id + "/" + prediction.job_id + "/point_" + prediction.mosaic_id + "_" + prediction.label_id + "_" + prediction.mark_id;
+            var filename = base + "/jobs/" + prediction.owner_id + "/" + prediction.job_id + "/point_" + prediction.mosaic_id + "_" + prediction.label_id + "_" + prediction.mark_id;
 
             $("#prediction-point-img-original").attr("src", filename + "_original.png");
             $("#prediction-point-img-merged").attr("src", filename + "_merged.png");
@@ -3038,7 +3039,7 @@ function initialize_mosaic(responseText) {
                 b : 0
             };
 
-            var meter_min = Math.min(meter_width, meter_height);
+            var meter_max = Math.max(meter_width, meter_height);
 
             var gridline_meters = 50;
             for (var x = gridline_meters; x < meter_width; x += gridline_meters) {
@@ -3046,10 +3047,10 @@ function initialize_mosaic(responseText) {
                 var d3Line = d3.select(overlay.node()).append("line")
                     .style('stroke', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.5)')
                     .attr("id", "svg-line-" + drawn_lines)
-                    .attr("x1", x / meter_min)
-                    .attr("x2", x / meter_min)
+                    .attr("x1", x / meter_max)
+                    .attr("x2", x / meter_max)
                     .attr("y1", 0.0)
-                    .attr("y2", meter_height / meter_min)
+                    .attr("y2", meter_height / meter_max)
                     .attr("stroke-width", 0.0005)
                     .attr("class", "gridline");
             }
@@ -3060,9 +3061,9 @@ function initialize_mosaic(responseText) {
                     .style('stroke', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.5)')
                     .attr("id", "svg-line-" + drawn_lines)
                     .attr("x1", 0.0)
-                    .attr("x2", meter_width / meter_min)
-                    .attr("y1", y / meter_min)
-                    .attr("y2", y / meter_min)
+                    .attr("x2", meter_width / meter_max)
+                    .attr("y1", y / meter_max)
+                    .attr("y2", y / meter_max)
                     .attr("stroke-width", 0.0005)
                     .attr("class", "gridline");
             }
