@@ -65,6 +65,20 @@ function initialize_mosaic_cards() {
         }
     });
 
+    $(".all-hide-button:not(.toggle-bound)").addClass('toggle-bound').click(function() {
+        console.log("toggling all hide button!");
+
+        if ($(this).attr("direction") == 'up') {
+            $(this).html("<i class='fa fa-angle-double-down'>");
+            $(this).attr("direction", 'down');
+
+            $(".hide-folder-button[showing='1']").click();
+        } else {
+            $(this).html("<i class='fa fa-angle-double-up'>");
+            $(this).attr("direction", 'up');
+            $(".hide-folder-button[showing='0']").click();
+        }
+    });
 }
 
 //these need to be updated when a new folder is added and the modal is updated
