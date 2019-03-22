@@ -2,6 +2,7 @@ var viewer;
 var overlay;
 
 var utm_zone;
+var gridlines_initialized = false;
 
 var lat_upper_left;
 var lon_upper_left;
@@ -2614,7 +2615,6 @@ function initialize_mosaic(responseText) {
     utm_e_lower_right = Number(mosaic_info.utm_e_lower_right);
     utm_n_lower_right = Number(mosaic_info.utm_n_lower_right);
 
-
     $("#index-content").html(response.html);
     if (typeof response.navbar != undefined) {
         console.log("SETTING NAVBAR CONTENT");
@@ -3015,6 +3015,64 @@ function initialize_mosaic(responseText) {
 
         set_mark_coordinates();
     });
+
+    $("#gridlines-button").click(function() {
+        if (!gridlines_initialized) {
+            gridlines_initialized = true;
+            console.log("clicked gridlines!");
+            console.log("image_width: " + image_width + ", image_height: " + image_height);
+
+            var meter_width = utm_e_upper_right - utm_e_upper_left;
+            var meter_height = utm_n_upper_left - utm_n_lower_left;
+
+            console.log("meter_width: " + meter_width + ", meter_height: " + meter_height);
+
+            var pixels_per_meter = image_width / meter_width;
+            console.log("pixels per meter : " + pixels_per_meter);
+            var gridline_distance = 50.0 / meter_width;
+            console.log("gridline distance: " + gridline_distance);
+
+            var color = {
+                r : 255,
+                g : 0,
+                b : 0
+            };
+
+            var meter_min = Math.min(meter_width, meter_height);
+
+            var gridline_meters = 50;
+            for (var x = gridline_meters; x < meter_width; x += gridline_meters) {
+
+                var d3Line = d3.select(overlay.node()).append("line")
+                    .style('stroke', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.5)')
+                    .attr("id", "svg-line-" + drawn_lines)
+                    .attr("x1", x / meter_min)
+                    .attr("x2", x / meter_min)
+                    .attr("y1", 0.0)
+                    .attr("y2", meter_height / meter_min)
+                    .attr("stroke-width", 0.0005)
+                    .attr("class", "gridline");
+            }
+
+            for (var y = gridline_meters; y < meter_height; y += gridline_meters) {
+
+                var d3Line = d3.select(overlay.node()).append("line")
+                    .style('stroke', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.5)')
+                    .attr("id", "svg-line-" + drawn_lines)
+                    .attr("x1", 0.0)
+                    .attr("x2", meter_width / meter_min)
+                    .attr("y1", y / meter_min)
+                    .attr("y2", y / meter_min)
+                    .attr("stroke-width", 0.0005)
+                    .attr("class", "gridline");
+            }
+
+        } else {
+            $(".gridline").toggle();
+        }
+
+    });
+
 }
 
 function initialize_splash(responseText) {
