@@ -217,15 +217,25 @@ function initialize_mosaics(responseText) {
                 var file = this.files[i];
                 var filename = file.webkitRelativePath || file.fileName || file.name;
 
+                const isImage = file['type'].split('/')[0] == 'image';
+
+                console.log("file type: '" + file['type'] + "'");
+                console.log("split[0]: " + file['type'].split('/')[0]);
+                console.log("isImage: " + isImage);
+
                 if (!filename.match(/^[a-zA-Z0-9_.-]*$/)) {
                     error_text += "The filename '" + filename + "' was malformed.<br>";
+                    error_test += "<br>Filenames must only contain letters, numbers, dashes ('-'), underscores ('_') and periods.";
+                } else if (!isImage) {
+                    error_text += "The selected file was not an image.";
+
                 } else {
                     start_upload(file);
                 }
             }
 
             if (error_text != "") {
-                display_error_modal("Malformed Filename", error_text += "<br>Filenames must only contain letters, numbers, dashes ('-'), underscores ('_') and periods.");
+                display_error_modal("Malformed Filename", error_text);
             }
         });
 
