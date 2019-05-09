@@ -2734,7 +2734,11 @@ function initialize_mosaic(responseText) {
         current_predictions = null;
         current_mark_attributes = null;
         current_prediction_type = null;
+
+        $('#prediction-inspector').removeClass('flex-column');
+        $('#prediction-inspector').removeClass('d-flex');
         $("#prediction-inspector").hide();
+
         $("#prediction-attributes").hide();
         $("#map-div").addClass("col-sm-10");
         $("#map-div").removeClass("col-sm-7");
@@ -2792,6 +2796,8 @@ function initialize_mosaic(responseText) {
                 }
 
                 $("#prediction-inspector").show();
+                $('#prediction-inspector').addClass('d-flex flex-column');
+
                 if (has_mark_attributes == true) {
                     $("#prediction-attributes").show();
                     $("#map-div").removeClass("col-sm-10");
