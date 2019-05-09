@@ -79,6 +79,12 @@ if ($request_type == NULL || $request_type == "INDEX") {
 
     error_log("got a request for a tile: '$name'");
     $fp = fopen($name, 'rb');
+    if ( !$fp ) {
+        error_log('fopen failed. reason: ', $php_errormsg);
+    } else {
+        error_log("success!");
+        error_log("filesize:" . filesize($name));
+    }
     
     // send the right headers
     header("Content-Type: image/png");

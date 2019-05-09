@@ -119,8 +119,6 @@ function export_rectangles($label_id, $mosaic_id) {
     echo "#utm_n_lower_left: $utm_n_lower_left<br>";
     echo "#utm_n_lower_right: $utm_n_lower_right<br>";
 
-
-
     $query = "SELECT * FROM rectangles WHERE mosaic_id = $mosaic_id AND label_id = $label_id";
     $result = query_our_db($query);
 

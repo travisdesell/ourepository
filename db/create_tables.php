@@ -1,5 +1,4 @@
-<?php
-$cwd[__FILE__] = __FILE__;
+<?php $cwd[__FILE__] = __FILE__;
 if (is_link($cwd[__FILE__])) $cwd[__FILE__] = readlink($cwd[__FILE__]);
 $cwd[__FILE__] = dirname($cwd[__FILE__]);
 
@@ -19,8 +18,13 @@ if ($drop_tables) {
     query_our_db("DROP TABLE folder_assignments");
     query_our_db("DROP TABLE labels");
     query_our_db("DROP TABLE points");
-    query_our_db("DROP TABLE lines");
+    query_our_db("DROP TABLE `lines`");
     query_our_db("DROP TABLE polygons");
+    query_our_db("DROP TABLE rectangles");
+    query_our_db("DROP TABLE project_access");
+    query_our_db("DROP TABLE mosaic_access");
+    query_our_db("DROP TABLE label_access");
+    query_our_db("DROP TABLE label_mosaics");
 }
 
 query_our_db("DROP TABLE mark_attributes");
