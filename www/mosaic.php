@@ -34,7 +34,7 @@ echo "<body>";
 
 print_navbar();
 
-echo "<div id='index-content'></div>";
+echo "<div id='index-content' style='height:100%;'></div>";
 
 echo "
 <div id='error-modal' class='modal' tabindex='-1' role='dialog'>
