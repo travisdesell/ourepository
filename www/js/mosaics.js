@@ -3023,6 +3023,15 @@ function initialize_mosaic(responseText) {
         set_mark_coordinates();
     });
 
+    $("#download-mosaic-button").click(function() {
+        console.log("downloading source mosaic!");
+        console.log("mosaic id: " + mosaic_id);
+
+        var win = window.open("./request.php?id_token=" + id_token + "&request=MOSAIC_SOURCE&mosaic_id=" + mosaic_id, "_blank");
+        win.focus();
+    });
+
+
     $("#gridlines-button").click(function() {
         if (!gridlines_initialized) {
             gridlines_initialized = true;

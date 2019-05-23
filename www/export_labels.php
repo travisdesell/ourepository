@@ -19,6 +19,7 @@ function export_polygons($label_id, $mosaic_id) {
     $row = $result->fetch_assoc();
     $label_name = $row['label_name'];
 
+    echo "#polygons<br>";
     echo "#label: $label_name<br>";
 
     $query = "SELECT filename, width, height, utm_e_upper_left, utm_n_upper_left, utm_e_upper_right, utm_n_upper_right, utm_e_lower_left, utm_n_lower_left, utm_e_lower_right, utm_n_lower_right FROM mosaics WHERE id = $mosaic_id";
@@ -65,8 +66,11 @@ function export_polygons($label_id, $mosaic_id) {
 
             //echo "$x, $y ==> ";
 
-            $x = $utm_e_upper_left + ($x * ($utm_e_upper_left - $utm_e_upper_right));
-            $y = $utm_n_upper_left + ($y * ($utm_n_upper_left - $utm_n_lower_left));
+//            $x = $utm_e_upper_left + ($x * ($utm_e_upper_left - $utm_e_upper_right));
+//            $y = $utm_n_upper_left + ($y * ($utm_n_upper_left - $utm_n_lower_left));
+
+            $x = floor($x * floatval($width));
+            $y = floor($y * floatval($width));
 
             if ($first) {
                 echo "$x,$y";
@@ -89,6 +93,7 @@ function export_rectangles($label_id, $mosaic_id) {
     $row = $result->fetch_assoc();
     $label_name = $row['label_name'];
 
+    echo "#rectangles<br>";
     echo "#label: $label_name<br>";
 
     $query = "SELECT filename, width, height, utm_e_upper_left, utm_n_upper_left, utm_e_upper_right, utm_n_upper_right, utm_e_lower_left, utm_n_lower_left, utm_e_lower_right, utm_n_lower_right FROM mosaics WHERE id = $mosaic_id";
@@ -124,12 +129,17 @@ function export_rectangles($label_id, $mosaic_id) {
 
     echo "x1,y1,x2,y2<br>";
     while ($row = $result->fetch_assoc()) {
-        $x1 = $utm_e_upper_left + (floatval($row['x1']) * ($utm_e_upper_left - $utm_e_lower_right));
-        $x2 = $utm_e_upper_left + (floatval($row['x2']) * ($utm_e_upper_left - $utm_e_upper_right));
-        $y1 = $utm_n_upper_left + (floatval($row['y1']) * ($utm_n_upper_left - $utm_n_lower_left));
-        $y2 = $utm_n_upper_left + (floatval($row['y2']) * ($utm_n_upper_left - $utm_n_lower_left));
+        #$x1 = $utm_e_upper_left + (floatval($row['x1']) * ($utm_e_upper_left - $utm_e_lower_right));
+        #$x2 = $utm_e_upper_left + (floatval($row['x2']) * ($utm_e_upper_left - $utm_e_upper_right));
+        #$y1 = $utm_n_upper_left + (floatval($row['y1']) * ($utm_n_upper_left - $utm_n_lower_left));
+        #$y2 = $utm_n_upper_left + (floatval($row['y2']) * ($utm_n_upper_left - $utm_n_lower_left));
 
-        echo "$x1,$y2,$x2,$y2<br>";
+        $x1 = floor(floatval($row['x1']) * floatval($width));
+        $x2 = ceil(floatval($row['x2']) * floatval($width));
+        $y1 = floor(floatval($row['y1']) * floatval($width)) ;
+        $y2 = ceil(floatval($row['y2']) * floatval($width)) ;
+
+        echo "$x1,$y1,$x2,$y2<br>";
     }
 
 }
@@ -140,6 +150,7 @@ function export_lines($label_id, $mosaic_id) {
     $row = $result->fetch_assoc();
     $label_name = $row['label_name'];
 
+    echo "#lines<br>";
     echo "#label: $label_name<br>";
 
     $query = "SELECT filename, width, height, utm_e_upper_left, utm_n_upper_left, utm_e_upper_right, utm_n_upper_right, utm_e_lower_left, utm_n_lower_left, utm_e_lower_right, utm_n_lower_right FROM mosaics WHERE id = $mosaic_id";
@@ -193,6 +204,7 @@ function export_points($label_id, $mosaic_id) {
     $row = $result->fetch_assoc();
     $label_name = $row['label_name'];
 
+    echo "#points<br>";
     echo "#label: $label_name<br>";
 
     $query = "SELECT filename, width, height, utm_e_upper_left, utm_n_upper_left, utm_e_upper_right, utm_n_upper_right, utm_e_lower_left, utm_n_lower_left, utm_e_lower_right, utm_n_lower_right FROM mosaics WHERE id = $mosaic_id";
