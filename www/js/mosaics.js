@@ -87,11 +87,11 @@ function hexToRgb(hex) {
 
 
 function get_mark_coordinates(viewportPoint, type) {
-    //console.log("viewportPoint: " + viewportPoint);
+    console.log("viewportPoint: " + viewportPoint);
 
     var imagePoint = viewer.viewport.viewportToImageCoordinates(viewportPoint);
 
-    //console.log("imagePoint: " + imagePoint);
+    console.log("imagePoint: " + imagePoint);
 
     var pixel_y = Math.round(imagePoint.y);
     var pixel_x = Math.round(imagePoint.x);
@@ -108,8 +108,10 @@ function get_mark_coordinates(viewportPoint, type) {
        */
 
     if (utm_n_upper_left != null) {
-        var utm_n = utm_n_upper_left + (y * (utm_n_upper_left - utm_n_lower_left));
-        var utm_e = utm_e_upper_left + (x * (utm_e_upper_left - utm_e_lower_right));
+        //y is top to bottom, but UTM is bottom to top
+
+        var utm_n = utm_n_upper_left - (y * (utm_n_upper_left - utm_n_lower_left));
+        var utm_e = utm_e_upper_left + (x * (utm_e_upper_right - utm_e_upper_left));
 
         var utm_n_text = Number(utm_n).toLocaleString('en', {maximumFractionDigits : 4, minimumFractionDigits : 4});
         var utm_e_text = Number(utm_e).toLocaleString('en', {maximumFractionDigits : 4, minimumFractionDigits : 4});
@@ -234,8 +236,9 @@ App = {
                     */
                     
                     if (utm_n_upper_left != null) {
-                        var utm_n = utm_n_upper_left + (y * (utm_n_upper_left - utm_n_lower_left));
-                        var utm_e = utm_e_upper_left + (x * (utm_e_upper_left - utm_e_lower_right));
+                        //y is 0 at top, utm_n is zero at bottom
+                        var utm_n = utm_n_upper_left - (y * (utm_n_upper_left - utm_n_lower_left));
+                        var utm_e = utm_e_upper_left + (x * (utm_e_upper_right - utm_e_upper_left));
 
                         $("#utm-n").text(Number(utm_n).toLocaleString('en', {maximumFractionDigits : 4, minimumFractionDigits : 4}));
                         $("#utm-e").text(Number(utm_e).toLocaleString('en', {maximumFractionDigits : 4, minimumFractionDigits : 4}));
