@@ -4,6 +4,7 @@ if (is_link($cwd[__FILE__])) $cwd[__FILE__] = readlink($cwd[__FILE__]);
 $cwd[__FILE__] = dirname($cwd[__FILE__]);
 
 require_once($cwd[__FILE__] . "/../db/my_query.php");
+require_once($cwd[__FILE__] . "/coordinates.php");
 
 /*
 $mosaic_id = $argv[1];
@@ -40,7 +41,20 @@ function to_utm_n($y, $utm_n_upper_left, $utm_n_lower_left) {
     return $utm_n;
 }
 
-function export_polygons($label_id, $mosaic_id) {
+function utm_to_lat_lon($north, $east, $utm_zone) { 
+	error_log("utm_zone: '$utm_zone'");
+	$above_equator = substr($utm_zone, -1) == "N";
+	$utm_zone = intval(substr($utm_zone, 0, -1));
+
+	error_log("above_equator: $above_equator, utm_zone: $utm_zone, north: $north, east: $east");
+
+	$ll = utm2ll(floatval($east), floatval($north), $utm_zone, $above_equator);
+	error_log($ll);
+
+	return $ll;
+}
+
+function export_polygons($label_id, $mosaic_id, $coord_type) {
     $query = "SELECT label_name FROM labels WHERE label_id = $label_id";
     $result = query_our_db($query);
     $row = $result->fetch_assoc();
@@ -49,13 +63,14 @@ function export_polygons($label_id, $mosaic_id) {
     echo "#polygons<br>";
     echo "#label: $label_name<br>";
 
-    $query = "SELECT filename, width, height, utm_e_upper_left, utm_n_upper_left, utm_e_upper_right, utm_n_upper_right, utm_e_lower_left, utm_n_lower_left, utm_e_lower_right, utm_n_lower_right FROM mosaics WHERE id = $mosaic_id";
+    $query = "SELECT filename, width, height, utm_zone, utm_e_upper_left, utm_n_upper_left, utm_e_upper_right, utm_n_upper_right, utm_e_lower_left, utm_n_lower_left, utm_e_lower_right, utm_n_lower_right FROM mosaics WHERE id = $mosaic_id";
     $result = query_our_db($query);
     $row = $result->fetch_assoc();
 
     $width = $row['width'];
     $height = $row['height'];
     $filename = $row['filename'];
+    $utm_zone = $row['utm_zone'];
     $utm_e_upper_left   = floatval($row['utm_e_upper_left']);
     $utm_e_upper_right  = floatval($row['utm_e_upper_right']);
     $utm_e_lower_left   = floatval($row['utm_e_lower_left']);
@@ -94,17 +109,37 @@ function export_polygons($label_id, $mosaic_id) {
 
             adjust_coords($y, $x, $height, $width);
 
-            $x = to_utm_e($x, $utm_e_upper_left, $utm_e_upper_right);
-            $y = to_utm_n($y, $utm_n_upper_left, $utm_n_lower_left);
+            if ($coord_type == "PIXEL") {
+                $x = round($x * $width);
+                $y = round($y * $height);
 
-            //$x = floor($x * floatval($width));
-            //$y = floor($y * floatval($width));
+            } else if ($coord_type == "UTM") {
+                $x = to_utm_e($x, $utm_e_upper_left, $utm_e_upper_right);
+                $y = to_utm_n($y, $utm_n_upper_left, $utm_n_lower_left);
+
+            } else if ($coord_type == "GEO") {
+                $x = to_utm_e($x, $utm_e_upper_left, $utm_e_upper_right);
+                $y = to_utm_n($y, $utm_n_upper_left, $utm_n_lower_left);
+
+                $lat_lon = utm_to_lat_lon($y, $x, $utm_zone);
+
+                $x = $lat_lon['lat'];
+                $y = $lat_lon['lon'];
+            }
 
             if ($first) {
-                echo number_format($x, 4, ".", "") . "," . number_format($y, 4, ".", "");
+                if ($coord_type == "PIXEL") {
+                    echo "$x,$y";
+                } else {
+                    echo number_format($x, 4, ".", "") . "," . number_format($y, 4, ".", "");
+                }
                 $first = false;
             } else {
-                echo " " . number_format($x, 4, ".", "") . "," . number_format($y, 4, ".", "");
+                if ($coord_type == "PIXEL") {
+                    echo " $x,$y";
+                } else {
+                    echo " " . number_format($x, 4, ".", "") . "," . number_format($y, 4, ".", "");
+                }
             }
             //echo "<br>";
         }
@@ -115,7 +150,7 @@ function export_polygons($label_id, $mosaic_id) {
 }
 
 
-function export_rectangles($label_id, $mosaic_id) {
+function export_rectangles($label_id, $mosaic_id, $coord_type) {
     $query = "SELECT label_name FROM labels WHERE label_id = $label_id";
     $result = query_our_db($query);
     $row = $result->fetch_assoc();
@@ -124,13 +159,14 @@ function export_rectangles($label_id, $mosaic_id) {
     echo "#rectangles<br>";
     echo "#label: $label_name<br>";
 
-    $query = "SELECT filename, width, height, utm_e_upper_left, utm_n_upper_left, utm_e_upper_right, utm_n_upper_right, utm_e_lower_left, utm_n_lower_left, utm_e_lower_right, utm_n_lower_right FROM mosaics WHERE id = $mosaic_id";
+    $query = "SELECT filename, width, height, utm_zone, utm_e_upper_left, utm_n_upper_left, utm_e_upper_right, utm_n_upper_right, utm_e_lower_left, utm_n_lower_left, utm_e_lower_right, utm_n_lower_right FROM mosaics WHERE id = $mosaic_id";
     $result = query_our_db($query);
     $row = $result->fetch_assoc();
 
     $width = $row['width'];
     $height = $row['height'];
     $filename = $row['filename'];
+    $utm_zone = $row['utm_zone'];
     $utm_e_upper_left   = floatval($row['utm_e_upper_left']);
     $utm_e_upper_right  = floatval($row['utm_e_upper_right']);
     $utm_e_lower_left   = floatval($row['utm_e_lower_left']);
@@ -165,25 +201,48 @@ function export_rectangles($label_id, $mosaic_id) {
         $y2 = $row['y2'];
         adjust_coords($y2, $x2, $height, $width);
 
-        $x1 = to_utm_e($x1, $utm_e_upper_left, $utm_e_upper_right);
-        $x2 = to_utm_e($x2, $utm_e_upper_left, $utm_e_upper_right);
+        if ($coord_type == "PIXEL") {
+            $x1 = round($x1 * $width);
+            $y1 = round($y1 * $height);
 
-        $y1 = to_utm_n($y1, $utm_n_upper_left, $utm_n_lower_left);
-        $y2 = to_utm_n($y2, $utm_n_upper_left, $utm_n_lower_left);
+            $x2 = round($x2 * $width);
+            $y2 = round($y2 * $height);
 
-        /*
-        $x1 = floor(floatval($row['x1']) * floatval($width));
-        $x2 = ceil(floatval($row['x2']) * floatval($width));
-        $y1 = floor(floatval($row['y1']) * floatval($width)) ;
-        $y2 = ceil(floatval($row['y2']) * floatval($width)) ;
-         */
+        } else if ($coord_type == "UTM") {
+            $x1 = to_utm_e($x1, $utm_e_upper_left, $utm_e_upper_right);
+            $y1 = to_utm_n($y1, $utm_n_upper_left, $utm_n_lower_left);
 
-        echo number_format($x1, 4, ".", "") . "," . number_format($y1, 4, ".", "") . "," . number_format($x2, 4, ".", "") . "," . number_format($y2, 4, ".", "") . "<br>";
+            $x2 = to_utm_e($x2, $utm_e_upper_left, $utm_e_upper_right);
+            $y2 = to_utm_n($y2, $utm_n_upper_left, $utm_n_lower_left);
+
+        } else if ($coord_type == "GEO") {
+            $x1 = to_utm_e($x1, $utm_e_upper_left, $utm_e_upper_right);
+            $y1 = to_utm_n($y1, $utm_n_upper_left, $utm_n_lower_left);
+
+            $x2 = to_utm_e($x2, $utm_e_upper_left, $utm_e_upper_right);
+            $y2 = to_utm_n($y2, $utm_n_upper_left, $utm_n_lower_left);
+
+            $lat_lon = utm_to_lat_lon($y1, $x1, $utm_zone);
+
+            $x1 = $lat_lon['lat'];
+            $y1 = $lat_lon['lon'];
+
+            $lat_lon = utm_to_lat_lon($y2, $x2, $utm_zone);
+
+            $x2 = $lat_lon['lat'];
+            $y2 = $lat_lon['lon'];
+        }
+
+        if ($coord_type == "PIXEL") {
+            echo "$x1,$y1,$x2,$y2<br>";
+        } else {
+            echo number_format($x1, 4, ".", "") . "," . number_format($y1, 4, ".", "") . "," . number_format($x2, 4, ".", "") . "," . number_format($y2, 4, ".", "") . "<br>";
+        }
     }
 
 }
 
-function export_lines($label_id, $mosaic_id) {
+function export_lines($label_id, $mosaic_id, $coord_type) {
     $query = "SELECT label_name FROM labels WHERE label_id = $label_id";
     $result = query_our_db($query);
     $row = $result->fetch_assoc();
@@ -192,13 +251,14 @@ function export_lines($label_id, $mosaic_id) {
     echo "#lines<br>";
     echo "#label: $label_name<br>";
 
-    $query = "SELECT filename, width, height, utm_e_upper_left, utm_n_upper_left, utm_e_upper_right, utm_n_upper_right, utm_e_lower_left, utm_n_lower_left, utm_e_lower_right, utm_n_lower_right FROM mosaics WHERE id = $mosaic_id";
+    $query = "SELECT filename, width, height, utm_zone, utm_e_upper_left, utm_n_upper_left, utm_e_upper_right, utm_n_upper_right, utm_e_lower_left, utm_n_lower_left, utm_e_lower_right, utm_n_lower_right FROM mosaics WHERE id = $mosaic_id";
     $result = query_our_db($query);
     $row = $result->fetch_assoc();
 
     $width = $row['width'];
     $height = $row['height'];
     $filename = $row['filename'];
+    $utm_zone = $row['utm_zone'];
     $utm_e_upper_left   = floatval($row['utm_e_upper_left']);
     $utm_e_upper_right  = floatval($row['utm_e_upper_right']);
     $utm_e_lower_left   = floatval($row['utm_e_lower_left']);
@@ -234,19 +294,49 @@ function export_lines($label_id, $mosaic_id) {
         $y2 = $row['y2'];
         adjust_coords($y2, $x2, $height, $width);
 
-        $x1 = to_utm_e($x1, $utm_e_upper_left, $utm_e_upper_right);
-        $x2 = to_utm_e($x2, $utm_e_upper_left, $utm_e_upper_right);
+        if ($coord_type == "PIXEL") {
+            $x1 = round($x1 * $width);
+            $y1 = round($y1 * $height);
 
-        $y1 = to_utm_n($y1, $utm_n_upper_left, $utm_n_lower_left);
-        $y2 = to_utm_n($y2, $utm_n_upper_left, $utm_n_lower_left);
+            $x2 = round($x2 * $width);
+            $y2 = round($y2 * $height);
 
-        echo number_format($x1, 4, ".", "") . "," . number_format($y1, 4, ".", "") . "," . number_format($x2, 4, ".", "") . "," . number_format($y2, 4, ".", "") . "<br>";
-    }
+        } else if ($coord_type == "UTM") {
+            $x1 = to_utm_e($x1, $utm_e_upper_left, $utm_e_upper_right);
+            $y1 = to_utm_n($y1, $utm_n_upper_left, $utm_n_lower_left);
+
+            $x2 = to_utm_e($x2, $utm_e_upper_left, $utm_e_upper_right);
+            $y2 = to_utm_n($y2, $utm_n_upper_left, $utm_n_lower_left);
+
+        } else if ($coord_type == "GEO") {
+            $x1 = to_utm_e($x1, $utm_e_upper_left, $utm_e_upper_right);
+            $y1 = to_utm_n($y1, $utm_n_upper_left, $utm_n_lower_left);
+
+            $x2 = to_utm_e($x2, $utm_e_upper_left, $utm_e_upper_right);
+            $y2 = to_utm_n($y2, $utm_n_upper_left, $utm_n_lower_left);
+
+			$lat_lon = utm_to_lat_lon($y1, $x1, $utm_zone);
+
+			$x1 = $lat_lon['lat'];
+			$y1 = $lat_lon['lon'];
+
+			$lat_lon = utm_to_lat_lon($y2, $x2, $utm_zone);
+
+			$x2 = $lat_lon['lat'];
+			$y2 = $lat_lon['lon'];
+        }
+
+		if ($coord_type == "PIXEL") {
+            echo "$x1,$y1,$x2,$y2<br>";
+		} else {
+			echo number_format($x1, 4, ".", "") . "," . number_format($y1, 4, ".", "") . "," . number_format($x2, 4, ".", "") . "," . number_format($y2, 4, ".", "") . "<br>";
+		}
+	}
 
 }
 
 
-function export_points($label_id, $mosaic_id) {
+function export_points($label_id, $mosaic_id, $coord_type) {
     $query = "SELECT label_name FROM labels WHERE label_id = $label_id";
     $result = query_our_db($query);
     $row = $result->fetch_assoc();
@@ -255,13 +345,15 @@ function export_points($label_id, $mosaic_id) {
     echo "#points<br>";
     echo "#label: $label_name<br>";
 
-    $query = "SELECT filename, width, height, utm_e_upper_left, utm_n_upper_left, utm_e_upper_right, utm_n_upper_right, utm_e_lower_left, utm_n_lower_left, utm_e_lower_right, utm_n_lower_right FROM mosaics WHERE id = $mosaic_id";
+    $query = "SELECT filename, width, height, utm_zone, utm_e_upper_left, utm_n_upper_left, utm_e_upper_right, utm_n_upper_right, utm_e_lower_left, utm_n_lower_left, utm_e_lower_right, utm_n_lower_right FROM mosaics WHERE id = $mosaic_id";
     $result = query_our_db($query);
     $row = $result->fetch_assoc();
 
     $width = $row['width'];
     $height = $row['height'];
     $filename = $row['filename'];
+	$utm_zone = $row['utm_zone'];
+
     $utm_e_upper_left   = floatval($row['utm_e_upper_left']);
     $utm_e_upper_right  = floatval($row['utm_e_upper_right']);
     $utm_e_lower_left   = floatval($row['utm_e_lower_left']);
@@ -292,15 +384,30 @@ function export_points($label_id, $mosaic_id) {
         $cy = $row['cy'];
         adjust_coords($cy, $cx, $height, $width);
 
-        $cx = to_utm_e($cx, $utm_e_upper_left, $utm_e_upper_right);
-        $cy = to_utm_n($cy, $utm_n_upper_left, $utm_n_lower_left);
+        if ($coord_type == "PIXEL") {
+            $cx = round($cx * $width);
+            $cy = round($cy * $height);
+        } else if ($coord_type == "UTM") {
+            $cx = to_utm_e($cx, $utm_e_upper_left, $utm_e_upper_right);
+            $cy = to_utm_n($cy, $utm_n_upper_left, $utm_n_lower_left);
+        } else if ($coord_type == "GEO") {
+            $cx = to_utm_e($cx, $utm_e_upper_left, $utm_e_upper_right);
+            $cy = to_utm_n($cy, $utm_n_upper_left, $utm_n_lower_left);
 
-        $radius = floatval($row['radius']) * ($utm_e_upper_left - $utm_e_upper_right);
+			$lat_lon = utm_to_lat_lon($cy, $cx, $utm_zone);
 
-        echo number_format($cx, 4, ".", "") . "," . number_format($cy, 4, ".", "") . "," . number_format($radius, 4, ".", "") . "<br>";
+			$cy = $lat_lon['lon'];
+			$cx = $lat_lon['lat'];
+        }
+
+        $radius = floatval($row['radius']) * ($utm_e_upper_right - $utm_e_upper_left);
+
+        if ($coord_type == "PIXEL") {
+            echo "$cx,$cy,$radius<br>";
+        } else {
+            echo number_format($cx, 4, ".", "") . "," . number_format($cy, 4, ".", "") . "," . number_format($radius, 4, ".", "") . "<br>";
+        }
     }
 }
-
-
 
 ?>
