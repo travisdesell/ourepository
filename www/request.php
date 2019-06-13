@@ -56,6 +56,49 @@ if ($request_type == NULL || $request_type == "INDEX") {
     require_once($cwd[__FILE__] . "/mosaics.php");
     display_index($user_id);
 
+} else if ($request_type == "MOSAIC_SOURCE") {
+
+    $mosaic_id = $_GET['mosaic_id'];
+
+    //check and see if user has access to this mosaic
+    $query = "SELECT owner_id, filename FROM mosaics WHERE id = $mosaic_id";
+    $result = query_our_db($query);
+    $row = $result->fetch_assoc();
+    $owner_id = $row['owner_id'];
+    $filename = $row['filename'];
+
+    if ($owner_id != $user_id) {
+        $query = "SELECT user_id FROM mosaic_access WHERE mosaic_id = $mosaic_id AND user_id = $user_id";
+        $result = query_our_db($query);
+        $row = $result->fetch_assoc();
+        if ($row == NULL) {
+            exit;
+        }
+    }
+
+    $name = "$UPLOAD_DIRECTORY/$owner_id/$filename";
+
+    $extension = pathinfo($name, PATHINFO_EXTENSION);
+
+    error_log("got a request for a mosaic source: '$name', extension: '$extension'");
+    $fp = fopen($name, 'rb');
+    if ( !$fp ) {
+        error_log('fopen failed. reason: ', $php_errormsg);
+    } else {
+        error_log("success!");
+        error_log("filesize:" . filesize($name));
+    }
+
+    
+    // send the right headers
+    header("Content-Type: image/png");
+    header("Content-Length: " . filesize($name));
+
+    // dump the picture and stop the script
+    fpassthru($fp);
+    exit;
+
+
 } else if ($request_type == "TILE") {
     // open the file in a binary mode
     // tiles come as GETs not POSTs
