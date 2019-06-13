@@ -1351,7 +1351,7 @@ function initialize_openseadragon(tiles_url, channels, height, width, marks) {
     });
 
     function getCoordType() {
-        var coordType = "";
+        var coordType = "PIXEL";
         if ($("#utm-switch-button").hasClass("active")) {
             coordType = "UTM";
         } else if ($("#geo-switch-button").hasClass("active")) {
