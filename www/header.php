@@ -7,13 +7,13 @@ $cwd[__FILE__] = dirname($cwd[__FILE__]);
 require_once($cwd[__FILE__] . "/settings.php");
 
 
-function print_header($additional_css, $additional_js) {
+function print_header($additional_css, $additional_js, $title="Open UAS Repository") {
     global $CLIENT_ID;
 
     echo "
 <html>
 <head>
-    <title>Open UAS Repository</title>
+    <title>$title</title>
 
     <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css' integrity='sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy' crossorigin='anonymous'>
 

@@ -6,6 +6,8 @@ $cwd[__FILE__] = dirname($cwd[__FILE__]);
 
 require_once($cwd[__FILE__] . "/header.php");
 require_once($cwd[__FILE__] . "/navbar.php");
+require_once($cwd[__FILE__] . "/../db/my_query.php");
+
 require_once($cwd[__FILE__] . "/../../Mustache.php/src/Mustache/Autoloader.php");
 Mustache_Autoloader::register();
 
@@ -27,8 +29,16 @@ $additional_js[] = "<script type='text/javascript' src='//d3js.org/d3.v3.min.js'
 $additional_js[] = "<script type='text/javascript' src='./js/proj4.js'></script>";
 $additional_js[] = "<script type='text/javascript' src='./js/mosaics.js'></script>";
 
+$query = "SELECT filename FROM mosaics WHERE id = $mosaic_id";
+error_log($query);
+$mosaic_result = query_our_db($query);
 
-print_header($additional_css, $additional_js);
+$mosaic_row = $mosaic_result->fetch_assoc();
+
+$mosaic_name = $mosaic_row['filename'];
+$mosaic_name = substr($mosaic_name, 0, -4);
+
+print_header($additional_css, $additional_js, $mosaic_name);
 
 echo "<body>";
 
