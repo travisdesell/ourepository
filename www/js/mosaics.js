@@ -87,11 +87,11 @@ function hexToRgb(hex) {
 
 
 function get_mark_coordinates(viewportPoint, type) {
-    //console.log("viewportPoint: " + viewportPoint);
+    console.log("viewportPoint: " + viewportPoint);
 
     var imagePoint = viewer.viewport.viewportToImageCoordinates(viewportPoint);
 
-    //console.log("imagePoint: " + imagePoint);
+    console.log("imagePoint: " + imagePoint);
 
     var pixel_y = Math.round(imagePoint.y);
     var pixel_x = Math.round(imagePoint.x);
@@ -108,8 +108,10 @@ function get_mark_coordinates(viewportPoint, type) {
        */
 
     if (utm_n_upper_left != null) {
-        var utm_n = utm_n_upper_left + (y * (utm_n_upper_left - utm_n_lower_left));
-        var utm_e = utm_e_upper_left + (x * (utm_e_upper_left - utm_e_lower_right));
+        //y is top to bottom, but UTM is bottom to top
+
+        var utm_n = utm_n_upper_left - (y * (utm_n_upper_left - utm_n_lower_left));
+        var utm_e = utm_e_upper_left + (x * (utm_e_upper_right - utm_e_upper_left));
 
         var utm_n_text = Number(utm_n).toLocaleString('en', {maximumFractionDigits : 4, minimumFractionDigits : 4});
         var utm_e_text = Number(utm_e).toLocaleString('en', {maximumFractionDigits : 4, minimumFractionDigits : 4});
@@ -140,11 +142,11 @@ function get_mark_coordinates(viewportPoint, type) {
 function set_mark_coordinates() {
     var type;
 
-    if ($(".pixel-switch-button").hasClass("active")) {
+    if ($("#pixel-switch-button").hasClass("active")) {
         type = "pixel";
-    } else if ($(".geo-switch-button").hasClass("active")) {
+    } else if ($("#geo-switch-button").hasClass("active")) {
         type = "geo";
-    } else if ($(".utm-switch-button").hasClass("active")) {
+    } else if ($("#utm-switch-button").hasClass("active")) {
         type = "utm";
     } else {
         return; //should never get here
@@ -234,8 +236,9 @@ App = {
                     */
                     
                     if (utm_n_upper_left != null) {
-                        var utm_n = utm_n_upper_left + (y * (utm_n_upper_left - utm_n_lower_left));
-                        var utm_e = utm_e_upper_left + (x * (utm_e_upper_left - utm_e_lower_right));
+                        //y is 0 at top, utm_n is zero at bottom
+                        var utm_n = utm_n_upper_left - (y * (utm_n_upper_left - utm_n_lower_left));
+                        var utm_e = utm_e_upper_left + (x * (utm_e_upper_right - utm_e_upper_left));
 
                         $("#utm-n").text(Number(utm_n).toLocaleString('en', {maximumFractionDigits : 4, minimumFractionDigits : 4}));
                         $("#utm-e").text(Number(utm_e).toLocaleString('en', {maximumFractionDigits : 4, minimumFractionDigits : 4}));
@@ -1347,23 +1350,36 @@ function initialize_openseadragon(tiles_url, channels, height, width, marks) {
         xhr.send(formData);
     });
 
+    function getCoordType() {
+        var coordType = "PIXEL";
+        if ($("#utm-switch-button").hasClass("active")) {
+            coordType = "UTM";
+        } else if ($("#geo-switch-button").hasClass("active")) {
+            coordType = "GEO";
+        } else if ($("#pixel-switch-button").hasClass("active")) {
+            coordType = "PIXEL";
+        }
+
+        return coordType;
+    }
+
     $("#export-polygons-button").click(function() {
-        var win = window.open("./request.php?request=EXPORT_LABEL_CSV&id_token=" + id_token + "&mosaic_id=" + mosaic_id + "&label_id=" + current_label_id + "&export_type=POLYGONS", '_blank');
+        var win = window.open("./request.php?request=EXPORT_LABEL_CSV&id_token=" + id_token + "&mosaic_id=" + mosaic_id + "&label_id=" + current_label_id + "&export_type=POLYGONS&coord_type=" + getCoordType(), '_blank');
         win.focus();
     });
 
     $("#export-rectangles-button").click(function() {
-        var win = window.open("./request.php?request=EXPORT_LABEL_CSV&id_token=" + id_token + "&mosaic_id=" + mosaic_id + "&label_id=" + current_label_id + "&export_type=RECTANGLES", '_blank');
+        var win = window.open("./request.php?request=EXPORT_LABEL_CSV&id_token=" + id_token + "&mosaic_id=" + mosaic_id + "&label_id=" + current_label_id + "&export_type=RECTANGLES&coord_type=" + getCoordType(), '_blank');
         win.focus();
     });
 
     $("#export-lines-button").click(function() {
-        var win = window.open("./request.php?request=EXPORT_LABEL_CSV&id_token=" + id_token + "&mosaic_id=" + mosaic_id + "&label_id=" + current_label_id + "&export_type=LINES", '_blank');
+        var win = window.open("./request.php?request=EXPORT_LABEL_CSV&id_token=" + id_token + "&mosaic_id=" + mosaic_id + "&label_id=" + current_label_id + "&export_type=LINES&coord_type=" + getCoordType(), '_blank');
         win.focus();
     });
 
     $("#export-points-button").click(function() {
-        var win = window.open("./request.php?request=EXPORT_LABEL_CSV&id_token=" + id_token + "&mosaic_id=" + mosaic_id + "&label_id=" + current_label_id + "&export_type=POINTS", '_blank');
+        var win = window.open("./request.php?request=EXPORT_LABEL_CSV&id_token=" + id_token + "&mosaic_id=" + mosaic_id + "&label_id=" + current_label_id + "&export_type=POINTS&coord_type=" + getCoordType(), '_blank');
         win.focus();
     });
 
@@ -2934,38 +2950,38 @@ function initialize_mosaic(responseText) {
 
     });
 
-    $(".pixel-switch-button").click(function() {
+    $("#pixel-switch-button").click(function() {
         $(".table-pixel").show();
         $(".table-geo").hide();
         $(".table-utm").hide();
 
-        $(".pixel-switch-button").addClass("active").addClass("btn-secondary").removeClass("btn-outline-secondary");
-        $(".geo-switch-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
-        $(".utm-switch-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
+        $("#pixel-switch-button").addClass("active").addClass("btn-secondary").removeClass("btn-outline-secondary");
+        $("#geo-switch-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
+        $("#utm-switch-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
 
         set_mark_coordinates();
     });
 
-    $(".geo-switch-button").click(function() {
+    $("#geo-switch-button").click(function() {
         $(".table-pixel").hide();
         $(".table-geo").show();
         $(".table-utm").hide();
 
-        $(".pixel-switch-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
-        $(".geo-switch-button").addClass("active").addClass("btn-secondary").removeClass("btn-outline-secondary");
-        $(".utm-switch-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
+        $("#pixel-switch-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
+        $("#geo-switch-button").addClass("active").addClass("btn-secondary").removeClass("btn-outline-secondary");
+        $("#utm-switch-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
 
         set_mark_coordinates();
     });
 
-    $(".utm-switch-button").click(function() {
+    $("#utm-switch-button").click(function() {
         $(".table-pixel").hide();
         $(".table-geo").hide();
         $(".table-utm").show();
 
-        $(".pixel-switch-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
-        $(".geo-switch-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
-        $(".utm-switch-button").addClass("active").addClass("btn-secondary").removeClass("btn-outline-secondary");
+        $("#pixel-switch-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
+        $("#geo-switch-button").removeClass("active").removeClass("btn-secondary").addClass("btn-outline-secondary");
+        $("#utm-switch-button").addClass("active").addClass("btn-secondary").removeClass("btn-outline-secondary");
 
         set_mark_coordinates();
     });

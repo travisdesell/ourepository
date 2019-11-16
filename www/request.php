@@ -184,17 +184,18 @@ if ($request_type == NULL || $request_type == "INDEX") {
     $label_id = $our_db->real_escape_string($_GET['label_id']);
     $mosaic_id = $our_db->real_escape_string($_GET['mosaic_id']);
     $export_type = $our_db->real_escape_string($_GET['export_type']);
+    $coord_type = $our_db->real_escape_string($_GET['coord_type']);
 
     error_log("exporting label csv!");
 
     if ($export_type == "POLYGONS") {
-        export_polygons($label_id, $mosaic_id);
+        export_polygons($label_id, $mosaic_id, $coord_type);
     } else if ($export_type == "RECTANGLES") {
-        export_rectangles($label_id, $mosaic_id);
+        export_rectangles($label_id, $mosaic_id, $coord_type);
     } else if ($export_type == "LINES") {
-        export_lines($label_id, $mosaic_id);
+        export_lines($label_id, $mosaic_id, $coord_type);
     } else if ($export_type == "POINTS") {
-        export_points($label_id, $mosaic_id);
+        export_points($label_id, $mosaic_id, $coord_type);
     }
 
 } else if ($request_type == "MOSAIC_CARD") {

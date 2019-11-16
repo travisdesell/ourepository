@@ -9,9 +9,9 @@
         <ul class='navbar-nav mr-auto'>
             {{#has_utm}}
             <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                <button type="button" class="pixel-switch-button btn btn-small btn-secondary active" data-toggle="button" aria-pressed="false">Pixel</button>
-                <button type="button" class="geo-switch-button btn btn-small btn-outline-secondary" data-toggle="button" aria-pressed="false">Geo</button>
-                <button type="button" class="utm-switch-button btn btn-small btn-outline-secondary" data-toggle="button" aria-pressed="false">UTM</button>
+                <button type="button" id="pixel-switch-button" class="btn btn-small btn-secondary active" data-toggle="button" aria-pressed="false">Pixel</button>
+                <button type="button" id="geo-switch-button" class="btn btn-small btn-outline-secondary" data-toggle="button" aria-pressed="false">Geo</button>
+                <button type="button" id="utm-switch-button" class="btn btn-small btn-outline-secondary" data-toggle="button" aria-pressed="false">UTM</button>
             </div>
 
             <button type="button" id="gridlines-button" class="btn btn-small btn-outline-secondary ml-1" data-toggle="button" aria-pressed="false">Grid</button>
