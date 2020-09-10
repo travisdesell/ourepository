@@ -1,7 +1,7 @@
+Dependencies:
+INSTALL COMPOSER FOR PHP
 
-To install google API client:
+cd www
 composer require google/apiclient:^2.0
+php -S localhost:5000
 
-see
-
-https://github.com/google/google-api-php-client
