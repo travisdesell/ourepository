@@ -6,7 +6,7 @@ $cwd[__FILE__] = dirname($cwd[__FILE__]);
 
 require_once($cwd[__FILE__] . "/header.php");
 require_once($cwd[__FILE__] . "/navbar.php");
-require_once($cwd[__FILE__] . "/../../Mustache.php/src/Mustache/Autoloader.php");
+require_once($cwd[__FILE__] . "/Mustache.php/src/Mustache/Autoloader.php");
 Mustache_Autoloader::register();
 
 $additional_css = array();
