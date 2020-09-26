@@ -3071,30 +3071,60 @@ function initialize_mosaic(responseText) {
             };
 
             var meter_max = Math.max(meter_width, meter_height);
+            console.log("meter_max: " + meter_max);
 
-            var gridline_meters = 50;
-            for (var x = gridline_meters; x < meter_width; x += gridline_meters) {
+            var min_x = 0;
+            var max_x = 1.0;
+            var min_y = 0;
+            var max_y = image_height / image_width;
 
+            var x_gridlines = meter_width / 50;
+            var y_gridlines = meter_height / 50;
+
+
+            /*
+            var d3Line = d3.select(overlay.node()).append("line")
+                .style('stroke', 'rgba(' + 0 + ',' + 0 + ',' + 255 + ',0.5)')
+                .attr("id", "svg-line-" + drawn_lines)
+                .attr("x1", min_x)
+                .attr("x2", max_x)
+                .attr("y1", 0.5)
+                .attr("y2", 0.5)
+                .attr("stroke-width", 0.0005)
+                .attr("class", "gridline");
+
+            var d3Line = d3.select(overlay.node()).append("line")
+                .style('stroke', 'rgba(' + 0 + ',' + 0 + ',' + 255 + ',0.5)')
+                .attr("id", "svg-line-" + drawn_lines)
+                .attr("x1", 0.5)
+                .attr("x2", 0.5)
+                .attr("y1", min_y)
+                .attr("y2", max_y)
+                .attr("stroke-width", 0.0005)
+                .attr("class", "gridline");
+                */
+
+            for (var x = 1; x < x_gridlines; x++) {
                 var d3Line = d3.select(overlay.node()).append("line")
                     .style('stroke', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.5)')
                     .attr("id", "svg-line-" + drawn_lines)
-                    .attr("x1", x / meter_max)
-                    .attr("x2", x / meter_max)
-                    .attr("y1", 0.0)
-                    .attr("y2", meter_height / meter_max)
+                    .attr("x1", x * (max_x / x_gridlines))
+                    .attr("x2", x * (max_x / x_gridlines))
+                    .attr("y1", min_y)
+                    .attr("y2", max_y)
                     .attr("stroke-width", 0.0005)
                     .attr("class", "gridline");
             }
 
-            for (var y = gridline_meters; y < meter_height; y += gridline_meters) {
+            for (var y = 1; y < y_gridlines; y++) {
 
                 var d3Line = d3.select(overlay.node()).append("line")
                     .style('stroke', 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',0.5)')
                     .attr("id", "svg-line-" + drawn_lines)
-                    .attr("x1", 0.0)
-                    .attr("x2", meter_width / meter_max)
-                    .attr("y1", y / meter_max)
-                    .attr("y2", y / meter_max)
+                    .attr("x1", min_x)
+                    .attr("x2", max_x)
+                    .attr("y1", y * (max_y / y_gridlines))
+                    .attr("y2", y * (max_y / y_gridlines))
                     .attr("stroke-width", 0.0005)
                     .attr("class", "gridline");
             }

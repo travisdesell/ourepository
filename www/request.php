@@ -91,7 +91,7 @@ if ($request_type == NULL || $request_type == "INDEX") {
 
     
     // send the right headers
-    header("Content-Type: image/png");
+    header("Content-Type: image/$extension");
     header("Content-Length: " . filesize($name));
 
     // dump the picture and stop the script

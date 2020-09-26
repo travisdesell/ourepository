@@ -22,9 +22,10 @@ function adjust_coords(&$y, &$x, $height, $width) {
     $y = floatval($y);
     $x = floatval($x);
 
-    $max_dim = max($height, $width);
-    $y *= $max_dim;
-    $x *= $max_dim;
+    //$min_dim = min($height, $width);
+    $min_dim = $width;
+    $y *= $min_dim;
+    $x *= $min_dim;
 
     $y /= $height;
     $x /= $width;
