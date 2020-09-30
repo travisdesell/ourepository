@@ -15,14 +15,8 @@ const LoginPage = (props) => {
         alert('Recover password callback, see log on the console to see the data.');
       };
       return (
-          <div>
-              <ReactSignupLoginComponent
-                styles={{mainTitle:{color:"gray"}}}
-                  title="OURepository"
-                  handleSignup={signupWasClickedCallback}
-                  handleLogin={loginWasClickedCallback}
-                  handleRecoverPassword={recoverPasswordWasClickedCallback}
-              />
+          <div class="">
+              
           </div>
       );
 };
