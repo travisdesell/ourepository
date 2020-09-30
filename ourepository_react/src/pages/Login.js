@@ -2,6 +2,31 @@ import React from 'react';
 import ReactSignupLoginComponent from 'react-signup-login-component';
 
 const LoginPage = (props) => {
+
+    const [signUp, setSignUp] = React.useState(false)
+    let button;
+    function handleSubmitClick() {
+        setSignUp(false)
+    }
+  
+    function handleSignUpClick() {
+      setSignUp(true)
+    }
+    if (!signUp) {
+      button =           <>
+      <button class="bg-blue hover:bg-blue-dark text-black border-2 border-blue-300 font-bold py-2 px-4 rounded" type="button">
+      Sign In
+    </button>
+    <button onClick={handleSignUpClick} class="bg-blue hover:bg-blue-dark text-black border-2 border-blue-300 font-bold py-2 px-4 rounded" type="button">
+                          Sign Up
+                          </button></>
+    } else {
+      button =           
+      
+      <button onClick={handleSubmitClick} class="bg-blue hover:bg-blue-dark text-black border-2 border-blue-300 font-bold py-2 px-4 rounded" type="button">
+      Submit
+    </button>
+    }
     const signupWasClickedCallback = (data) => {
         console.log(data);
         alert('Signup callback, see log on the console to see the data.');
@@ -24,9 +49,7 @@ const LoginPage = (props) => {
           <p class="text-red text-xs italic">Please choose a password.</p>
         </div>
         <div class="flex items-center justify-between">
-          <button class="bg-blue hover:bg-blue-dark text-black border-2 border-blue-300 font-bold py-2 px-4 rounded" type="button">
-            Sign In
-          </button>
+          {button}
           <a class="inline-block align-baseline font-bold text-sm text-black hover:text-blue-darker " href="#">
             Forgot Password?
           </a>
