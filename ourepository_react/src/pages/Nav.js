@@ -2,9 +2,49 @@
 
 import React from 'react';
 import {Link, Route} from "react-router-dom";
+import emitter from "../services/emitter"
 
 
 const Nav = (props) => {
+
+  const [navbarOpen, setNavbarOpen] = React.useState(false);
+  const [userBtn, setUserBtn] = React.useState(<></>);
+
+  React.useEffect(()=>{
+
+    if (localStorage.getItem('user')) {
+      setUserBtn(<a onClick={handleLogOut} class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4" href="#">Logout</a>)
+    }else{
+      setUserBtn(<a class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4" href="#"> <Link to="/login">Login</Link></a>)
+
+    }
+    emitter.addListener("storage", () => {
+      if (localStorage.getItem('user')) {
+        setUserBtn(<a onClick={handleLogOut} class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4" href="#">Logout</a>)
+      }else{
+        setUserBtn(<a class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4" href="#"> <Link to="/login">Login</Link></a>)
+      }
+    });
+    
+      
+
+    },[])
+
+
+    function toggleMenu() {
+      setNavbarOpen(!navbarOpen)
+      
+    }
+  
+
+    function handleLogOut(){
+        localStorage.removeItem("user")
+        setUserBtn(<a class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4" href="#"> <Link to="/login">Login</Link></a>)
+    }
+
+
+
+
 
       return (<>
         <nav class="flex items-center justify-between flex-wrap bg-gray-800 p-6 fixed w-full z-10 top-0">
@@ -14,18 +54,17 @@ const Nav = (props) => {
           </a>
         </div>
   
-        {/* <div class="block lg:hidden">
-          <button id="nav-toggle" class="flex items-center px-3 py-2 border rounded text-gray-500 border-gray-600 hover:text-white hover:border-white">
+        <div class="block lg:hidden">
+          <button id="nav-toggle" class="flex items-center px-3 py-2 border rounded text-gray-500 border-gray-600 hover:text-white hover:border-white" onClick={toggleMenu}> 
             <svg class="fill-current h-3 w-3" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Menu</title><path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z"/></svg>
           </button>
-        </div> */}
+        </div>
   
-        <div class="w-full flex-grow lg:flex lg:items-center lg:w-auto lg:block pt-6 lg:pt-0" id="nav-content">
+        <div className={"w-full flex-grow lg:flex lg:items-center lg:w-auto lg:block pt-6 lg:pt-0" + (navbarOpen ? " flex" : " hidden")} id="nav-content">
           <ul class="list-reset lg:flex justify-end flex-1 items-center">
             <li class="mr-3">
-              <a class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4" href="#"> <Link to="/login">Login</Link></a>
+            {userBtn}
             </li>
-
           </ul>
         </div>
 
