@@ -64,11 +64,6 @@ for i in range(x_iter):
     for j in range(y_iter):
 
         # check bounds
-        print()
-        print(i)
-        print(j)
-        print(offset_x)
-        print(offset_y)
         if offset_x + input_width > width or offset_y + input_height > height:
             continue
 
