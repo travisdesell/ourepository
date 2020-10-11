@@ -131,9 +131,17 @@ for i in range(x_iter):
         if (offset_x, offset_y) in annotations:
             boxes = annotations[(offset_x, offset_y)]
             print(boxes)
-            for box in boxes:
-                print(box)
-                draw.rectangle((box[0], box[1], box[2], box[3]), fill=(192, 0, 0, 128), outline=(255, 255, 255))               # add annotations
+
+            # write to csv
+            with open(r"/media/john/DATA/Classes/SeniorProject/caribou/caribou/sample" + str(i) + "_" + str(j) + ".csv", 'w') as csv_file:
+                writer = csv.writer(csv_file)
+                writer.writerow(['x1', 'y1', 'x2', 'y2'])
+
+                for box in boxes:
+                    print(box)
+                    draw.rectangle((box[0], box[1], box[2], box[3]), fill=(255, 0, 0, 128), outline=(255, 255, 255))               # add annotations
+                    writer.writerow([box[0], box[1], box[2], box[3]])                                                              # write relative bounds to file
+
 
         # # plot image
         # pyplot.imshow(sample)
