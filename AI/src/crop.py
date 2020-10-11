@@ -1,8 +1,9 @@
-from PIL import Image
+from PIL import Image, ImageDraw
 import rasterio as rio
 from rasterio.windows import Window
 import numpy as np
 from matplotlib import pyplot
+import csv
 import os
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../data')
@@ -10,13 +11,16 @@ CARIBOU_DIR = os.path.join(DATA_DIR, 'caribou')
 
 caribou_file_name = os.path.join(CARIBOU_DIR, '20160718_camp_gm_03_120m_transparent_mosaic_group1.tif')
 
+
 ## Training Specs
-input_height = 254
-input_width = 254
+input_height = 512
+input_width = 512
+
 
 ## load in tif mosaic
-#mosaic_dataset = rio.open(r"/media/john/DATA/Classes/SeniorProject/caribou/caribou/20160718_camp_gm_02_75m_transparent_mosaic_group1.tif")
-mosaic_dataset = rio.open(caribou_file_name)
+mosaic_dataset = rio.open(r"/media/john/DATA/Classes/SeniorProject/caribou/caribou/20160718_camp_gm_02_75m_transparent_mosaic_group1.tif")
+#mosaic_dataset = rio.open(caribou_file_name)
+
 
 ## display attrs
 print("Number of bands:")
@@ -52,6 +56,42 @@ print("Mosaic CRS:")
 print(mosaic_dataset.crs)
 
 
+## load in annotations
+annotation_file = csv.reader(open(r"/media/john/DATA/Classes/SeniorProject/caribou/caribou/mosaic_97_adult_caribou.csv", 'r'))
+
+# iterate past header
+line = [None]
+while line[0] != 'x1':
+    line = next(annotation_file)
+
+# populate annotation dict with (slice coords)-[annotation bounds] KVPs
+annotations = dict()
+
+for line in annotation_file:
+    # find top left corner of mosaic slice
+    X = round(int(line[0]) / input_width) * input_width
+    Y = round(int(line[1]) / input_height) * input_height
+
+    # find relative annotation bounds
+    x1 = int(line[0]) % input_width
+    y1 = int(line[1]) % input_height
+    x2 = int(line[2]) % input_width
+    y2 = int(line[3]) % input_height
+
+    # check for edge condition bounds
+    if x1 > x2 or y1 > y2:
+        continue
+
+    # create KVP and insert into annotations dict
+    annotation_bounds = [x1, y1, x2, y2]
+    mosaic_slice = (X, Y)
+
+    if mosaic_slice in annotations:
+        annotations[mosaic_slice].append(annotation_bounds)
+    else:
+        annotations[mosaic_slice] = [annotation_bounds]
+
+
 ## crop mosaic loop
 #(0,0) is upper left corner of mosaic img
 
@@ -81,19 +121,33 @@ for i in range(x_iter):
         
         # concatenate bands along new RGBA axis
         sample = np.concatenate([sample_red, sample_green, sample_blue, sample_alpha], axis=2)
-
-        # # plot img
-        # pyplot.imshow(sample)
-        # pyplot.show()
         
         # annotate
+        image = Image.fromarray(sample, mode='RGBA')                                                # create image
+        draw = ImageDraw.Draw(image)                                                                # create Draw object
+
+        print()
+        print((offset_x, offset_y))
+        if (offset_x, offset_y) in annotations:
+            boxes = annotations[(offset_x, offset_y)]
+            print(boxes)
+            for box in boxes:
+                print(box)
+                draw.rectangle((box[0], box[1], box[2], box[3]), fill=(192, 0, 0, 128), outline=(255, 255, 255))               # add annotations
+
+        # # plot image
+        # pyplot.imshow(sample)
+        # pyplot.show()
 
         # save
-        img = Image.fromarray(sample, mode='RGBA')
-        img.save(r"/media/john/DATA/Classes/SeniorProject/caribou/caribou/sample" + str(i) + "_" + str(j) + ".png")
+        image.save(r"/media/john/DATA/Classes/SeniorProject/caribou/caribou/sample" + str(i) + "_" + str(j) + ".png")
 
         # iterate
         offset_y += input_height
     
     # iterate
     offset_x += input_width 
+
+
+## close resources
+mosaic_dataset.close()
