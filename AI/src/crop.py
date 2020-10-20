@@ -12,6 +12,8 @@ import click
 import time
 import sys
 
+from make_xml import make_xml
+
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../data')
 CARIBOU_DIR = os.path.join(DATA_DIR, 'caribou')
 OUT_DIR = os.path.join(CARIBOU_DIR, 'out')
@@ -151,30 +153,36 @@ for coord in slice_coords_dict:
 
     # annotate
     image = Image.fromarray(sample, mode='RGBA')  # create image
-    overlay = Image.new('RGBA', image.size, (0, 0, 0, 0))
-    draw = ImageDraw.Draw(overlay) # create Draw object
+    # overlay = Image.new('RGBA', image.size, (0, 0, 0, 0))
+    # draw = ImageDraw.Draw(overlay) # create Draw object
 
-    with open(f'{OUT_DIR}/sample_{x}_{y}.csv', 'w') as csv_file:
-        writer = csv.writer(csv_file)
-        writer.writerow(['x1', 'y1', 'x2', 'y2'])
+    filename_prefix = f'{OUT_DIR}/sample_{x}_{y}'
+    # with open(filename_prefix + '.csv', 'w') as csv_file:
+        # writer = csv.writer(csv_file)
+        # writer.writerow(['x1', 'y1', 'x2', 'y2'])
+    rel_annotations = list()
 
-        for x1, y1, x2, y2 in annotations:
-            # calculate relative coordinates for annotation in slice
-            rel_x1 = x1 - x
-            rel_y1 = y1 - y
-            rel_x2 = x2 - x
-            rel_y2 = y2 - y
+    for x1, y1, x2, y2 in annotations:
+        # calculate relative coordinates for annotation in slice
+        rel_x1 = x1 - x
+        rel_y1 = y1 - y
+        rel_x2 = x2 - x
+        rel_y2 = y2 - y
+
+        rel_annotations.append((rel_x1, rel_y1, rel_y1, rel_y2))
+
+    make_xml(annotations, MODEL_INPUT_WIDTH, MODEL_INPUT_HEIGHT, filename_prefix)
 
             # draw rectangle to represent annotation
-            draw.rectangle((rel_x1, rel_y1, rel_x2, rel_y2), fill=(255, 0, 0, 50),
-                           outline=(255, 255, 255))  # add annotations
+            # draw.rectangle((rel_x1, rel_y1, rel_x2, rel_y2), fill=(255, 0, 0, 50),
+            #                outline=(255, 255, 255))  # add annotations
 
             # save relative coordinates to file
-            writer.writerow([rel_x1, rel_y1, rel_x2, rel_y2])  # write relative bounds to file
+            # writer.writerow([rel_x1, rel_y1, rel_x2, rel_y2])  # write relative bounds to file
 
     # save image with annotation drawn
-    image = Image.alpha_composite(image, overlay)
-    image.save(f'{OUT_DIR}/sample_{x}_{y}.png')
+    # image = Image.alpha_composite(image, overlay)
+    image.save(f'{filename_prefix}.png')
 
 # close resources
 mosaic_dataset.close()
