@@ -9,19 +9,27 @@ import pandas as pd
 import os
 import shutil
 import click
+import time
+import sys
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../data')
 CARIBOU_DIR = os.path.join(DATA_DIR, 'caribou')
 OUT_DIR = os.path.join(CARIBOU_DIR, 'out')
 CONTINUE_CHECKPOINT = False
 
-# if os.path.exists(OUT_DIR):
-#     if click.confirm('Do you want to continue from last saved slice?'):
-#         CONTINUE_CHECKPOINT = True
-#     else:
-#         if click.confirm('Are you sure you want to remove existing output?'):
-#             shutil.rmtree(OUT_DIR)
-#             os.makedirs(OUT_DIR)
+if os.path.exists(OUT_DIR):
+    if click.confirm('Are you sure you want to remove existing output?'):
+        shutil.rmtree(OUT_DIR)
+        os.makedirs(OUT_DIR)
+    else:
+        sys.exit(1)
+
+    # if click.confirm('Do you want to continue from last saved slice?'):
+    #     CONTINUE_CHECKPOINT = True
+    # else:
+    #     if click.confirm('Are you sure you want to remove existing output?'):
+    #         shutil.rmtree(OUT_DIR)
+    #         os.makedirs(OUT_DIR)
 # else:
 #     os.makedirs(OUT_DIR)
 
@@ -80,20 +88,51 @@ slice_x_coords.append(MOSAIC_WIDTH-MODEL_INPUT_WIDTH)
 slice_y_coords = list(range(0, MOSAIC_HEIGHT-MODEL_INPUT_HEIGHT, STRIDE_LENGTH))
 slice_y_coords.append(MOSAIC_HEIGHT-MODEL_INPUT_HEIGHT)
 slice_coords_list = list(product(slice_x_coords, slice_y_coords))
+slice_coords_dict = {key: list() for key in slice_coords_list}
 
-for coord in slice_coords_list:
-    x = coord[0]
-    y = coord[1]
+total_annotations = 0
+tic = time.perf_counter()
+for index, row in annotations_df.iterrows():
+    # get corners of annotation
+    x1 = row['x1']
+    x2 = row['x2']
+    y1 = row['y1']
+    y2 = row['y2']
+    assert x1 <= x2
+    assert y1 <= y2
 
-    # get all annotations in slice
-    annotations_in_slice_df = annotations_df.loc[
-                              ((x <= annotations_df['x1']) & (annotations_df['x1'] < x+MODEL_INPUT_WIDTH)) &
-                              ((x <= annotations_df['x2']) & (annotations_df['x2'] < x+MODEL_INPUT_WIDTH)) &
-                              ((y <= annotations_df['y1']) & (annotations_df['y1'] < y+MODEL_INPUT_HEIGHT)) &
-                              ((y <= annotations_df['y2']) & (annotations_df['y2'] < y+MODEL_INPUT_HEIGHT))]
+    annotation_width = x2 - x1
+    annotation_height = y2 - y1
 
-    if annotations_in_slice_df.empty:
+    # Get all slices that have full annotation in them.
+    # Start coordinate must be at least 0.
+    # Start coordinate must be the start of a slice; cannot be between slices (if so, go to next slice).
+    # repeat for x and y
+
+    x_start = max(0, x2 - MODEL_INPUT_WIDTH)
+    x_start = (int(x_start / STRIDE_LENGTH) + (x_start % STRIDE_LENGTH != 0)) * STRIDE_LENGTH
+    x_end = min(x2 - annotation_width, MOSAIC_WIDTH - MODEL_INPUT_WIDTH)
+
+    y_start = max(0, y2 - MODEL_INPUT_HEIGHT)
+    y_start = (int(y_start / STRIDE_LENGTH) + (y_start % STRIDE_LENGTH != 0)) * STRIDE_LENGTH
+    y_end = min(y2 - annotation_height, MOSAIC_HEIGHT - MODEL_INPUT_HEIGHT)
+
+    # add this annotation to all slices that include it
+    for coord in product(range(x_start, x_end, STRIDE_LENGTH), range(y_start, y_end, STRIDE_LENGTH)):
+        slice_coords_dict[coord].append(tuple(row))
+        total_annotations += 1
+
+toc = time.perf_counter()
+print(f"{toc - tic:0.4f} seconds")
+print(f"{total_annotations} total annotations over all slices")
+
+# loop over slices
+for coord in slice_coords_dict:
+    annotations = slice_coords_dict[coord]
+    if not annotations: # if no annotations for this slice; TODO remove
         continue
+
+    x, y = coord  # top left corner for this slice
 
     # read band slices using Window views
     sample_red = mosaic_dataset.read(1, window=Window(x, y, MODEL_INPUT_WIDTH, MODEL_INPUT_HEIGHT))
@@ -119,16 +158,21 @@ for coord in slice_coords_list:
         writer = csv.writer(csv_file)
         writer.writerow(['x1', 'y1', 'x2', 'y2'])
 
-        for row in annotations_in_slice_df.itertuples():
-            rel_x1 = row.x1 - x
-            rel_y1 = row.y1 - y
-            rel_x2 = row.x2 - x
-            rel_y2 = row.y2 - y
+        for x1, y1, x2, y2 in annotations:
+            # calculate relative coordinates for annotation in slice
+            rel_x1 = x1 - x
+            rel_y1 = y1 - y
+            rel_x2 = x2 - x
+            rel_y2 = y2 - y
 
+            # draw rectangle to represent annotation
             draw.rectangle((rel_x1, rel_y1, rel_x2, rel_y2), fill=(255, 0, 0, 50),
                            outline=(255, 255, 255))  # add annotations
+
+            # save relative coordinates to file
             writer.writerow([rel_x1, rel_y1, rel_x2, rel_y2])  # write relative bounds to file
 
+    # save image with annotation drawn
     image = Image.alpha_composite(image, overlay)
     image.save(f'{OUT_DIR}/sample_{x}_{y}.png')
 
