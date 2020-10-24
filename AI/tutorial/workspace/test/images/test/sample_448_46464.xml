@@ -1,0 +1,22 @@
+<annotation>
+  <folder>out</folder>
+  <filename>sample_448_46464</filename>
+  <path>/media/john/846c2fa8-d606-4d0f-a9c9-405bdb28cce9/Classes/SeniorProject/ourepository/AI/src/../data/caribou/out/sample_448_46464.png</path>
+  <size>
+    <width>512</width>
+    <height>512</height>
+    <depth>3</depth>
+  </size>
+  <object>
+    <name>caribou</name>
+    <pose>Unspecified</pose>
+    <truncated>0</truncated>
+    <difficult>0</difficult>
+    <bndbox>
+      <xmin>444</xmin>
+      <xmax>496</xmax>
+      <ymin>498</ymin>
+      <ymax>498</ymax>
+    </bndbox>
+  </object>
+</annotation>

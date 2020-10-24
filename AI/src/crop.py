@@ -35,7 +35,7 @@ if os.path.exists(OUT_DIR):
 # else:
 #     os.makedirs(OUT_DIR)
 
-CARIBOU_IMAGE_FILENAME = os.path.join(CARIBOU_DIR, '20160718_camp_gm_02_75m_transparent_mosaic_group1.tif')
+CARIBOU_IMAGE_FILENAME = os.path.join(CARIBOU_DIR, '20160718_camp_gm_04_75m_caribou_transparent_mosaic_group1.tif')
 # caribou_csv_file_name = os.path.join(CARIBOU_DIR, 'mosaic_97_adult_caribou.csv')
 CARIBOU_CSV_FILENAME = os.path.join(CARIBOU_DIR, 'test.csv')
 
@@ -156,7 +156,8 @@ for coord in slice_coords_dict:
     # overlay = Image.new('RGBA', image.size, (0, 0, 0, 0))
     # draw = ImageDraw.Draw(overlay) # create Draw object
 
-    filename_prefix = f'{OUT_DIR}/sample_{x}_{y}'
+    # filename = os.path.abspath(__file__0
+    file_path = f'{OUT_DIR}/sample_{x}_{y}'
     # with open(filename_prefix + '.csv', 'w') as csv_file:
         # writer = csv.writer(csv_file)
         # writer.writerow(['x1', 'y1', 'x2', 'y2'])
@@ -169,9 +170,9 @@ for coord in slice_coords_dict:
         rel_x2 = x2 - x
         rel_y2 = y2 - y
 
-        rel_annotations.append((rel_x1, rel_y1, rel_y1, rel_y2))
+        rel_annotations.append((rel_x1, rel_y1, rel_x2, rel_y2))
 
-    make_xml(annotations, MODEL_INPUT_WIDTH, MODEL_INPUT_HEIGHT, filename_prefix)
+    make_xml(rel_annotations, MODEL_INPUT_WIDTH, MODEL_INPUT_HEIGHT, file_path)
 
             # draw rectangle to represent annotation
             # draw.rectangle((rel_x1, rel_y1, rel_x2, rel_y2), fill=(255, 0, 0, 50),
@@ -182,7 +183,7 @@ for coord in slice_coords_dict:
 
     # save image with annotation drawn
     # image = Image.alpha_composite(image, overlay)
-    image.save(f'{filename_prefix}.png')
+    image.save(f'{file_path}.png')
 
 # close resources
 mosaic_dataset.close()
