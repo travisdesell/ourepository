@@ -1,0 +1,6 @@
+Pillow
+numpy
+matplotlib
+rasterio
+pandas
+tensorflow==2.2.0
