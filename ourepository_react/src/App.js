@@ -38,7 +38,7 @@ function App() {
   return (
       <div className="App">        
 
-      <BrowserRouter>
+      <BrowserRouter forceRefresh={true}>
         <header className="App-header">
           <Nav></Nav>
           {localStorage.getItem("user") ? <Sidebar></Sidebar> : <></>}

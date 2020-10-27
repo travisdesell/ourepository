@@ -27,6 +27,7 @@ const LoginPage = (props) => {
         localStorage.setItem("user","true")     
         setSignUp(true)
         emitter.emit("storage")
+       
       }
     }
 
