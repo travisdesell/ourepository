@@ -8,20 +8,26 @@ import {Redirect, Route, Switch, BrowserRouter} from "react-router-dom";
 import HomePage from './pages/Home';
 import LandingPage from './pages/Landing';
 import emitter from "./services/emitter"
+import Sidebar from './components/Sidebar';
+import OrganizationPage from './pages/Organization';
 function App() {
-  const [loginRedirect, setLoginRedirect] = React.useState(<Redirect exact from="/landing" to="/" />)
+  const protected_routes = [
+    {path: "/landing", page: LandingPage},
+    {path: "/organization" ,page: OrganizationPage}
+  ]
+  const [protectedRoutes, setProtectedRoutes] = React.useState([])
   React.useEffect(()=>{
     if (localStorage.getItem('user')) {
-      setLoginRedirect(<Redirect exact from="/" to="/landing" />)
+      setProtectedRoutes(protected_routes)
     }else{
-      setLoginRedirect(<Redirect from="/landing" to="/" />)
+      setProtectedRoutes([])
     }
 
     emitter.addListener("storage", () => {
       if (localStorage.getItem('user')) {
-        setLoginRedirect(<Redirect exact from="/" to="/landing" />)
+        setProtectedRoutes(protected_routes)
       }else{
-        setLoginRedirect(<Redirect from="/landing" to="/" />)
+        setProtectedRoutes([])
       }
     });
     
@@ -30,15 +36,25 @@ function App() {
     },[])
   return (
       <div className="App">        
-      <BrowserRouter>
+
+      <BrowserRouter forceRefresh={true}>
         <header className="App-header">
-        <Nav></Nav>
+          <Nav></Nav>
+          {localStorage.getItem("user") ? <Sidebar></Sidebar> : <></>}
+
+
+
 
         <Switch>
-        {loginRedirect}
-        <Route exact path="/" component={HomePage}></Route>
+        <Route exact path="/" >
+          {localStorage.getItem("user") ? <Redirect to="/landing" /> : <HomePage></HomePage>}
+        </Route>
         <Route path="/login" component={LoginPage}></Route>
-        <Route path="/landing" component={LandingPage}></Route>
+        {protectedRoutes.map((route)=>{
+
+          return <Route path={route.path} component={route.page}></Route> 
+
+        })}
 
         </Switch>
         

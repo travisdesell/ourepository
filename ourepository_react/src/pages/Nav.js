@@ -1,7 +1,7 @@
 
 
 import React from 'react';
-import {Link, Route} from "react-router-dom";
+import {Link, Route, Redirect} from "react-router-dom";
 import emitter from "../services/emitter"
 
 
@@ -12,6 +12,9 @@ const Nav = (props) => {
   
   const [navbarOpen, setNavbarOpen] = React.useState(false);
   const [userBtn, setUserBtn] = React.useState(<></>);
+
+  const [heading, setHeading] = React.useState(<Link to="/">OURepository</Link>);
+  const [toolBar, setToolbar] = React.useState([]);
 
   React.useEffect(()=>{
 
@@ -26,6 +29,18 @@ const Nav = (props) => {
         setUserBtn(logOutBtn)
       }else{
         setUserBtn(logInBtn)
+      }
+    });
+
+    emitter.addListener("updateHeading", (heading) => {
+      if (heading) {
+        setHeading(heading)
+      }
+    });
+
+    emitter.addListener("updateToolbar", (heading) => {
+      if (heading) {
+        setToolbar(heading)
       }
     });
     
@@ -43,18 +58,25 @@ const Nav = (props) => {
     function handleLogOut(){
         localStorage.removeItem("user")
         setUserBtn(<a class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4" > <Link to="/login">Login</Link></a>)
+
     }
-
-
-
-
 
       return (<>
         <nav class="flex items-center justify-between flex-wrap bg-gray-800 p-6 fixed w-full z-10 top-0">
         <div class="flex items-center flex-shrink-0 text-white mr-6">
-          <a class="text-white no-underline hover:text-white hover:no-underline">
-            <span class="text-2xl pl-2"><i class="em em-grinning"></i> <Link to="/">OURepository</Link></span>
-          </a>
+        <a class="text-white no-underline hover:text-white hover:no-underline">
+          <span class="text-2xl pl-2"><i class="em em-grinning"></i>{heading}</span>
+        </a>
+        <div class="p-2"></div>
+        <ul class="list-reset lg:flex justify-end flex-1 items-center">
+          {toolBar.map((tool =>{
+            return <li class="mr-3">
+              <span class="text-lg text-gray-400">{tool}</span> 
+            </li>
+          }))}
+
+          </ul>
+
         </div>
   
         <div class="block lg:hidden">
@@ -72,6 +94,7 @@ const Nav = (props) => {
         </div>
 
       </nav>
+      
     </>
       );
 };
