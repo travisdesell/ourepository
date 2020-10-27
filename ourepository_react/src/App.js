@@ -11,10 +11,12 @@ import emitter from "./services/emitter"
 import Sidebar from './components/Sidebar';
 import OrganizationPage from './pages/Organization';
 function App() {
+
   const protected_routes = [
     {path: "/landing", page: LandingPage},
     {path: "/organization" ,page: OrganizationPage}
   ]
+
   const [protectedRoutes, setProtectedRoutes] = React.useState([])
   React.useEffect(()=>{
     if (localStorage.getItem('user')) {
@@ -30,14 +32,13 @@ function App() {
         setProtectedRoutes([])
       }
     });
-    
       
 
     },[])
   return (
       <div className="App">        
 
-      <BrowserRouter forceRefresh={true}>
+      <BrowserRouter>
         <header className="App-header">
           <Nav></Nav>
           {localStorage.getItem("user") ? <Sidebar></Sidebar> : <></>}
