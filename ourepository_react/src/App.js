@@ -18,6 +18,7 @@ function App() {
   ]
 
   const [protectedRoutes, setProtectedRoutes] = React.useState([])
+
   React.useEffect(()=>{
     if (localStorage.getItem('user')) {
       setProtectedRoutes(protected_routes)
@@ -35,6 +36,7 @@ function App() {
       
 
     },[])
+    
   return (
       <div className="App">        
 
