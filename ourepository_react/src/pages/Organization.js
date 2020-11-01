@@ -45,7 +45,7 @@ const OrganizationPage = (props) => {
     },[])
 
       return (
-        <div class="bg-grey-900 shadow-md rounded px-8 pt-6 pb-8 absolute left-0 top-0 pt-32 h-full text-left" style={{marginLeft:"16vw", width:"84vw"}}>
+        <div class="bg-grey-900 shadow-md rounded px-8 pt-6 pb-8 absolute left-0 top-0 pt-32 h-full" style={{marginLeft:"16vw", width:"84vw"}}>
         <Switch>
         <Route exact path={path}>
             Select A Project                
