@@ -14,7 +14,7 @@ function App() {
 
   const protected_routes = [
     {path: "/landing", page: LandingPage},
-    {path: "/organization" ,page: OrganizationPage}
+    {path: "/organization/:id" ,page: OrganizationPage}
   ]
 
   const [protectedRoutes, setProtectedRoutes] = React.useState([])
@@ -61,8 +61,8 @@ function App() {
 
         </Switch>
         
-
         </header>      
+
         </BrowserRouter>
 
     </div>

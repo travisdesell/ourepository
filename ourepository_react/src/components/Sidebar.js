@@ -21,7 +21,7 @@ const Sidebar = (props) => {
 
       return (<>
 
-            <div class="fixed h-full bg-gray-700 left-0" style={{width: "15vw"}}>
+            <div class="fixed h-full bg-gray-700 left-0" style={{width: "16vw"}}>
 
                 <div class="m-32"></div>
                 <div class="absolute h-40 w-full">

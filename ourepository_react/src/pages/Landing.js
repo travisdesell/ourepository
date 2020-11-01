@@ -16,7 +16,7 @@ const LandingPage = (props) => {
           <div class="bg-gray-700 shadow-md rounded px-8 pt-6 pb-8"> Your Organizations
           <div class=" p-1"></div>
 
-          <div class="bg-gray-800  shadow-md rounded px-4 pt-3 pb-4"><Link to="/organization">Eye In The Sky</Link> </div>
+          <div class="bg-gray-800  shadow-md rounded px-4 pt-3 pb-4"><Link to="/organization/eyeinthesky">Eye In The Sky</Link> </div>
 
         </div>
 

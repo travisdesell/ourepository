@@ -43,8 +43,7 @@ const Nav = (props) => {
         setToolbar(heading)
       }
     });
-    
-      
+
 
     },[])
 
