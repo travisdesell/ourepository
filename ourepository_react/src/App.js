@@ -10,11 +10,13 @@ import LandingPage from './pages/Landing';
 import emitter from "./services/emitter"
 import Sidebar from './components/Sidebar';
 import OrganizationPage from './pages/Organization';
+import UserStatusPage from './pages/UserStatus';
 function App() {
 
   const protected_routes = [
     {path: "/landing", page: LandingPage},
-    {path: "/organization/:id" ,page: OrganizationPage}
+    {path: "/organization/:id" ,page: OrganizationPage},
+    {path: "/UserStatus", page:UserStatusPage}
   ]
 
   const [protectedRoutes, setProtectedRoutes] = React.useState([])
@@ -33,12 +35,12 @@ function App() {
         setProtectedRoutes([])
       }
     });
-      
+
 
     },[])
-    
+
   return (
-      <div className="App">        
+      <div className="App">
 
       <BrowserRouter forceRefresh={true}>
         <header className="App-header">
@@ -55,13 +57,13 @@ function App() {
         <Route path="/login" component={LoginPage}></Route>
         {protectedRoutes.map((route)=>{
 
-          return <Route path={route.path} component={route.page}></Route> 
+          return <Route path={route.path} component={route.page}></Route>
 
         })}
 
         </Switch>
-        
-        </header>      
+
+        </header>
 
         </BrowserRouter>
 
