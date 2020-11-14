@@ -5,7 +5,7 @@ if (is_link($cwd[__FILE__])) $cwd[__FILE__] = readlink($cwd[__FILE__]);
 $cwd[__FILE__] = dirname($cwd[__FILE__]);
 
 require_once($cwd[__FILE__] . "/../db/my_query.php");
-require_once($cwd[__FILE__] . "/../../Mustache.php/src/Mustache/Autoloader.php");
+require_once($cwd[__FILE__] . "/Mustache.php/src/Mustache/Autoloader.php");
 Mustache_Autoloader::register();
 
 function create_points($user_id, $mosaic_id, $label_id, $points) {

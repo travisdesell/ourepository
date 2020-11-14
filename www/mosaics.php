@@ -8,7 +8,7 @@ require_once($cwd[__FILE__] . "/../db/my_query.php");
 require_once($cwd[__FILE__] . "/upload.php"); //for rrmdir
 require_once($cwd[__FILE__] . "/marks.php"); //for create_polygon_points
 require_once($cwd[__FILE__] . "/settings.php"); //for mosaic directories
-require_once($cwd[__FILE__] . "/../../Mustache.php/src/Mustache/Autoloader.php");
+require_once($cwd[__FILE__] . "/Mustache.php/src/Mustache/Autoloader.php");
 Mustache_Autoloader::register();
 
 function ordinal_suffix($num) {

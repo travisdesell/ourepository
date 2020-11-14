@@ -19,7 +19,7 @@ $mosaic_id = $_GET['mosaic_id'];
 
 $additional_js = array();
 $additional_js[] = "<script type='text/javascript'>var mosaic_id = $mosaic_id;</script>";
-$additional_js[] = "<script type='text/javascript'>var id_token;</script>"; //define an id_token variable for use by all other scripts
+$additional_js[] = "<script type='text/javascript'>var id_token='user';</script>"; //define an id_token variable for use by all other scripts
 
 $additional_js[] = "<script type='text/javascript' src='./js/amwg256.js'></script>";
 $additional_js[] = "<script type='text/javascript' src='./js/openseadragon.min.js'></script>";
