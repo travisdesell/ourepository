@@ -3,4 +3,4 @@ numpy
 matplotlib
 rasterio
 pandas
-tensorflow==2.2.0
+labelImg
