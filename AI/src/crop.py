@@ -14,6 +14,7 @@ from itertools import product
 from matplotlib import pyplot
 import csv
 import pandas as pd
+import cv2
 import os
 import shutil
 import click
@@ -165,57 +166,68 @@ for coord in progressBar(slice_coords_dict, prefix='Progress:', suffix='Complete
     if CONTINUE_CHECKPOINT and (filename_prefix + '.xml') in EXISTING_FILES:
         continue
 
-    # read band slices using Window views
-    sample_red = mosaic_dataset.read(1, window=Window(x, y, MODEL_INPUT_WIDTH, MODEL_INPUT_HEIGHT))
-    sample_green = mosaic_dataset.read(2, window=Window(x, y, MODEL_INPUT_WIDTH, MODEL_INPUT_HEIGHT))
-    sample_blue = mosaic_dataset.read(3, window=Window(x, y, MODEL_INPUT_WIDTH, MODEL_INPUT_HEIGHT))
-    sample_alpha = mosaic_dataset.read(4, window=Window(x, y, MODEL_INPUT_WIDTH, MODEL_INPUT_HEIGHT))
+    # if saved image is corrupt, retry up to 5 times total
+    retry = 0
 
-    # add new axis for RGBA values
-    sample_red = sample_red[:, :, np.newaxis]
-    sample_green = sample_green[:, :, np.newaxis]
-    sample_blue = sample_blue[:, :, np.newaxis]
-    sample_alpha = sample_alpha[:, :, np.newaxis]
+    while 0 <= retry < 5:
+        # read band slices using Window views
+        sample_red = mosaic_dataset.read(1, window=Window(x, y, MODEL_INPUT_WIDTH, MODEL_INPUT_HEIGHT))
+        sample_green = mosaic_dataset.read(2, window=Window(x, y, MODEL_INPUT_WIDTH, MODEL_INPUT_HEIGHT))
+        sample_blue = mosaic_dataset.read(3, window=Window(x, y, MODEL_INPUT_WIDTH, MODEL_INPUT_HEIGHT))
+        sample_alpha = mosaic_dataset.read(4, window=Window(x, y, MODEL_INPUT_WIDTH, MODEL_INPUT_HEIGHT))
 
-    # concatenate bands along new RGBA axis
-    sample = np.concatenate([sample_red, sample_green, sample_blue, sample_alpha], axis=2)
+        # add new axis for RGBA values
+        sample_red = sample_red[:, :, np.newaxis]
+        sample_green = sample_green[:, :, np.newaxis]
+        sample_blue = sample_blue[:, :, np.newaxis]
+        sample_alpha = sample_alpha[:, :, np.newaxis]
 
-    # create image
-    image = Image.fromarray(sample, mode='RGBA')  # create image
+        # concatenate bands along new RGBA axis
+        sample = np.concatenate([sample_red, sample_green, sample_blue, sample_alpha], axis=2)
 
-    # annotate image
-    # overlay = Image.new('RGBA', image.size, (0, 0, 0, 0))
-    # draw = ImageDraw.Draw(overlay) # create Draw object
+        # create image
+        image = Image.fromarray(sample, mode='RGBA')  # create image
 
-    filepath = f'{OUT_DIR}/{filename_prefix}'  # full filepath of output files excluding extension
-    # with open(filename_prefix + '.csv', 'w') as csv_file:
-        # writer = csv.writer(csv_file)
-        # writer.writerow(['x1', 'y1', 'x2', 'y2'])
-    rel_annotations = list()
+        # annotate image
+        # overlay = Image.new('RGBA', image.size, (0, 0, 0, 0))
+        # draw = ImageDraw.Draw(overlay) # create Draw object
 
-    # iterate over all annotations in slice
-    for x1, y1, x2, y2 in annotations:
-        # calculate relative coordinates for annotation in slice
-        rel_x1 = x1 - x
-        rel_y1 = y1 - y
-        rel_x2 = x2 - x
-        rel_y2 = y2 - y
+        filepath = f'{OUT_DIR}/{filename_prefix}'  # full filepath of output files excluding extension
+        # with open(filename_prefix + '.csv', 'w') as csv_file:
+            # writer = csv.writer(csv_file)
+            # writer.writerow(['x1', 'y1', 'x2', 'y2'])
+        rel_annotations = list()
 
-        rel_annotations.append((rel_x1, rel_y1, rel_x2, rel_y2))
+        # iterate over all annotations in slice
+        for x1, y1, x2, y2 in annotations:
+            # calculate relative coordinates for annotation in slice
+            rel_x1 = x1 - x
+            rel_y1 = y1 - y
+            rel_x2 = x2 - x
+            rel_y2 = y2 - y
 
-    # make the XML to be used to generate TFRecords and store along with output images
-    make_xml(rel_annotations, MODEL_INPUT_WIDTH, MODEL_INPUT_HEIGHT, filepath)
+            rel_annotations.append((rel_x1, rel_y1, rel_x2, rel_y2))
 
-    # draw rectangle to represent annotation
-    # draw.rectangle((rel_x1, rel_y1, rel_x2, rel_y2), fill=(255, 0, 0, 50),
-    #                outline=(255, 255, 255))  # add annotations
+        # make the XML to be used to generate TFRecords and store along with output images
+        make_xml(rel_annotations, MODEL_INPUT_WIDTH, MODEL_INPUT_HEIGHT, filepath)
 
-    # save relative coordinates to file
-    # writer.writerow([rel_x1, rel_y1, rel_x2, rel_y2])  # write relative bounds to file
+        # draw rectangle to represent annotation
+        # draw.rectangle((rel_x1, rel_y1, rel_x2, rel_y2), fill=(255, 0, 0, 50),
+        #                outline=(255, 255, 255))  # add annotations
 
-    # Save image. Uncomment next line to add annotation overlay to image.
-    # image = Image.alpha_composite(image, overlay)
-    image.save(f'{filepath}.png')
+        # save relative coordinates to file
+        # writer.writerow([rel_x1, rel_y1, rel_x2, rel_y2])  # write relative bounds to file
+
+        # Save image. Uncomment next line to add annotation overlay to image.
+        # image = Image.alpha_composite(image, overlay)
+        image_path = filepath + '.png'
+        image.save(image_path)
+
+        # retry if saved image is corrupt
+        if cv2.imread(image_path) is None:
+            retry += 1
+        else:
+            retry -= 1
 
     # TODO remove
     # if x >= 2944 and y >= 46912:  # this is the first slice with more than one annotation
