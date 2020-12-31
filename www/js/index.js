@@ -1424,7 +1424,7 @@ function login() {
 
     // setTimeout(login, 5 * 60 * 1000);  //1 minutes
     id_token = "user"
-    serverRequest("INDEX", true);
+    serverRequest("INDEX", initialize_splash);
 }
 
 $(document).ready(function() {

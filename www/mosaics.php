@@ -215,7 +215,6 @@ function display_index($user_id) {
         $projects['users'][] = $users_row;
     }
 
-
     $projects_template = file_get_contents($cwd[__FILE__] . "/templates/mosaics_template.html");
 
     $m = new Mustache_Engine;
