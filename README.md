@@ -1,5 +1,6 @@
 Dependencies:
 INSTALL COMPOSER FOR PHP
+
 Make sure mysqli is enabled for PHP
 
 #### Create SQL DB info file
