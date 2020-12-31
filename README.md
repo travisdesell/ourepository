@@ -7,10 +7,10 @@ Make sure mysqli is enabled for PHP
 ```
 cat << EOF >> ./db/db_info.php
 <?php
-$our_db_host="localhost:3306";
-$our_db_user="jon";
-$our_db_password="password";
-$our_db_name="our";
+\$our_db_host="localhost:3306";
+\$our_db_user="jon";
+\$our_db_password="password";
+\$our_db_name="our";
 ?>
 EOF
 ```
