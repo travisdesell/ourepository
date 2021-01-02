@@ -1424,7 +1424,9 @@ function login() {
 
     // setTimeout(login, 5 * 60 * 1000);  //1 minutes
     id_token = "user"
-    serverRequest("INDEX", initialize_splash);
+    if (!initialized_mosaics) {
+        serverRequest("INDEX", initialize_mosaics);
+    }
 }
 
 $(document).ready(function() {
