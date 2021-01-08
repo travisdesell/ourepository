@@ -52,6 +52,7 @@ function get_mosaic_info($owner_id, $md5_hash) {
 }
 
 function initiate_upload($owner_id) {
+    connect_our_db();
     global $our_db, $UPLOAD_DIRECTORY;
     error_log(json_encode($_POST));
     error_log(json_encode($our_db));

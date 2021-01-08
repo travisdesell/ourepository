@@ -7,6 +7,7 @@ $cwd[__FILE__] = dirname($cwd[__FILE__]);
 require_once($cwd[__FILE__] . "/../db/my_query.php");
 require_once($cwd[__FILE__] . "/user.php");
 require_once($cwd[__FILE__] . "/settings.php");
+connect_our_db();
 
 /*
 error_log("BEFORE GET USER ID!");
@@ -228,7 +229,6 @@ if ($request_type == NULL || $request_type == "INDEX") {
     process_chunk($user_id);
 } else if ($request_type == "TILE_PROGRESS") {
     require_once($cwd[__FILE__] . "/upload.php");
-
     $md5_hash = $our_db->real_escape_string($_POST['md5_hash']);
     $mosaic_info = get_mosaic_info($user_id, $md5_hash);
 

@@ -8,7 +8,7 @@ require_once($cwd[__FILE__] . "/header.php");
 require_once($cwd[__FILE__] . "/navbar.php");
 require_once($cwd[__FILE__] . "/../db/my_query.php");
 
-require_once($cwd[__FILE__] . "/../../Mustache.php/src/Mustache/Autoloader.php");
+require_once($cwd[__FILE__] . "/Mustache.php/src/Mustache/Autoloader.php");
 Mustache_Autoloader::register();
 
 $additional_css = array();
