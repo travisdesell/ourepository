@@ -1,4 +1,12 @@
+.idea/
+
 connect_xcel_db.sh
 db_info.php
-.idea/
-AI/data/
+AI/original-data/
+
+AI/images/train/
+AI/images/test/
+AI/images/*.png
+AI/images/*.xml
+AI/annotations/*.record
+

@@ -14,7 +14,7 @@ optional arguments:
 """
 import os
 import re
-from shutil import copyfile
+from shutil import copyfile, move
 import argparse
 import math
 import random
@@ -40,20 +40,20 @@ def iterate_dir(source, dest, ratio, copy_xml):
     for i in range(num_test_images):
         idx = random.randint(0, len(images)-1)
         filename = images[idx]
-        copyfile(os.path.join(source, filename),
+        move(os.path.join(source, filename),
                  os.path.join(test_dir, filename))
         if copy_xml:
             xml_filename = os.path.splitext(filename)[0]+'.xml'
-            copyfile(os.path.join(source, xml_filename),
+            move(os.path.join(source, xml_filename),
                      os.path.join(test_dir,xml_filename))
         images.remove(images[idx])
 
     for filename in images:
-        copyfile(os.path.join(source, filename),
+        move(os.path.join(source, filename),
                  os.path.join(train_dir, filename))
         if copy_xml:
             xml_filename = os.path.splitext(filename)[0]+'.xml'
-            copyfile(os.path.join(source, xml_filename),
+            move(os.path.join(source, xml_filename),
                      os.path.join(train_dir, xml_filename))
 
 
@@ -66,7 +66,7 @@ def main():
         '-i', '--imageDir',
         help='Path to the folder where the image dataset is stored. If not specified, the CWD will be used.',
         type=str,
-        default=os.getcwd()
+        default='../../images'#os.getcwd()
     )
     parser.add_argument(
         '-o', '--outputDir',
@@ -83,7 +83,8 @@ def main():
     parser.add_argument(
         '-x', '--xml',
         help='Set this flag if you want the xml annotation files to be processed and copied over.',
-        action='store_true'
+        action='store_true',
+        default=True
     )
     args = parser.parse_args()
 

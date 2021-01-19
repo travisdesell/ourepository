@@ -6,29 +6,35 @@ and XMLs for each slice.
 @author: John McCarroll
 """
 
-from PIL import Image, ImageDraw
+from PIL import Image
 import rasterio as rio
 from rasterio.windows import Window
 import numpy as np
-from itertools import product
-from matplotlib import pyplot
 import csv
 import pandas as pd
 import cv2
 import os
 import shutil
 import click
-import time
 import sys
 
-from make_xml import make_xml
-from progress_bar import progressBar
+from scripts.util.progress_bar import progressBar
+from scripts.util.make_xml import make_xml
+from scripts.util.slice import generate_slice_coords
 
-DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../data'))
+# TODO doing it this way to have a clean path in the generated XML. This may not be necessary. Possible change to relative.
+DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../original-data'))
 CARIBOU_DIR = os.path.abspath(os.path.join(DATA_DIR, 'caribou'))
-OUT_DIR = os.path.abspath(os.path.join(CARIBOU_DIR, 'out'))  # TODO change to make for easier preprocessing later
+OUT_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../images'))
 CONTINUE_CHECKPOINT = False  # check whether slice creation should continue from where it left off
 EXISTING_FILES = os.listdir(OUT_DIR)  # existing files in output (to be used for checkpoint continuation)
+
+# Training Specs
+MODEL_INPUT_HEIGHT = 640 # TODO must this be same as model? I don't think so, but it probably mitigates effects of distortion.
+MODEL_INPUT_WIDTH = 640
+
+# how far to move sliding window for each slice
+STRIDE_LENGTH = 64
 
 # check whether the output directory exists
 if os.path.exists(OUT_DIR):
@@ -51,13 +57,6 @@ else:
 CARIBOU_IMAGE_FILENAME = os.path.join(CARIBOU_DIR, '20160718_camp_gm_02_75m_transparent_mosaic_group1.tif')
 # caribou_csv_file_name = os.path.join(CARIBOU_DIR, 'mosaic_97_adult_caribou.csv')
 CARIBOU_CSV_FILENAME = os.path.join(CARIBOU_DIR, 'test.csv')
-
-# Training Specs
-MODEL_INPUT_HEIGHT = 640 # TODO must this be same as model?
-MODEL_INPUT_WIDTH = 640
-
-# how far to move sliding window for each slice
-STRIDE_LENGTH = 64
 
 # load in tif mosaic
 mosaic_dataset = rio.open(CARIBOU_IMAGE_FILENAME)
@@ -95,61 +94,65 @@ print(mosaic_dataset.bounds)
 print("Mosaic CRS:")
 print(mosaic_dataset.crs)
 
-# create dataframe contaning annotation data
+# create dataframe containing annotation data
 annotations_df = pd.read_csv(CARIBOU_CSV_FILENAME, comment='#')
 
-# determine upper left corner of each slice
-# uses sliding window
-slice_x_coords = list(range(0, MOSAIC_WIDTH-MODEL_INPUT_WIDTH, STRIDE_LENGTH))
-slice_x_coords.append(MOSAIC_WIDTH-MODEL_INPUT_WIDTH)
-slice_y_coords = list(range(0, MOSAIC_HEIGHT-MODEL_INPUT_HEIGHT, STRIDE_LENGTH))
-slice_y_coords.append(MOSAIC_HEIGHT-MODEL_INPUT_HEIGHT)
-slice_coords_list = list(product(slice_x_coords, slice_y_coords))
-slice_coords_dict = {key: list() for key in slice_coords_list}
+slice_coords_dict = generate_slice_coords(MOSAIC_WIDTH, MOSAIC_HEIGHT, MODEL_INPUT_WIDTH, MODEL_INPUT_WIDTH,
+                                          STRIDE_LENGTH, annotations_df)
 
-total_annotations = 0
-tic = time.perf_counter()
+# TODO REMOVE
+# # determine upper left corner of each slice
+# # uses sliding window
+# slice_x_coords = list(range(0, MOSAIC_WIDTH-MODEL_INPUT_WIDTH, STRIDE_LENGTH))
+# slice_x_coords.append(MOSAIC_WIDTH-MODEL_INPUT_WIDTH)
+# slice_y_coords = list(range(0, MOSAIC_HEIGHT-MODEL_INPUT_HEIGHT, STRIDE_LENGTH))
+# slice_y_coords.append(MOSAIC_HEIGHT-MODEL_INPUT_HEIGHT)
+# slice_coords_list = list(product(slice_x_coords, slice_y_coords))
+# slice_coords_dict = {key: list() for key in slice_coords_list}
 
-# iterate over alll annotations
-for index, row in annotations_df.iterrows():
-    # get corners of annotation
-    x1 = row['x1']
-    x2 = row['x2']
-    y1 = row['y1']
-    y2 = row['y2']
-    assert x1 <= x2
-    assert y1 <= y2
+# TODO REMOVE
+# # iterate over all annotations
+# for index, row in annotations_df.iterrows():
+#     # get corners of annotation
+#     x1 = row['x1']
+#     x2 = row['x2']
+#     y1 = row['y1']
+#     y2 = row['y2']
+#     assert x1 <= x2
+#     assert y1 <= y2
+#
+#     # calculate width and height of annotation
+#     annotation_width = x2 - x1
+#     annotation_height = y2 - y1
+#
+#     # Get all slices that have full annotation in them.
+#     # Start coordinate must be at least 0.
+#     # Start coordinate must be the start of a slice; cannot be between slices (if so, go to next slice).
+#     # Repeat for x and y.
+#
+#     x_start = max(0, x2 - MODEL_INPUT_WIDTH)
+#     x_start = (int(x_start / STRIDE_LENGTH) + (x_start % STRIDE_LENGTH != 0)) * STRIDE_LENGTH
+#     x_end = min(x2 - annotation_width, MOSAIC_WIDTH - MODEL_INPUT_WIDTH)
+#
+#     y_start = max(0, y2 - MODEL_INPUT_HEIGHT)
+#     y_start = (int(y_start / STRIDE_LENGTH) + (y_start % STRIDE_LENGTH != 0)) * STRIDE_LENGTH
+#     y_end = min(y2 - annotation_height, MOSAIC_HEIGHT - MODEL_INPUT_HEIGHT)
+#
+#     # add this annotation to all slices that include it
+#     for coord in product(range(x_start, x_end, STRIDE_LENGTH), range(y_start, y_end, STRIDE_LENGTH)):
+#         slice_coords_dict[coord].append(tuple(row))
+#         total_annotations += 1
+#
+# toc = time.perf_counter()
+# print(f"{toc - tic:0.4f} seconds")
+# print(f"{total_annotations} total annotations over all slices")
 
-    # calculate width and height of annotation
-    annotation_width = x2 - x1
-    annotation_height = y2 - y1
-
-    # Get all slices that have full annotation in them.
-    # Start coordinate must be at least 0.
-    # Start coordinate must be the start of a slice; cannot be between slices (if so, go to next slice).
-    # Repeat for x and y.
-
-    x_start = max(0, x2 - MODEL_INPUT_WIDTH)
-    x_start = (int(x_start / STRIDE_LENGTH) + (x_start % STRIDE_LENGTH != 0)) * STRIDE_LENGTH
-    x_end = min(x2 - annotation_width, MOSAIC_WIDTH - MODEL_INPUT_WIDTH)
-
-    y_start = max(0, y2 - MODEL_INPUT_HEIGHT)
-    y_start = (int(y_start / STRIDE_LENGTH) + (y_start % STRIDE_LENGTH != 0)) * STRIDE_LENGTH
-    y_end = min(y2 - annotation_height, MOSAIC_HEIGHT - MODEL_INPUT_HEIGHT)
-
-    # add this annotation to all slices that include it
-    for coord in product(range(x_start, x_end, STRIDE_LENGTH), range(y_start, y_end, STRIDE_LENGTH)):
-        slice_coords_dict[coord].append(tuple(row))
-        total_annotations += 1
-
-toc = time.perf_counter()
-print(f"{toc - tic:0.4f} seconds")
-print(f"{total_annotations} total annotations over all slices")
-
-# TODO remove
+# TODO remove (maybe)
 # remove all slices without an annotation (performed here to make progress bar more accurate)
 slice_coords_dict_all = slice_coords_dict
 slice_coords_dict = {coord:annotations for (coord, annotations) in slice_coords_dict.items() if len(annotations) > 0}
+percent_containing_annotations = 100 * len(slice_coords_dict) / len(slice_coords_dict_all)
+print(f'{round(percent_containing_annotations, 2)}% of all slices contain annotations')
 
 # loop over slices
 # for coord in slice_coords_dict: TODO maybe put back

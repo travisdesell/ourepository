@@ -12,3 +12,10 @@ These steps are not comprehensive nor is all the code/file structure yet availab
 5. Run `python generate_tfrecord.py` to generate the TFRecords for the training and test datasets.
 6. Run `python model_main_tf2.py --model_dir=models/my_faster_rcnn_resnet50_v1 
    --pipeline_config_path=models/my_faster_rcnn_resnet50_v1/pipeline.config` to start the training process.
+7. Run `tensorboard --logdir=models/my_faster_rcnn_resnet50_v1` to view training statistics. Training can be stopped 
+   when loss reaches an asymptote.
+8. Run `python exporter_main_v2.py --input_type image_tensor --pipeline_config_path 
+   models/my_faster_rcnn_resnet50_v1/pipeline.config --trained_checkpoint_dir models/my_faster_rcnn_resnet50_v1 
+   --output_directory exported-models/my_faster_rcnn_resnet50_v1` to export the model.
+9. Evaluation can be performed using either a Tensorflow SavedModel or a Checkpoint. We will use SavedModel. Run 
+   `python inference.py`.
