@@ -2,20 +2,18 @@
 
 ## Preliminary steps for training:
 
-These steps are not comprehensive nor is all the code/file structure yet available.
-
 1. Run `python crop.py` to generate image slices.
-2. Copy output PNGs and XMLs into images directory.
-3. Run `python partition_dataset.py` to move the images into train and test directories.
-4. Run `python edit_xml.py` to correct filepath-related tags in the XMLs. This step may not be needed or is possible 
+1. Run `python partition_dataset.py` to move the images into train and test directories.
+1. Run `python edit_xml.py` to correct filepath-related tags in the XMLs. This step may not be needed or is possible 
    to simplify.
-5. Run `python generate_tfrecord.py` to generate the TFRecords for the training and test datasets.
-6. Run `python model_main_tf2.py --model_dir=models/my_faster_rcnn_resnet50_v1 
-   --pipeline_config_path=models/my_faster_rcnn_resnet50_v1/pipeline.config` to start the training process.
-7. Run `tensorboard --logdir=models/my_faster_rcnn_resnet50_v1` to view training statistics. Training can be stopped 
+1. Run `python generate_tfrecord.py` to generate the TFRecords for the training and test datasets.
+1. Run `python model_main_tf2.py --model_dir=models/my_faster_rcnn_resnet50_v1 
+   --pipeline_config_path=models/my_faster_rcnn_resnet50_v1/pipeline.config --checkpoint_every_n=100` to start the 
+   training process.
+1. Run `tensorboard --logdir=models/my_faster_rcnn_resnet50_v1` to view training statistics. Training can be stopped 
    when loss reaches an asymptote.
-8. Run `python exporter_main_v2.py --input_type image_tensor --pipeline_config_path 
+1. Run `python exporter_main_v2.py --input_type image_tensor --pipeline_config_path 
    models/my_faster_rcnn_resnet50_v1/pipeline.config --trained_checkpoint_dir models/my_faster_rcnn_resnet50_v1 
    --output_directory exported-models/my_faster_rcnn_resnet50_v1` to export the model.
-9. Evaluation can be performed using either a Tensorflow SavedModel or a Checkpoint. We will use SavedModel. Run 
+1. Evaluation can be performed using either a Tensorflow SavedModel or a Checkpoint. We will use SavedModel. Run 
    `python inference.py`.
