@@ -34,6 +34,9 @@ def generate_slice_coords(mosaic_width, mosaic_height, model_width, model_height
         # Start coordinate must be the start of a slice; cannot be between slices (if so, go to next slice).
         # Repeat for x and y.
 
+        # Start is the left-most/top-most possible coordinate of a slice that would contain this annotation.
+        # End is the right-most/bottom-most possible coordinate of a slice that would contain this annotation.
+
         x_start = max(0, x2 - model_width)
         x_start = (int(x_start / stride_length) + (x_start % stride_length != 0)) * stride_length
         x_end = min(x2 - annotation_width, mosaic_width - model_width)
