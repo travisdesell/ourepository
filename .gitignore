@@ -1,7 +1,11 @@
 .idea/
+*.pyc
 
+# DB
 connect_xcel_db.sh
 db_info.php
+
+# AI
 AI/original-data/
 
 AI/images/train/
@@ -9,4 +13,9 @@ AI/images/test/
 AI/images/*.png
 AI/images/*.xml
 AI/annotations/*.record
+
+AI/*.zip
+AI/pre-trained-models/
+AI/models/
+AI/exported-models/
 
