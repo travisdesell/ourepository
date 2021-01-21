@@ -34,19 +34,21 @@ def generate_slice_coords(mosaic_width, mosaic_height, model_width, model_height
         # Start coordinate must be the start of a slice; cannot be between slices (if so, go to next slice).
         # Repeat for x and y.
 
-        # Start is the left-most/top-most possible coordinate of a slice that would contain this annotation.
-        # End is the right-most/bottom-most possible coordinate of a slice that would contain this annotation.
+        # Start is the left-most/top-most coordinate of the left-most/top-most slice that would contain this annotation.
+        # End is the left-most/top-most coordinate of the right-most/bottom-most slice that would contain this annotation.
 
         x_start = max(0, x2 - model_width)
         x_start = (int(x_start / stride_length) + (x_start % stride_length != 0)) * stride_length
+        x_start = min(x_start, mosaic_width - model_width)
         x_end = min(x2 - annotation_width, mosaic_width - model_width)
 
         y_start = max(0, y2 - model_height)
         y_start = (int(y_start / stride_length) + (y_start % stride_length != 0)) * stride_length
+        y_start = min(y_start, mosaic_height - model_height)
         y_end = min(y2 - annotation_height, mosaic_height - model_height)
 
         # add this annotation to all slices that include it
-        for coord in product(range(x_start, x_end, stride_length), range(y_start, y_end, stride_length)):
+        for coord in product(range(x_start, x_end+1, stride_length), range(y_start, y_end+1, stride_length)):
             slice_coords_dict[coord].append(tuple(row))
             total_annotations += 1
 
