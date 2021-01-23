@@ -5,7 +5,7 @@ from scripts.util.slice import generate_slice_coords
 
 
 class TestSlice(unittest.TestCase):
-    
+
     def setUp(self):
         # these values were chosen specifically so that the right-most/bottom-most slices start less than a stride
         # length away from the previous slice
