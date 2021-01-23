@@ -15,6 +15,19 @@ cat << EOF >> ./db/db_info.php
 EOF
 ```
 
+
+#### Create settings.php  file
+```
+cat << EOF >> ./www/settings.php
+<?php
+\$CLIENT_ID = "345";
+\$BASE_DIRECTORY = "./"; 
+\$UPLOAD_DIRECTORY = "./mosaic_uploads";
+\$ARCHIVE_DIRECTORY = "./mosaics";
+?>
+EOF
+```
+
 #### Start web servers 
 ##### Backend port 5000; Frontend port 3000 
 

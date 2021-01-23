@@ -13,6 +13,7 @@ import OrganizationPage from './pages/Organization';
 import UserStatusPage from './pages/UserStatus';
 function App() {
 
+
   const protected_routes = [
     {path: "/landing", page: LandingPage},
     {path: "/organization/:id" ,page: OrganizationPage},
