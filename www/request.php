@@ -1,4 +1,9 @@
 <?php
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Credentials: true");
+header("Access-Control-Max-Age: 1000");
+header("Access-Control-Allow-Headers: X-Requested-With, Content-Type, Origin, Cache-Control, Pragma, Authorization, Accept, Accept-Encoding");
+header("Access-Control-Allow-Methods: PUT, POST, GET, OPTIONS, DELETE");
 
 $cwd[__FILE__] = __FILE__;
 if (is_link($cwd[__FILE__])) $cwd[__FILE__] = readlink($cwd[__FILE__]);
@@ -9,7 +14,6 @@ require_once($cwd[__FILE__] . "/user.php");
 require_once($cwd[__FILE__] . "/settings.php");
 connect_our_db();
 
-/*
 error_log("BEFORE GET USER ID!");
 foreach ($_FILES as $file) {
     error_log("file: " . json_encode($file));
@@ -22,7 +26,7 @@ foreach ($_GET as $key => $value) {
 foreach ($_POST as $key => $value) {
     error_log("_POST['$key']: '$value'");
 }
-*/
+
 
 // Get $id_token via HTTPS POST.
 if (isset($_POST['id_token'])) {
@@ -159,7 +163,7 @@ if ($request_type == NULL || $request_type == "INDEX") {
         }
     }
 
-    $name = "$BASE_DIRECTORY$name";
+    $name = "$BASE_DIRECTORY$owner_id/$name";
 
     error_log("got a request for a tile: '$name'");
     $fp = fopen($name, 'rb');

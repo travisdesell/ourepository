@@ -8,6 +8,7 @@ const HomePage = (props) => {
   React.useEffect(()=>{
     navbarService.setHeading(<Link to="/">OURepository</Link>)
     navbarService.setToolbar([])
+
 },[])
 
       return (
