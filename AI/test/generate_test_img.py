@@ -1,23 +1,25 @@
-from PIL import Image, ImageDraw
-import math
+from PIL import Image
 from random import randint
 import numpy as np
 import pandas as pd
 
 
-def rotate(point, radians):
-    cos = math.cos(radians)
-    sin = math.sin(radians)
-    return cos*point[0] - sin*point[1], sin*point[0] + cos*point[1]
-
-
 def add_item(base, item):
+    """
+    Adds a new item on top of the base image. The item will have a random scale, rotation, and location.
+    :param base: The base image
+    :param item: The template item image
+    :return: Tuple containing the base image with the item appended, and the coordinates of where the item was placed
+    """
+
+    # Generate random values for scale, rotation, and location
     base_w, base_h = base.size
     avg_dim = (base_w + base_h) / 2
     size = randint(int(avg_dim*0.04), int(avg_dim*0.1))
     angle = randint(0, 360)
     offset = (randint(0, base_w-size), randint(0, base_h-size))
 
+    # Apply the transformations
     item_asp_ratio = item.size[0] / item.size[1]
     new_im = item.resize((int(size * item_asp_ratio), size))
     new_im = new_im.rotate(angle, expand=True)
@@ -45,7 +47,6 @@ def crop(pil_image):
 
 
 def main():
-    # im = Image.new('RGBA', (1000, 1000), color=(128, 200, 255))
     im = Image.open("grass.jpg").convert('RGBA')
     item_im = Image.open("butterfly.png")
     df = pd.DataFrame(columns=['x1', 'y1', 'x2', 'y2'])
