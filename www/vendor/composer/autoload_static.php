@@ -104,6 +104,10 @@ class ComposerStaticInit8e3dd0529f144c1197d02fa34a0f18ca
         ),
     );
 
+    public static $fallbackDirsPsr0 = array (
+        0 => __DIR__ . '/../..' . '/src',
+    );
+
     public static $classMap = array (
         'Google_Service_Exception' => __DIR__ . '/..' . '/google/apiclient/src/Google/Service/Exception.php',
         'Google_Service_Resource' => __DIR__ . '/..' . '/google/apiclient/src/Google/Service/Resource.php',
@@ -115,6 +119,7 @@ class ComposerStaticInit8e3dd0529f144c1197d02fa34a0f18ca
             $loader->prefixLengthsPsr4 = ComposerStaticInit8e3dd0529f144c1197d02fa34a0f18ca::$prefixLengthsPsr4;
             $loader->prefixDirsPsr4 = ComposerStaticInit8e3dd0529f144c1197d02fa34a0f18ca::$prefixDirsPsr4;
             $loader->prefixesPsr0 = ComposerStaticInit8e3dd0529f144c1197d02fa34a0f18ca::$prefixesPsr0;
+            $loader->fallbackDirsPsr0 = ComposerStaticInit8e3dd0529f144c1197d02fa34a0f18ca::$fallbackDirsPsr0;
             $loader->classMap = ComposerStaticInit8e3dd0529f144c1197d02fa34a0f18ca::$classMap;
 
         }, null, ClassLoader::class);
