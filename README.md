@@ -40,6 +40,7 @@ Note: if using Windows these commands will not work. instead you must manually c
 
 To run on windows simply type 
 
-'''
+```
 dev.sh
-'''
+
+```
