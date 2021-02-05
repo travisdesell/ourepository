@@ -35,3 +35,12 @@ EOF
 ./dev.sh
 
 ```
+
+Note: if using Windows these commands will not work. instead you must manually create the db_info and settings files and manually insert the contents.
+
+To run on windows simply type 
+
+```
+dev.sh
+
+```
