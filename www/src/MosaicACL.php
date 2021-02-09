@@ -3,7 +3,7 @@
 use Doctrine\ORM\Mapping as ORM;
 /**
  * @ORM\Entity 
- * @ORM\Table(name="organizations")
+ * @ORM\Table(name="org_acl")
  */
 class Organization
 {
@@ -19,10 +19,7 @@ class Organization
     protected $visible;
 
     /** @ORM\Column(type="boolean") */
-    protected $members;
-
-    /** @ORM\Column(type="boolean") */
-    protected $roles;
+    protected $u;
 
 
     public function getId()

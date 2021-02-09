@@ -12,7 +12,7 @@ class Role
     protected $organization;
 
     /** @Column(type="string") */
-    protected $manage;
+    protected $users;
 
 
     public function getId()

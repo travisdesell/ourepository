@@ -9,10 +9,16 @@ class Role
     protected $id;
 
     /** @Column(type="string") */
-    protected $organization;
+    protected $organizations;
+
+    /** @Column(type="string") */
+    protected $roles;
 
     /** @Column(type="string") */
     protected $manage;
+
+    /** @Column(type="boolean") */
+    protected $admin;
 
 
     public function getId()
