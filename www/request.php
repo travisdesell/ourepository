@@ -505,6 +505,28 @@ if ($request_type == NULL || $request_type == "INDEX") {
     $label_id = $our_db->real_escape_string($_POST['label_id']);
 
     get_predictions($user_id, $job_id, $mosaic_id, $label_id);
+} else if ($request_type == "REGISTER_USER"){
+    $username = $_GET['username'];
+    $password = $_GET['password'];
+    $given_name = $_GET['given_name'];
+    $family_name = $_GET['family_name'];
+    $query = "INSERT into users (email,name,given_name,family_name) VALUES ($password, $username, $given_name, $family_name)";
+    $result = query_our_db($query);
+
+
+} else if($request_type == "CUSTOM_LOGIN"){
+    $username = $_GET['username'];
+    $password = $_GET['password'];
+    $query = "SELECT id FROM users WHERE $username = name and given_name = $password";
+    $result = query_our_db($query);
+    if ($result != null){
+        $response['login_result'] = "successful login";
+    }
+    else{
+        $response['login_result'] = "The username or password was incorrect";
+    }
+
+    echo json_encode($response);
 }
 
 ?>
