@@ -5,10 +5,9 @@ and XMLs for each slice.
 @author: Ian Randman
 @author: John McCarroll
 """
+import random
 
 from PIL import Image
-import rasterio as rio
-from rasterio.windows import Window
 import numpy as np
 import csv
 import pandas as pd
@@ -17,17 +16,24 @@ import os
 import shutil
 import click
 import sys
+from object_detection.utils import label_map_util
+
+import tensorflow.compat.v1 as tf
+from generate_tfrecord import create_tf_example_new
+
+import rasterio as rio
+from rasterio.windows import Window
 
 from scripts.util.progress_bar import progressBar
 from scripts.util.make_xml import make_xml
 from scripts.util.slice import generate_slice_coords
 
 # TODO doing it this way to have a clean path in the generated XML. This may not be necessary. Possible change to relative.
-DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../original-data'))
-CARIBOU_DIR = os.path.abspath(os.path.join(DATA_DIR, 'caribou'))
-OUT_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../images'))
+# DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../original-data/caribou'))
+DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../test'))
+OUT_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../images', DATA_DIR.split('\\')[-1]))
 CONTINUE_CHECKPOINT = False  # check whether slice creation should continue from where it left off
-EXISTING_FILES = os.listdir(OUT_DIR)  # existing files in output (to be used for checkpoint continuation)
+EXISTING_FILES = list()  # existing files in output (to be used for checkpoint continuation)
 
 # Training Specs
 MODEL_INPUT_HEIGHT = 640 # TODO must this be same as model? I don't think so, but it probably mitigates effects of distortion.
@@ -36,30 +42,32 @@ MODEL_INPUT_WIDTH = 640
 # how far to move sliding window for each slice
 STRIDE_LENGTH = 64
 
-# check whether the output directory exists
-if os.path.exists(OUT_DIR):
-    # check whether slice creation should start from the beginning
-    if click.confirm('Do you want to remove existing output?'):
-        shutil.rmtree(OUT_DIR)
-        os.makedirs(OUT_DIR)
-    else:
-        # check whether slice creation should continue from where it left off
-        if click.confirm('Do you want to continue from where you left off?'):
-            CONTINUE_CHECKPOINT = True
-        else:
-            # if the user does not want to delete existing output and does not want to continue from where it left
-            # off, exit program
-            sys.exit(1)
-else:
-    # create output directory if it does not yet exist
-    os.makedirs(OUT_DIR)
+# # check whether the output directory exists
+# if os.path.exists(OUT_DIR):
+#     # check whether slice creation should start from the beginning
+#     if click.confirm(f'Do you want to remove existing output in:\n{OUT_DIR}\n'):
+#         shutil.rmtree(OUT_DIR)
+#         os.makedirs(OUT_DIR)
+#     else:
+#         # check whether slice creation should continue from where it left off
+#         if click.confirm('Do you want to continue from where you left off?'):
+#             CONTINUE_CHECKPOINT = True
+#             EXISTING_FILES = os.listdir(OUT_DIR)
+#         else:
+#             # if the user does not want to delete existing output and does not want to continue from where it left
+#             # off, exit program
+#             sys.exit(1)
+# else:
+#     # create output directory if it does not yet exist
+#     os.makedirs(OUT_DIR)
 
-CARIBOU_IMAGE_FILENAME = os.path.join(CARIBOU_DIR, '20160718_camp_gm_02_75m_transparent_mosaic_group1.tif')
-# caribou_csv_file_name = os.path.join(CARIBOU_DIR, 'mosaic_97_adult_caribou.csv')
-CARIBOU_CSV_FILENAME = os.path.join(CARIBOU_DIR, 'test.csv')
+# IMAGE_FILENAME = os.path.join(DATA_DIR, '20160718_camp_gm_02_75m_transparent_mosaic_group1.tif')
+# CSV_FILENAME = os.path.join(DATA_DIR, 'test.csv')
+IMAGE_FILENAME = os.path.join(DATA_DIR, 'test.png')
+CSV_FILENAME = os.path.join(DATA_DIR, 'test.csv')
 
 # load in tif mosaic
-mosaic_dataset = rio.open(CARIBOU_IMAGE_FILENAME)
+mosaic_dataset = rio.open(IMAGE_FILENAME)
 
 # display attrs
 print("Number of bands:")
@@ -94,58 +102,14 @@ print(mosaic_dataset.bounds)
 print("Mosaic CRS:")
 print(mosaic_dataset.crs)
 
+# load label map
+LABEL_MAP = label_map_util.load_labelmap('../../annotations/test/label_map.pbtxt')
+
 # create dataframe containing annotation data
-annotations_df = pd.read_csv(CARIBOU_CSV_FILENAME, comment='#')
+annotations_df = pd.read_csv(CSV_FILENAME, comment='#')
 
 slice_coords_dict = generate_slice_coords(MOSAIC_WIDTH, MOSAIC_HEIGHT, MODEL_INPUT_WIDTH, MODEL_INPUT_WIDTH,
                                           STRIDE_LENGTH, annotations_df)
-
-# TODO REMOVE
-# # determine upper left corner of each slice
-# # uses sliding window
-# slice_x_coords = list(range(0, MOSAIC_WIDTH-MODEL_INPUT_WIDTH, STRIDE_LENGTH))
-# slice_x_coords.append(MOSAIC_WIDTH-MODEL_INPUT_WIDTH)
-# slice_y_coords = list(range(0, MOSAIC_HEIGHT-MODEL_INPUT_HEIGHT, STRIDE_LENGTH))
-# slice_y_coords.append(MOSAIC_HEIGHT-MODEL_INPUT_HEIGHT)
-# slice_coords_list = list(product(slice_x_coords, slice_y_coords))
-# slice_coords_dict = {key: list() for key in slice_coords_list}
-
-# TODO REMOVE
-# # iterate over all annotations
-# for index, row in annotations_df.iterrows():
-#     # get corners of annotation
-#     x1 = row['x1']
-#     x2 = row['x2']
-#     y1 = row['y1']
-#     y2 = row['y2']
-#     assert x1 <= x2
-#     assert y1 <= y2
-#
-#     # calculate width and height of annotation
-#     annotation_width = x2 - x1
-#     annotation_height = y2 - y1
-#
-#     # Get all slices that have full annotation in them.
-#     # Start coordinate must be at least 0.
-#     # Start coordinate must be the start of a slice; cannot be between slices (if so, go to next slice).
-#     # Repeat for x and y.
-#
-#     x_start = max(0, x2 - MODEL_INPUT_WIDTH)
-#     x_start = (int(x_start / STRIDE_LENGTH) + (x_start % STRIDE_LENGTH != 0)) * STRIDE_LENGTH
-#     x_end = min(x2 - annotation_width, MOSAIC_WIDTH - MODEL_INPUT_WIDTH)
-#
-#     y_start = max(0, y2 - MODEL_INPUT_HEIGHT)
-#     y_start = (int(y_start / STRIDE_LENGTH) + (y_start % STRIDE_LENGTH != 0)) * STRIDE_LENGTH
-#     y_end = min(y2 - annotation_height, MOSAIC_HEIGHT - MODEL_INPUT_HEIGHT)
-#
-#     # add this annotation to all slices that include it
-#     for coord in product(range(x_start, x_end, STRIDE_LENGTH), range(y_start, y_end, STRIDE_LENGTH)):
-#         slice_coords_dict[coord].append(tuple(row))
-#         total_annotations += 1
-#
-# toc = time.perf_counter()
-# print(f"{toc - tic:0.4f} seconds")
-# print(f"{total_annotations} total annotations over all slices")
 
 # TODO remove (maybe)
 # remove all slices without an annotation (performed here to make progress bar more accurate)
@@ -154,8 +118,25 @@ slice_coords_dict = {coord:annotations for (coord, annotations) in slice_coords_
 percent_containing_annotations = 100 * len(slice_coords_dict) / len(slice_coords_dict_all)
 print(f'{round(percent_containing_annotations, 2)}% of all slices contain annotations')
 
+train_output_path = '../../annotations/test/train.record'
+train_writer = tf.python_io.TFRecordWriter(train_output_path)
+test_output_path = '../../annotations/test/test.record'
+test_writer = tf.python_io.TFRecordWriter(test_output_path)
+
+# create train/test split
+in_train_split = dict()
+coords_list = list(slice_coords_dict.keys())
+random.shuffle(coords_list)
+ratio = 0.9
+first_half = int(len(coords_list) * ratio)
+for coord in coords_list[:first_half]:
+    in_train_split[coord] = True
+for coord in coords_list[first_half:]:
+    in_train_split[coord] = False
+
 # loop over slices
 # for coord in slice_coords_dict: TODO maybe put back
+images = list()
 for coord in progressBar(slice_coords_dict, prefix='Progress:', suffix='Complete', length=50):
     annotations = slice_coords_dict[coord]  # annotations for this slice
     x, y = coord  # top left corner for this slice
@@ -211,8 +192,15 @@ for coord in progressBar(slice_coords_dict, prefix='Progress:', suffix='Complete
 
             rel_annotations.append((rel_x1, rel_y1, rel_x2, rel_y2))
 
+        # create the TFExample
+        tf_example = create_tf_example_new(rel_annotations, image, 'butterfly', LABEL_MAP)
+        if in_train_split[coord]:
+            train_writer.write(tf_example.SerializeToString())
+        else:
+            test_writer.write(tf_example.SerializeToString())
+
         # make the XML to be used to generate TFRecords and store along with output images
-        make_xml(rel_annotations, MODEL_INPUT_WIDTH, MODEL_INPUT_HEIGHT, filepath)
+        # make_xml(rel_annotations, MODEL_INPUT_WIDTH, MODEL_INPUT_HEIGHT, filepath, 'butterfly')
 
         # draw rectangle to represent annotation
         # draw.rectangle((rel_x1, rel_y1, rel_x2, rel_y2), fill=(255, 0, 0, 50),
@@ -223,18 +211,21 @@ for coord in progressBar(slice_coords_dict, prefix='Progress:', suffix='Complete
 
         # Save image. Uncomment next line to add annotation overlay to image.
         # image = Image.alpha_composite(image, overlay)
-        image_path = filepath + '.png'
-        image.save(image_path)
+        # image_path = filepath + '.png'
+        # images.append(image)
+        # image.save(image_path)
+        retry -= 1
 
         # retry if saved image is corrupt
-        if cv2.imread(image_path) is None:
-            retry += 1
-        else:
-            retry -= 1
-
-    # TODO remove
-    # if x >= 2944 and y >= 46912:  # this is the first slice with more than one annotation
-    #     break
+        # if cv2.imread(image_path) is None:
+        #     retry += 1
+        # else:
+        #     retry -= 1
 
 # close resources
+train_writer.close()
+print('Successfully created the TFRecord file: {}'.format(train_output_path))
+test_writer.close()
+print('Successfully created the TFRecord file: {}'.format(test_output_path))
+
 mosaic_dataset.close()

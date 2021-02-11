@@ -9,7 +9,7 @@ from lxml import etree
 from lxml.etree import Element, SubElement
 
 
-def make_xml(annotations, image_width, image_height, filepath, annotation_class="caribou"):
+def make_xml(annotations, image_width, image_height, filepath, annotation_class):
     """
     Generate the XML files of images to be used in TFRecord creation. Output of the function mimics output from
     LabelImg program. Order of tags matters.

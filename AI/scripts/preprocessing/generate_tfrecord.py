@@ -148,10 +148,62 @@ def create_tf_example(group, path, label_map):
     tf_example = tf.train.Example(features=tf.train.Features(feature={
         'image/height': dataset_util.int64_feature(height),
         'image/width': dataset_util.int64_feature(width),
-        'image/filename': dataset_util.bytes_feature(filename),
-        'image/source_id': dataset_util.bytes_feature(filename),
+        # 'image/filename': dataset_util.bytes_feature(filename),
+        # 'image/source_id': dataset_util.bytes_feature(filename),
         'image/encoded': dataset_util.bytes_feature(encoded_image),
-        'image/format': dataset_util.bytes_feature(image_format),
+        # 'image/format': dataset_util.bytes_feature(image_format),
+        'image/object/bbox/xmin': dataset_util.float_list_feature(xmins),
+        'image/object/bbox/xmax': dataset_util.float_list_feature(xmaxs),
+        'image/object/bbox/ymin': dataset_util.float_list_feature(ymins),
+        'image/object/bbox/ymax': dataset_util.float_list_feature(ymaxs),
+        'image/object/class/text': dataset_util.bytes_list_feature(classes_text),
+        'image/object/class/label': dataset_util.int64_list_feature(classes),
+    }))
+    return tf_example
+
+
+def create_tf_example_new(annotations, image, annotation_class, label_map):
+    # with tf.gfile.GFile(os.path.join(path, '{}'.format(group.filename)), 'rb') as fid:
+    #     encoded_image = fid.read()
+    encoded_image_io = io.BytesIO()
+    image.save(encoded_image_io, 'png')
+    encoded_image = encoded_image_io.getvalue()
+    # encoded_image_io = io.BytesIO(encoded_image)
+    # image = Image.open(encoded_image_io)
+    width, height = image.size
+
+    # filename = group.filename.encode('utf8')
+    # image_format = b'png'
+    xmins = []
+    xmaxs = []
+    ymins = []
+    ymaxs = []
+    classes_text = []
+    classes = []
+
+    for x1, y1, x2, y2 in annotations:
+        xmins.append(x1 / width)
+        xmaxs.append(x2 / width)
+        ymins.append(y1 / height)
+        ymaxs.append(y2 / height)
+        classes_text.append(annotation_class.encode('utf8'))
+        classes.append(class_text_to_int(annotation_class, label_map))
+
+    # for index, row in group.object.iterrows():
+    #     xmins.append(row['xmin'] / width)
+    #     xmaxs.append(row['xmax'] / width)
+    #     ymins.append(row['ymin'] / height)
+    #     ymaxs.append(row['ymax'] / height)
+    #     classes_text.append(row['class'].encode('utf8'))
+    #     classes.append(class_text_to_int(row['class'], label_map))
+
+    tf_example = tf.train.Example(features=tf.train.Features(feature={
+        'image/height': dataset_util.int64_feature(height),
+        'image/width': dataset_util.int64_feature(width),
+        # 'image/filename': dataset_util.bytes_feature(filename),
+        # 'image/source_id': dataset_util.bytes_feature(filename),
+        'image/encoded': dataset_util.bytes_feature(encoded_image),
+        # 'image/format': dataset_util.bytes_feature(image_format),
         'image/object/bbox/xmin': dataset_util.float_list_feature(xmins),
         'image/object/bbox/xmax': dataset_util.float_list_feature(xmaxs),
         'image/object/bbox/ymin': dataset_util.float_list_feature(ymins),
@@ -179,7 +231,6 @@ def create_tf_example(group, path, label_map):
 
 
 def main(xml_dir, image_dir, output_path, csv_path, label_map):
-
     writer = tf.python_io.TFRecordWriter(output_path)
     path = os.path.join(image_dir)
     examples = xml_to_csv(xml_dir)
@@ -202,11 +253,11 @@ def setup():
                         "--xml_dir",
                         help="Path to the folder where the input .xml files are stored.",
                         type=str,
-                        default='../../images/train')
+                        default='../../images/test/train')
     parser.add_argument("-l",
                         "--labels_path",
                         help="Path to the labels (.pbtxt) file.", type=str,
-                        default='../../annotations/label_map.pbtxt')
+                        default='../../annotations/test/label_map.pbtxt')
     parser.add_argument("-o",
                         "--output_path",
                         help="Path of output TFRecord (.record) file.", type=str)
@@ -227,16 +278,16 @@ def setup():
     #     args.image_dir = args.xml_dir
 
     # train files
-    xml_dir = '../../images/train'
+    xml_dir = '../../images/test/train'
     image_dir = xml_dir
-    output_path = '../../annotations/train.record'
+    output_path = '../../annotations/test/train.record'
     label_map = label_map_util.load_labelmap(args.labels_path)
     main(xml_dir, image_dir, output_path, args.csv_path, label_map)
 
     # test files
-    xml_dir = '../../images/test'
+    xml_dir = '../../images/test/test'
     image_dir = xml_dir
-    output_path = '../../annotations/test.record'
+    output_path = '../../annotations/test/test.record'
     label_map = label_map_util.load_labelmap(args.labels_path)
     main(xml_dir, image_dir, output_path, args.csv_path, label_map)
 

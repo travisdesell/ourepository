@@ -8,15 +8,15 @@ from object_detection.utils import visualization_utils as viz_utils
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow logging (1)
 tf.get_logger().setLevel('ERROR')  # Suppress TensorFlow logging (2)
 
-def load_model2():
+def load_from_checkpoint():
     import time
     from object_detection.utils import label_map_util
     from object_detection.utils import config_util
     from object_detection.utils import visualization_utils as viz_utils
     from object_detection.builders import model_builder
 
-    PATH_TO_MODEL_DIR = '../../exported-models/my_faster_rcnn_resnet50_v1'
-    PATH_TO_LABELS = '../../annotations/label_map.pbtxt'
+    PATH_TO_MODEL_DIR = '../../exported-models/test/my_faster_rcnn_resnet50_v1'
+    PATH_TO_LABELS = '../../annotations/test/label_map.pbtxt'
 
     PATH_TO_CFG = PATH_TO_MODEL_DIR + "/pipeline.config"
     PATH_TO_CKPT = PATH_TO_MODEL_DIR + "/checkpoint"
@@ -55,14 +55,14 @@ def load_model2():
     return detect_fn, category_index
 
 
-def load_model():
+def load_from_saved_model():
     # Enable GPU dynamic memory allocation
     gpus = tf.config.experimental.list_physical_devices('GPU')
     for gpu in gpus:
         tf.config.experimental.set_memory_growth(gpu, True)
 
-    PATH_TO_SAVED_MODEL = '../../exported-models/my_faster_rcnn_resnet50_v1/saved_model'
-    PATH_TO_LABELS = '../../annotations/label_map.pbtxt'
+    PATH_TO_SAVED_MODEL = '../../exported-models/test/my_faster_rcnn_resnet50_v1/saved_model'
+    PATH_TO_LABELS = '../../annotations/test/label_map.pbtxt'
 
     print('Loading model...', end='')
     start_time = time.time()
@@ -193,5 +193,3 @@ def inference(image, detect_fn, category_index, overlay_data):
     plt.imshow(image_np_with_detections)
 
     plt.show()
-
-    z = 1

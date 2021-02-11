@@ -8,7 +8,7 @@ def create_label_str(id, name):
     return f"\nitem {{\n    id: {id}\n    name: '{name}'\n}}\n"
 
 
-filename = 'pb.pbtxt'
+filename = 'label_map.pbtxt'
 
 if __name__ == '__main__':
-    create_label_proto(filename, ['caribou'])
+    create_label_proto(filename, ['butterfly'])

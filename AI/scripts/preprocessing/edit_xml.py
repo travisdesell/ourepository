@@ -2,8 +2,8 @@ from lxml import etree
 import os
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-TRAIN_IMAGES_DIR = os.path.join(CURRENT_DIR, '../../images/train')
-TEST_IMAGES_DIR = os.path.join(CURRENT_DIR, '../../images/test')
+TRAIN_IMAGES_DIR = os.path.join(CURRENT_DIR, '../../images/test/train')
+TEST_IMAGES_DIR = os.path.join(CURRENT_DIR, '../../images/test/test')
 
 
 def main():

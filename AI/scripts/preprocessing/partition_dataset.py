@@ -66,7 +66,7 @@ def main():
         '-i', '--imageDir',
         help='Path to the folder where the image dataset is stored. If not specified, the CWD will be used.',
         type=str,
-        default='../../images'#os.getcwd()
+        default='../../images/test'#os.getcwd()
     )
     parser.add_argument(
         '-o', '--outputDir',

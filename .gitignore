@@ -8,14 +8,14 @@ db_info.php
 # AI
 AI/original-data/
 
-AI/images/train/
-AI/images/test/
-AI/images/*.png
-AI/images/*.xml
-AI/annotations/*.record
+
+AI/annotations/*
+AI/images/*
 
 AI/*.zip
 AI/pre-trained-models/
 AI/models/
 AI/exported-models/
+
+AI/test/test.*
 

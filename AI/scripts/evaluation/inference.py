@@ -8,35 +8,38 @@ import sys
 
 from scripts.util.progress_bar import progressBar
 from scripts.util.slice import generate_slice_coords
-from scripts.evaluation.model_inference import load_model, load_model2, inference
+from scripts.evaluation.model_inference import load_from_saved_model, inference
 
 # Python doesn't like me importing rasterio before tensorflow, so this goes down here
 import rasterio as rio
 from rasterio.windows import Window
 
-# TODO doing it this way to have a clean path in the generated XML. This may not be necessary. Possible change to relative.
-DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../original-data'))
-CARIBOU_DIR = os.path.abspath(os.path.join(DATA_DIR, 'caribou'))
-OUT_DIR = os.path.abspath(os.path.join(CARIBOU_DIR, 'inference'))  # TODO change
+DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../test'))
+OUT_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../images/inference',
+                                       DATA_DIR.split('\\')[-1]))
 
-# check whether the output directory exists
-if os.path.exists(OUT_DIR):
-    # check whether slice creation should start from the beginning
-    if click.confirm('Do you want to remove existing output?'):
-        shutil.rmtree(OUT_DIR)
-        os.makedirs(OUT_DIR)
-    else:
-        sys.exit(1)
-        # # check whether slice creation should continue from where it left off
-        # if click.confirm('Do you want to continue from where you left off?'):
-        #     CONTINUE_CHECKPOINT = True
-        # else:
-        #     # if the user does not want to delete existing output and does not want to continue from where it left
-        #     # off, exit program
-        #     sys.exit(1)
-else:
-    # create output directory if it does not yet exist
-    os.makedirs(OUT_DIR)
+# DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../original-data'))
+# CARIBOU_DIR = os.path.abspath(os.path.join(DATA_DIR, 'caribou'))
+# OUT_DIR = os.path.abspath(os.path.join(CARIBOU_DIR, 'inference'))  # TODO change
+
+# # check whether the output directory exists
+# if os.path.exists(OUT_DIR):
+#     # check whether slice creation should start from the beginning
+#     if click.confirm('Do you want to remove existing output?'):
+#         shutil.rmtree(OUT_DIR)
+#         os.makedirs(OUT_DIR)
+#     else:
+#         sys.exit(1)
+#         # # check whether slice creation should continue from where it left off
+#         # if click.confirm('Do you want to continue from where you left off?'):
+#         #     CONTINUE_CHECKPOINT = True
+#         # else:
+#         #     # if the user does not want to delete existing output and does not want to continue from where it left
+#         #     # off, exit program
+#         #     sys.exit(1)
+# else:
+#     # create output directory if it does not yet exist
+#     os.makedirs(OUT_DIR)
 
 # Training Specs
 MODEL_INPUT_HEIGHT = 640  # TODO must this be same as model?
@@ -47,18 +50,19 @@ assert MODEL_INPUT_HEIGHT == MODEL_INPUT_WIDTH  # TODO necessary?
 # how far to move sliding window for each slice
 STRIDE_LENGTH = MODEL_INPUT_HEIGHT
 
-CARIBOU_IMAGE_FILENAME = os.path.join(CARIBOU_DIR, '20160718_camp_gm_02_75m_transparent_mosaic_group1.tif')
-# caribou_csv_file_name = os.path.join(CARIBOU_DIR, 'mosaic_97_adult_caribou.csv')
-CARIBOU_CSV_FILENAME = os.path.join(CARIBOU_DIR, 'test.csv')
+# IMAGE_FILENAME = os.path.join(DATA_DIR, '20160718_camp_gm_02_75m_transparent_mosaic_group1.tif')
+# CSV_FILENAME = os.path.join(DATA_DIR, 'test.csv')
+IMAGE_FILENAME = os.path.join(DATA_DIR, 'test.png')
+CSV_FILENAME = os.path.join(DATA_DIR, 'test.csv')
 
 # load in tif mosaic
-mosaic_dataset = rio.open(CARIBOU_IMAGE_FILENAME)
+mosaic_dataset = rio.open(IMAGE_FILENAME)
 
 MOSAIC_WIDTH = mosaic_dataset.width
 MOSAIC_HEIGHT = mosaic_dataset.height
 
 # create dataframe containing annotation data
-annotations_df = pd.read_csv(CARIBOU_CSV_FILENAME, comment='#')
+annotations_df = pd.read_csv(CSV_FILENAME, comment='#')
 
 slice_coords_dict = generate_slice_coords(MOSAIC_WIDTH, MOSAIC_HEIGHT, MODEL_INPUT_WIDTH, MODEL_INPUT_WIDTH,
                                           STRIDE_LENGTH, annotations_df)
@@ -70,7 +74,7 @@ slice_coords_dict = {coord: annotations for (coord, annotations) in slice_coords
 percent_containing_annotations = 100 * len(slice_coords_dict) / len(slice_coords_dict_all)
 print(f'{round(percent_containing_annotations, 2)}% of all slices contain annotations')
 
-detect_fn, category_index = load_model()
+detect_fn, category_index = load_from_saved_model()
 
 # loop over slices
 # for coord in slice_coords_dict: TODO maybe put back
