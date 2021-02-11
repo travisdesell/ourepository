@@ -510,14 +510,18 @@ if ($request_type == NULL || $request_type == "INDEX") {
     $password = $_GET['password'];
     $given_name = $_GET['given_name'];
     $family_name = $_GET['family_name'];
-    $query = "INSERT into users (email,name,given_name,family_name) VALUES ($password, $username, $given_name, $family_name)";
+    $hash = hash_pbkdf2("sha256", $password, $given_name, 16, 20);
+    $query = "INSERT into users (email,name,given_name,family_name) VALUES ($hash, $username, $given_name, $family_name)";
     $result = query_our_db($query);
 
 
 } else if($request_type == "CUSTOM_LOGIN"){
     $username = $_GET['username'];
     $password = $_GET['password'];
-    $query = "SELECT id FROM users WHERE $username = name and given_name = $password";
+    $query = "SELECT given_name FROM users WHERE $username = name";
+    $salt = query_our_db($query);
+    $hash = hash_pbkdf2("sha256", $password, $salt, 16, 20);
+    $query = "SELECT id FROM users WHERE $username = name and email = $hash";
     $result = query_our_db($query);
     if ($result != null){
         $response['login_result'] = "successful login";
