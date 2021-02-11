@@ -34,29 +34,30 @@ def crop(pil_image):
     """
     Crops the image to remove unnecessary transparent parts created when a non-square image is rotated
     """
+
     image_data = np.asarray(pil_image)
     image_data_bw = image_data.max(axis=2)
     non_empty_columns = np.where(image_data_bw.max(axis=0) > 0)[0]
     non_empty_rows = np.where(image_data_bw.max(axis=1) > 0)[0]
-    cropBox = (min(non_empty_rows), max(non_empty_rows), min(non_empty_columns), max(non_empty_columns))
+    crop_box = (min(non_empty_rows), max(non_empty_rows), min(non_empty_columns), max(non_empty_columns))
 
-    image_data_new = image_data[cropBox[0]:cropBox[1] + 1, cropBox[2]:cropBox[3] + 1, :]
+    image_data_new = image_data[crop_box[0]:crop_box[1] + 1, crop_box[2]:crop_box[3] + 1, :]
 
     new_image = Image.fromarray(image_data_new)
     return new_image
 
 
 def main():
-    im = Image.open("grass.jpg").convert('RGBA')
-    item_im = Image.open("butterfly.png")
+    im = Image.open('grass.jpg').convert('RGBA')
+    item_im = Image.open('butterfly.png')
     df = pd.DataFrame(columns=['x1', 'y1', 'x2', 'y2'])
 
     for i in range(50):
         im, coords = add_item(im, item_im)
         df.loc[i] = coords
 
-    im.save("test.png")
-    df.to_csv('data.csv', index=False, header=True)
+    im.save('test.png')
+    df.to_csv('test.csv', index=False, header=True)
 
 
 if __name__ == '__main__':
