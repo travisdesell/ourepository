@@ -18,11 +18,16 @@ class Organization
     /** @ORM\Column(type="boolean") */
     protected $visible;
 
-    /** @ORM\Column(type="boolean") */
-    protected $members;
+    /**
+     * Many Users have Many Groups.
+     * @ManyToMany(targetEntity="User", inversedBy="members")
+     * @JoinTable(name="users_orgs")
+     */
+    protected $memberRoles;
 
     /** @ORM\Column(type="boolean") */
-    protected $roles;
+    protected $projects;
+
 
 
     public function getId()

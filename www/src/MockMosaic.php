@@ -3,23 +3,30 @@
 use Doctrine\ORM\Mapping as ORM;
 /**
  * @ORM\Entity 
- * @ORM\Table(name="org_acl")
+ * @ORM\Table(name="organizations")
  */
-class OrgACL
+class MockMosaic
 {
     /** @ORM\Id 
-     * @ORM\Column(type="integer") 
+    * @ORM\Column(type="integer") 
      * @ORM\GeneratedValue */
     protected $id;
 
     /** @ORM\Column(type="string") */
-    protected $organization;
+    protected $name;
 
     /** @ORM\Column(type="boolean") */
-    protected $role;
+    protected $visible;
 
-    /** @ORM\Column(type="string") */
-    protected $permission;
+    /** @ORM\Column(type="boolean") */
+    protected $members;
+
+    /** @ORM\Column(type="boolean") */
+    protected $roles;
+
+    /** @ORM\Column(type="boolean") */
+    protected $projects;
+
 
 
     public function getId()
@@ -31,18 +38,9 @@ class OrgACL
     {
         return $this->name;
     }
-
+    
     public function setName($name)
     {
         $this->name = $name;
     }
 }
-
-// Pseudocode
-// shareMosaic(){
-// 	checkUser(user){
-// 		roles->user.roles	
-// 		roles->getRoles(organization)
-// 		roles.contain(permission)
-// 	}
-// }

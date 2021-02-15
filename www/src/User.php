@@ -1,18 +1,21 @@
-  
 <?php
+
+use Doctrine\Common\Collections\ArrayCollection;
+
+
 /**
- * @Entity @Table(name="products")
+ * @Entity @Table(name="users")
  */
-class Role
+class User
 {
     /** @Id @Column(type="integer") @GeneratedValue */
     protected $id;
 
-    /** @Column(type="string") */
-    protected $organizations;
-
-    /** @Column(type="string") */
-    protected $roles;
+    /**
+     * One product has many features. This is the inverse side.
+     * @OneToMany(targetEntity="MemberRole", mappedBy="member")
+     */
+    protected $memberRoles;
 
     /** @Column(type="string") */
     protected $manage;
@@ -20,6 +23,9 @@ class Role
     /** @Column(type="boolean") */
     protected $admin;
 
+    public function __construct() {
+        $this->memberRoles = new ArrayCollection();
+    }
 
     public function getId()
     {

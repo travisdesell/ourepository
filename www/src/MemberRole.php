@@ -3,23 +3,24 @@
 use Doctrine\ORM\Mapping as ORM;
 /**
  * @ORM\Entity 
- * @ORM\Table(name="org_acl")
+ * @ORM\Table(name="mem_roles")
  */
-class OrgACL
+class MemberRole
 {
     /** @ORM\Id 
-     * @ORM\Column(type="integer") 
+    * @ORM\Column(type="integer") 
      * @ORM\GeneratedValue */
     protected $id;
 
-    /** @ORM\Column(type="string") */
+    /** @ORM\Column(type="boolean") */
+    protected $member;
+
+    /** @ORM\Column(type="boolean") */
     protected $organization;
 
     /** @ORM\Column(type="boolean") */
-    protected $role;
+    protected $name;
 
-    /** @ORM\Column(type="string") */
-    protected $permission;
 
 
     public function getId()
@@ -31,18 +32,9 @@ class OrgACL
     {
         return $this->name;
     }
-
+    
     public function setName($name)
     {
         $this->name = $name;
     }
 }
-
-// Pseudocode
-// shareMosaic(){
-// 	checkUser(user){
-// 		roles->user.roles	
-// 		roles->getRoles(organization)
-// 		roles.contain(permission)
-// 	}
-// }

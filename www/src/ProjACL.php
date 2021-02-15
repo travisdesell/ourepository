@@ -1,25 +1,29 @@
-  
 <?php
 use Doctrine\ORM\Mapping as ORM;
 /**
  * @ORM\Entity 
- * @ORM\Table(name="org_acl")
+ * @ORM\Table(name="projects")
  */
-class OrgACL
+class Project
 {
+
+
     /** @ORM\Id 
      * @ORM\Column(type="integer") 
      * @ORM\GeneratedValue */
     protected $id;
 
     /** @ORM\Column(type="string") */
-    protected $organization;
-
-    /** @ORM\Column(type="boolean") */
-    protected $role;
+    protected $entityId;
 
     /** @ORM\Column(type="string") */
-    protected $permission;
+    protected $listType;
+    
+    /** @ORM\Column(type="string") */
+    protected $entityType;
+
+    /** @ORM\Column(type="string") */
+    protected $project;
 
 
     public function getId()
@@ -37,12 +41,3 @@ class OrgACL
         $this->name = $name;
     }
 }
-
-// Pseudocode
-// shareMosaic(){
-// 	checkUser(user){
-// 		roles->user.roles	
-// 		roles->getRoles(organization)
-// 		roles.contain(permission)
-// 	}
-// }
