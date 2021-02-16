@@ -12,15 +12,20 @@ class OrgACL
      * @ORM\GeneratedValue */
     protected $id;
 
-    /** @ORM\Column(type="string") */
-    protected $organization;
-
-    /** @ORM\Column(type="boolean") */
-    protected $role;
+    /**
+     * Many features have one product. This is the owning side.
+     * @ORM\ManyToOne(targetEntity="MemberRole")
+     */    
+    protected $memberRole;
 
     /** @ORM\Column(type="string") */
     protected $permission;
 
+    /**
+     * @ORM\ManyToOne(targetEntity="Organization")
+     * 
+     */
+    protected $organization;
 
     public function getId()
     {

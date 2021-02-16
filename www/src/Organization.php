@@ -1,6 +1,9 @@
   
 <?php
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\ArrayCollection;
+
+
 /**
  * @ORM\Entity 
  * @ORM\Table(name="organizations")
@@ -19,14 +22,22 @@ class Organization
     protected $visible;
 
     /**
-     * Many Users have Many Groups.
-     * @ManyToMany(targetEntity="User", inversedBy="members")
-     * @JoinTable(name="users_orgs")
+     * @ORM\OneToMany(targetEntity="OrgACL", mappedBy="organization")
+     */
+    protected $orgAcls;
+
+    /**
+     * @ORM\OneToMany(targetEntity="MemberRole", mappedBy="organization")
      */
     protected $memberRoles;
 
-    /** @ORM\Column(type="boolean") */
-    protected $projects;
+    // /** @ORM\Column(type="boolean") */
+    // protected $projects;
+
+    public function __construct() {
+        $this->orgAcls = new ArrayCollection();
+        $this->memberRoles = new ArrayCollection();
+    }
 
 
 
@@ -44,4 +55,20 @@ class Organization
     {
         $this->name = $name;
     }
+
+    public function setVisible($visible)
+    {
+        $this->visible = $visible;
+    }
+
+    public function addOrgACL($acl)
+    {
+        $this->orgAcls->add($acl);
+    }
+
+    public function addMemberRole($memberRole)
+    {
+        $this->memberRoles->add($memberRole);
+    }
+
 }

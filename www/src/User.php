@@ -1,26 +1,28 @@
 <?php
 
+use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 
 
 /**
- * @Entity @Table(name="users")
+ * @ORM\Entity @ORM\Table(name="users")
  */
 class User
 {
-    /** @Id @Column(type="integer") @GeneratedValue */
+    /** @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue */
     protected $id;
 
     /**
      * One product has many features. This is the inverse side.
-     * @OneToMany(targetEntity="MemberRole", mappedBy="member")
+     * @ORM\OneToMany(targetEntity="MemberRole", mappedBy="member")
      */
     protected $memberRoles;
 
-    /** @Column(type="string") */
-    protected $manage;
 
-    /** @Column(type="boolean") */
+    /** @ORM\Column(type="string") */
+    protected $name;
+
+    /** @ORM\Column(type="boolean") */
     protected $admin;
 
     public function __construct() {
@@ -41,4 +43,20 @@ class User
     {
         $this->name = $name;
     }
+
+    public function isAdmin()
+    {
+        return $this->admin;
+    }
+
+    public function setAdmin($admin){
+        return $this->admin = $admin;
+    }
+
+    public function getMemberRoles()
+    {
+        return $this->memberRoles;
+    }
+
+
 }

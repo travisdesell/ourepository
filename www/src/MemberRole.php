@@ -10,15 +10,24 @@ class MemberRole
     /** @ORM\Id 
     * @ORM\Column(type="integer") 
      * @ORM\GeneratedValue */
+
     protected $id;
 
-    /** @ORM\Column(type="boolean") */
+    /**
+     * Many features have one product. This is the owning side.
+     * @ORM\ManyToOne(targetEntity="User")
+     */
     protected $member;
 
-    /** @ORM\Column(type="boolean") */
+
+    /**
+     * Many features have one product. This is the owning side.
+     * @ORM\ManyToOne(targetEntity="Organization")
+     */
     protected $organization;
 
-    /** @ORM\Column(type="boolean") */
+
+    /** @ORM\Column(type="string") */
     protected $name;
 
 
@@ -36,5 +45,15 @@ class MemberRole
     public function setName($name)
     {
         $this->name = $name;
+    }
+
+    public function setMember($member)
+    {
+        $this->member = $member;
+    }
+
+    public function setOrganization($organization)
+    {
+        $this->organization = $organization;
     }
 }
