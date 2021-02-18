@@ -511,6 +511,9 @@ if ($request_type == NULL || $request_type == "INDEX") {
     $given_name = $_GET['given_name'];
     $family_name = $_GET['family_name'];
     $hash = hash_pbkdf2("sha256", $password, $given_name, 16, 20);
+    $newUser = new User();
+    $newUser->setName($username);
+    $newUser->setAdmin(false);
     $query = "INSERT into users (email,name,given_name,family_name) VALUES ($hash, $username, $given_name, $family_name)";
     $result = query_our_db($query);
 
