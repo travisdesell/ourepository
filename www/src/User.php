@@ -14,7 +14,7 @@ class User
 
     /**
      * One product has many features. This is the inverse side.
-     * @ORM\OneToMany(targetEntity="MemberRole", mappedBy="member")
+     * @ORM\OneToMany(targetEntity="MemberRole", mappedBy="members")
      */
     protected $memberRoles;
 

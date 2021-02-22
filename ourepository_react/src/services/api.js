@@ -9,10 +9,29 @@ class ApiService {
           )
     }
 
+
+    createUser(name){
+        return fetch(`http://localhost:5000/test_bed.php`, {
+            method: 'POST',
+            mode: 'cors',
+            headers: {
+                // 'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin':'*',
+                'Content-Type': 'application/x-www-form-urlencoded'
+              },
+            body:new URLSearchParams({
+                request:"CREATE_USER",
+                name: name,
+                id_token:1
+            }) 
+          }
+          )   
+    }
+
 }
 
 const apiService = new ApiService()
 
 export default apiService 
-
+ 
  

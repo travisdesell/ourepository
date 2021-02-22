@@ -2,6 +2,7 @@ import React from 'react';
 import ReactSignupLoginComponent from 'react-signup-login-component';
 import { withRouter , Redirect, Link } from "react-router-dom";
 import emitter from "../services/emitter"
+import apiService from "../services/api"
 
 const LoginPage = (props) => {
 
@@ -16,6 +17,11 @@ const LoginPage = (props) => {
   }
 
     function handleSubmitClick() {
+        apiService.createUser(username)
+        .then((response)=>{response.text()})
+        .then((res)=>{
+          console.log(res)
+        })
         setSignUp(false)
     }
   

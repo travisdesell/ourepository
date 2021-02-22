@@ -14,9 +14,9 @@ class OrgACL
 
     /**
      * Many features have one product. This is the owning side.
-     * @ORM\ManyToOne(targetEntity="MemberRole")
+     * @ORM\ManyToOne(targetEntity="Role")
      */    
-    protected $memberRole;
+    protected $role;
 
     /** @ORM\Column(type="string") */
     protected $permission;

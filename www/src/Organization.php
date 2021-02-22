@@ -31,12 +31,21 @@ class Organization
      */
     protected $memberRoles;
 
+    /**
+     * @ORM\OneToMany(targetEntity="Role", mappedBy="organization")
+     */
+    protected $roles;
+
     // /** @ORM\Column(type="boolean") */
     // protected $projects;
 
     public function __construct() {
         $this->orgAcls = new ArrayCollection();
         $this->memberRoles = new ArrayCollection();
+        $this->roles = new ArrayCollection();
+
+        
+
     }
 
 

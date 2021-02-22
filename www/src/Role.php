@@ -3,21 +3,15 @@
 use Doctrine\ORM\Mapping as ORM;
 /**
  * @ORM\Entity 
- * @ORM\Table(name="member_roles")
+ * @ORM\Table(name="roles")
  */
-class MemberRole
+class Role
 {
     /** @ORM\Id 
     * @ORM\Column(type="integer") 
      * @ORM\GeneratedValue */
 
     protected $id;
-
-    /**
-     * Many features have one product. This is the owning side.
-     * @ORM\ManyToOne(targetEntity="User")
-     */
-    protected $member;
 
 
     /**
@@ -27,8 +21,8 @@ class MemberRole
     protected $organization;
 
 
-    /** @ORM\OneToOne(targetEntity="Role") */
-    protected $role;
+    /** @ORM\Column(type="string") */
+    protected $name;
 
 
 
@@ -41,15 +35,15 @@ class MemberRole
     {
         return $this->name;
     }
+
+    public function getOrganization()
+    {
+        return $this->organization;
+    }
     
     public function setName($name)
     {
         $this->name = $name;
-    }
-
-    public function setMember($member)
-    {
-        $this->member = $member;
     }
 
     public function setOrganization($organization)
