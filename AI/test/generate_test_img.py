@@ -2,6 +2,8 @@ from PIL import Image
 from random import randint
 import numpy as np
 import pandas as pd
+import os
+import shutil
 
 
 def add_item(base, item):
@@ -51,13 +53,25 @@ def main():
     im = Image.open('grass.jpg').convert('RGBA')
     item_im = Image.open('butterfly.png')
     df = pd.DataFrame(columns=['x1', 'y1', 'x2', 'y2'])
+    label = 'butterfly'
 
     for i in range(50):
         im, coords = add_item(im, item_im)
         df.loc[i] = coords
 
-    im.save('test.png')
-    df.to_csv('test.csv', index=False, header=True)
+    # create clean output directory
+    output_dir = 'test/'
+    if os.path.exists(output_dir):
+        shutil.rmtree(output_dir)
+    os.makedirs(output_dir)
+
+    im.save('test/test.png')
+    df.to_csv('test/test.csv', index=False, header=True)
+
+    with open('test/test.csv', 'r+') as f:
+        content = f.read()
+        f.seek(0, 0)
+        f.write(f'#label: {label}\n')
 
 
 if __name__ == '__main__':

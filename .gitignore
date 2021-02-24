@@ -18,4 +18,5 @@ AI/models/
 AI/exported-models/
 
 AI/test/test.*
+AI/test/test/*
 
