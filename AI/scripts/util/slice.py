@@ -1,5 +1,9 @@
+__author__ = 'Ian Randman'
+
+import logging
 from itertools import product
-import time
+
+logger = logging.getLogger(__name__)
 
 
 def generate_slice_coords(mosaic_width, mosaic_height, model_width, model_height, stride_length, annotations_df):
@@ -13,7 +17,6 @@ def generate_slice_coords(mosaic_width, mosaic_height, model_width, model_height
     slice_coords_dict = {key: list() for key in slice_coords_list}
 
     total_annotations = 0
-    tic = time.perf_counter()
 
     # iterate over all annotations
     for index, row in annotations_df.iterrows():
@@ -52,8 +55,6 @@ def generate_slice_coords(mosaic_width, mosaic_height, model_width, model_height
             slice_coords_dict[coord].append(tuple(row))
             total_annotations += 1
 
-    toc = time.perf_counter()
-    print(f"{toc - tic:0.4f} seconds")
-    print(f"{total_annotations} total annotations over all slices")
+    logger.info(f"{total_annotations} total annotations over all slices")
 
     return slice_coords_dict

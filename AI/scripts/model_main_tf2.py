@@ -27,14 +27,21 @@ python model_main_tf2.py -- \
   --pipeline_config_path=$PIPELINE_CONFIG_PATH \
   --alsologtostderr
 """
+import os
+import shutil
+import sys
+
 from absl import flags
 import tensorflow.compat.v2 as tf
 from object_detection import model_lib_v2
 
 import logging
 
-logger = tf.get_logger()
-logger.setLevel(logging.INFO)
+from scripts.util.download_model import download_and_unpack_model
+from scripts.util.edit_pipeline_config import edit_pipeline_config
+
+# TODO change TF logging. Do not know how to make it use this logger. May have to configure separately.
+logger = logging.getLogger(__name__)
 
 flags.DEFINE_string('pipeline_config_path', None, 'Path to pipeline config '
                                                   'file.')
@@ -73,18 +80,80 @@ flags.DEFINE_boolean('record_summaries', True,
                      ('Whether or not to record summaries during'
                       ' training.'))
 
+# NEW FLAGS
+
+flags.DEFINE_string(
+    'name',
+    help='a name that uniquely identifies this mosaic and training data',
+    default='test'
+)  # TODO must be changed to account for user/project
+flags.DEFINE_string(
+    'data_dir',
+    help='directory containing mosaic and CSVs to train on',
+    default=os.path.join(os.path.dirname(__file__), '../test/test')
+)
+flags.DEFINE_string(
+    'model_name',
+    help='the name of the pretrained model from the TF Object Detection model zoo',
+    default='faster_rcnn_resnet50_v1_640x640_coco17_tpu-8'
+)  # TODO maybe add option for year
+flags.DEFINE_boolean(
+    'continue_from_checkpoint',
+    help='whether training should continue from a checkpoint',
+    default=False
+)
+
 FLAGS = flags.FLAGS
 
 
 def main(unused_argv):
-    flags.mark_flag_as_required('model_dir')
-    flags.mark_flag_as_required('pipeline_config_path')
+    # TODO what flags should be required?
+    # TODO how to handle checkpoint
+
+    # pretrained model from Tensorflow Object Detection model zoo
+    pretrained_model_dir = os.path.join(os.path.join(os.path.dirname(__file__), '../pre-trained-models/'),
+                                        FLAGS.model_name)
+    if not os.path.exists(pretrained_model_dir):
+        download_and_unpack_model(FLAGS.model_name)
+
+    # user models
+    user_models_dir = os.path.join(os.path.dirname(__file__), '../models')
+    if not os.path.exists(user_models_dir):
+        os.mkdir(user_models_dir)
+        logger.info(f'Created {user_models_dir}')
+
+    # path to directory containing user-trained models for this mosaic
+    mosaic_models_dir = os.path.join(user_models_dir, FLAGS.name)
+    if not os.path.exists(mosaic_models_dir):
+        os.mkdir(mosaic_models_dir)
+        logger.info(f'Created {mosaic_models_dir}')
+
+    # path to directory containing the specific user-trained model for this mosaic
+    mosaic_model_dir = os.path.join(mosaic_models_dir, FLAGS.model_name)
+    if os.path.exists(mosaic_model_dir):
+        if FLAGS.continue_from_checkpoint:
+            logger.error(f'Cannot find {mosaic_model_dir}')
+            sys.exit(1)
+        else:
+            shutil.rmtree(mosaic_model_dir)
+
+    os.mkdir(mosaic_model_dir)
+    logger.info(f'Created {mosaic_model_dir}')
+
+    mosaic_annotations_dir = os.path.join(os.path.dirname(__file__), '../annotations/' + FLAGS.name)
+    num_classes = len([f for f in os.listdir(FLAGS.data_dir) if f.lower().endswith('.csv')])
+    pipeline_config_path = edit_pipeline_config(pretrained_model_dir, mosaic_model_dir, num_classes, mosaic_annotations_dir)
+    logger.info(f'Created {pipeline_config_path}')
+
+
+    # flags.mark_flag_as_required('model_dir')
+    # flags.mark_flag_as_required('pipeline_config_path')
     tf.config.set_soft_device_placement(True)
 
     if FLAGS.checkpoint_dir:
         model_lib_v2.eval_continuously(
             pipeline_config_path=FLAGS.pipeline_config_path,
-            model_dir=FLAGS.model_dir,
+            model_dir=mosaic_model_dir,
             train_steps=FLAGS.num_train_steps,
             sample_1_of_n_eval_examples=FLAGS.sample_1_of_n_eval_examples,
             sample_1_of_n_eval_on_train_examples=(
@@ -108,8 +177,8 @@ def main(unused_argv):
 
         with strategy.scope():
             model_lib_v2.train_loop(
-                pipeline_config_path=FLAGS.pipeline_config_path,
-                model_dir=FLAGS.model_dir,
+                pipeline_config_path=pipeline_config_path,
+                model_dir=mosaic_model_dir,
                 train_steps=FLAGS.num_train_steps,
                 use_tpu=FLAGS.use_tpu,
                 checkpoint_every_n=FLAGS.checkpoint_every_n,

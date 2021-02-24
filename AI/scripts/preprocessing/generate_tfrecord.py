@@ -162,7 +162,7 @@ def create_tf_example(group, path, label_map):
     return tf_example
 
 
-def create_tf_example_new(annotations, image, annotation_class, label_map):
+def create_tf_example_new(annotations, image, label_map):
     # with tf.gfile.GFile(os.path.join(path, '{}'.format(group.filename)), 'rb') as fid:
     #     encoded_image = fid.read()
     encoded_image_io = io.BytesIO()
@@ -181,7 +181,7 @@ def create_tf_example_new(annotations, image, annotation_class, label_map):
     classes_text = []
     classes = []
 
-    for x1, y1, x2, y2 in annotations:
+    for x1, y1, x2, y2, annotation_class in annotations:
         xmins.append(x1 / width)
         xmaxs.append(x2 / width)
         ymins.append(y1 / height)
@@ -224,10 +224,10 @@ def create_tf_example_new(annotations, image, annotation_class, label_map):
 #         tf_example = create_tf_example(group, path)
 #         writer.write(tf_example.SerializeToString())
 #     writer.close()
-#     print('Successfully created the TFRecord file: {}'.format(args.output_path))
+#     logger.info('Successfully created the TFRecord file: {}'.format(args.output_path))
 #     if args.csv_path is not None:
 #         examples.to_csv(args.csv_path, index=None)
-#         print('Successfully created the CSV file: {}'.format(args.csv_path))
+#         logger.info('Successfully created the CSV file: {}'.format(args.csv_path))
 
 
 def main(xml_dir, image_dir, output_path, csv_path, label_map):
@@ -239,10 +239,10 @@ def main(xml_dir, image_dir, output_path, csv_path, label_map):
         tf_example = create_tf_example(group, path, label_map)
         writer.write(tf_example.SerializeToString())
     writer.close()
-    print('Successfully created the TFRecord file: {}'.format(output_path))
+    logger.info('Successfully created the TFRecord file: {}'.format(output_path))
     if csv_path is not None:
         examples.to_csv(csv_path, index=None)
-        print('Successfully created the CSV file: {}'.format(csv_path))
+        logger.info('Successfully created the CSV file: {}'.format(csv_path))
 
 
 def setup():

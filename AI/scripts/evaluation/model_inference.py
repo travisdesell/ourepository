@@ -21,7 +21,7 @@ def load_from_checkpoint():
     PATH_TO_CFG = PATH_TO_MODEL_DIR + "/pipeline.config"
     PATH_TO_CKPT = PATH_TO_MODEL_DIR + "/checkpoint"
 
-    print('Loading model... ', end='')
+    logger.info('Loading model... ', end='')
     start_time = time.time()
 
     # Load pipeline config and build a detection model
@@ -46,7 +46,7 @@ def load_from_checkpoint():
 
     end_time = time.time()
     elapsed_time = end_time - start_time
-    print('Done! Took {} seconds'.format(elapsed_time))
+    logger.info('Done! Took {} seconds'.format(elapsed_time))
 
     # load label map data (for plotting)
     category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS,
@@ -64,7 +64,7 @@ def load_from_saved_model():
     PATH_TO_SAVED_MODEL = '../../exported-models/test/my_faster_rcnn_resnet50_v1/saved_model'
     PATH_TO_LABELS = '../../annotations/test/label_map.pbtxt'
 
-    print('Loading model...', end='')
+    logger.info('Loading model...', end='')
     start_time = time.time()
 
     # Load saved model and build the detection function
@@ -72,7 +72,7 @@ def load_from_saved_model():
 
     end_time = time.time()
     elapsed_time = end_time - start_time
-    print('Done! Took {} seconds'.format(elapsed_time))
+    logger.info('Done! Took {} seconds'.format(elapsed_time))
 
     # load label map data (for plotting)
     category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS,

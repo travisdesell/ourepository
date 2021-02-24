@@ -72,7 +72,7 @@ slice_coords_dict = generate_slice_coords(MOSAIC_WIDTH, MOSAIC_HEIGHT, MODEL_INP
 slice_coords_dict_all = slice_coords_dict
 slice_coords_dict = {coord: annotations for (coord, annotations) in slice_coords_dict.items() if len(annotations) > 0}
 percent_containing_annotations = 100 * len(slice_coords_dict) / len(slice_coords_dict_all)
-print(f'{round(percent_containing_annotations, 2)}% of all slices contain annotations')
+logger.info(f'{round(percent_containing_annotations, 2)}% of all slices contain annotations')
 
 detect_fn, category_index = load_from_saved_model()
 
