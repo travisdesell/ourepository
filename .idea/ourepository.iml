@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="PYTHON_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/www/vendor/composer" />
+      <excludeFolder url="file://$MODULE_DIR$/www/vendor/firebase/php-jwt" />
+      <excludeFolder url="file://$MODULE_DIR$/www/vendor/google/apiclient" />
+      <excludeFolder url="file://$MODULE_DIR$/www/vendor/google/apiclient-services" />
+      <excludeFolder url="file://$MODULE_DIR$/www/vendor/google/auth" />
+      <excludeFolder url="file://$MODULE_DIR$/www/vendor/guzzlehttp/guzzle" />
+      <excludeFolder url="file://$MODULE_DIR$/www/vendor/guzzlehttp/promises" />
+      <excludeFolder url="file://$MODULE_DIR$/www/vendor/guzzlehttp/psr7" />
+      <excludeFolder url="file://$MODULE_DIR$/www/vendor/monolog/monolog" />
+      <excludeFolder url="file://$MODULE_DIR$/www/vendor/phpseclib/phpseclib" />
+      <excludeFolder url="file://$MODULE_DIR$/www/vendor/psr/cache" />
+      <excludeFolder url="file://$MODULE_DIR$/www/vendor/psr/http-client" />
+      <excludeFolder url="file://$MODULE_DIR$/www/vendor/psr/http-message" />
+      <excludeFolder url="file://$MODULE_DIR$/www/vendor/psr/log" />
+      <excludeFolder url="file://$MODULE_DIR$/www/vendor/ralouphie/getallheaders" />
+    </content>
+    <orderEntry type="jdk" jdkName="Python 3.8 (ourepository_ai)" jdkType="Python SDK" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+  <component name="TemplatesService">
+    <option name="TEMPLATE_CONFIGURATION" value="Jinja2" />
+    <option name="TEMPLATE_FOLDERS">
+      <list>
+        <option value="$MODULE_DIR$/www/templates" />
+      </list>
+    </option>
+  </component>
+  <component name="TestRunnerService">
+    <option name="PROJECT_TEST_RUNNER" value="Unittests" />
+  </component>
+</module>

@@ -71,8 +71,7 @@ def main():
     with open('test/test.csv', 'r+') as f:
         content = f.read()
         f.seek(0, 0)
-        f.write(f'#label: {label}\n')
-        f.write('x1,y1,x2,y2\n')
+        f.write(f'#label: {label}\n'+content)
 
 
 if __name__ == '__main__':
