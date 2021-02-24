@@ -3,12 +3,14 @@ import ReactSignupLoginComponent from 'react-signup-login-component';
 import { withRouter , Redirect, Link } from "react-router-dom";
 import emitter from "../services/emitter"
 import apiService from "../services/api"
+import useMousePosition from "../hooks/useMousePosition"; 
 
 const LoginPage = (props) => {
 
     const [signUp, setSignUp] = React.useState(false)
     const [username, setUsername] = React.useState('')
     const [password, setPassword] = React.useState('')
+    const { x, y } = useMousePosition();
 
     let button;
 
@@ -16,12 +18,15 @@ const LoginPage = (props) => {
       setSignUp(false)
   }
 
-    function handleSubmitClick() {
-        apiService.createUser(username)
-        .then((response)=>{response.text()})
-        .then((res)=>{
-          console.log(res)
-        })
+    async function handleSubmitClick() {
+      try{
+        console.log(x*y);
+        const res = await apiService.createUser(username,password,x*y)
+        console.log(res);
+      }catch(err){
+        console.log(err);
+      }
+
         setSignUp(false)
     }
   

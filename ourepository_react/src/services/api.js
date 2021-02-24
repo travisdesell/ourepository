@@ -1,4 +1,5 @@
 const fetch = require('node-fetch');
+const axios = require('../config/axios');
 
 class ApiService {
 
@@ -10,22 +11,19 @@ class ApiService {
     }
 
 
-    createUser(name){
-        return fetch(`http://localhost:5000/test_bed.php`, {
-            method: 'POST',
-            mode: 'cors',
-            headers: {
-                // 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin':'*',
-                'Content-Type': 'application/x-www-form-urlencoded'
-              },
-            body:new URLSearchParams({
+    createUser(email, password,shake){
+        return axios({
+            method: 'post',
+            url: '/test_bed.php',
+            data: new URLSearchParams({
                 request:"CREATE_USER",
-                name: name,
-                id_token:1
-            }) 
-          }
-          )   
+                email: email,
+                password,
+                id_token:1,
+                shake:shake
+            }),
+            responseType: 'text'
+          });
     }
 
 }

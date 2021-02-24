@@ -22,6 +22,12 @@ class User
     /** @ORM\Column(type="string") */
     protected $name;
 
+    /** @ORM\Column(type="string") */
+    protected $shake;
+
+    /** @ORM\Column(type="string") */
+    protected $hash;
+
     /** @ORM\Column(type="boolean") */
     protected $admin;
 
@@ -42,6 +48,16 @@ class User
     public function setName($name)
     {
         $this->name = $name;
+    }
+
+    public function setHash($hash)
+    {
+        $this->hash = $hash;
+    }
+    
+    public function setShake($shake)
+    {
+        $this->shake = $shake;
     }
 
     public function isAdmin()

@@ -1,15 +1,10 @@
 <?php
 
-hheader("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Max-Age: 1000");
 header("Access-Control-Allow-Headers: X-Requested-With, Content-Type, Origin, Cache-Control, Pragma, Authorization, Accept, Accept-Encoding");
 header("Access-Control-Allow-Methods: PUT, POST, GET, OPTIONS, DELETE");
-// $cwd[__FILE__] = __FILE__;
-// if (is_link($cwd[__FILE__])) $cwd[__FILE__] = readlink($cwd[__FILE__]);
-// $cwd[__FILE__] = dirname($cwd[__FILE__]);
-
-
 
 require_once "bootstrap.php";
 
@@ -32,19 +27,32 @@ if (isset($_POST['id_token'])) {
     echo json_encode($_POST['name']);
 
 } else {
+    error_log(json_encode("GOTTEN HERE"));
+
     $id_token = $_GET['id_token'];
     $request_type = $_GET['request'];
 
 }
 
 if($request_type == "CREATE_USER"){
+    //TODO: Check if User is already created
     $newUser = new User();
-    $newUser->setName($_POST['name']);
+
+    $email = $_GET['email'];
+    $password = $_POST['password'];
+    $shake = $_POST['shake'];
+
+    $newUser->setName($_POST['email']);
+    $newUser->setShake($_POST['shake']);
+
+    $hash = hash_pbkdf2("sha256", $password, $shake, 16, 20);
+
+    $newUser->setHash($_POST['email']);
     $newUser->setAdmin(false);
     $entityManager->persist($newUser);
     try{
         $entityManager->flush();
-        echo "SUCCESSFULLY CREATED USER"
+        echo "SUCCESSFULLY CREATED USER";
 
     }
     catch (Exception $e) {
