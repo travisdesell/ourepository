@@ -24,7 +24,6 @@ foreach ($_POST as $key => $value) {
 if (isset($_POST['id_token'])) {
     $id_token = $_POST['id_token'];
     $request_type = $_POST['request'];
-    echo json_encode($_POST['name']);
 
 } else {
     error_log(json_encode("GOTTEN HERE"));
@@ -36,18 +35,29 @@ if (isset($_POST['id_token'])) {
 
 if($request_type == "CREATE_USER"){
     //TODO: Check if User is already created
+
+    $email = $_POST['email'];
+    $existingUser=$entityManager->find("User",(string)$email);
+
+    error_log(json_encode($existingUser));
+
+    if (isset($existingUser)){
+        error_log("USRE EXISTS");
+        echo "USER Exists";
+        return;
+    }
+
     $newUser = new User();
 
-    $email = $_GET['email'];
     $password = $_POST['password'];
     $shake = $_POST['shake'];
 
-    $newUser->setName($_POST['email']);
-    $newUser->setShake($_POST['shake']);
+    $newUser->setEmail($email);
+    $newUser->setShake($shake);
 
     $hash = hash_pbkdf2("sha256", $password, $shake, 16, 20);
 
-    $newUser->setHash($_POST['email']);
+    $newUser->setHash($hash);
     $newUser->setAdmin(false);
     $entityManager->persist($newUser);
     try{
@@ -58,8 +68,6 @@ if($request_type == "CREATE_USER"){
     catch (Exception $e) {
         echo 'Caught exception: ',  $e->getMessage(), "\n";
     }
-
-
 
 }
 

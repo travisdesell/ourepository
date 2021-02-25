@@ -19,8 +19,8 @@ class User
     protected $memberRoles;
 
 
-    /** @ORM\Column(type="string") */
-    protected $name;
+    /** @ORM\Column(type="string",unique=TRUE) */
+    protected $email;
 
     /** @ORM\Column(type="string") */
     protected $shake;
@@ -40,14 +40,14 @@ class User
         return $this->id;
     }
 
-    public function getName()
+    public function getEmail()
     {
-        return $this->name;
+        return $this->email;
     }
 
-    public function setName($name)
+    public function setEmail($email)
     {
-        $this->name = $name;
+        $this->email = $email;
     }
 
     public function setHash($hash)
@@ -73,6 +73,5 @@ class User
     {
         return $this->memberRoles;
     }
-
 
 }
