@@ -40,6 +40,18 @@ class ApiService {
           });
     }
 
+    isAuth(jwt){
+        return axios({
+            method: 'get',
+            url: '/test_bed.php',
+            params: {
+                request:"GET_AUTH",
+                jwt:jwt
+            },
+            responseType: 'text'
+          });
+    }
+
 }
 
 const apiService = new ApiService()

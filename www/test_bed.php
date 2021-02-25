@@ -1,9 +1,14 @@
 <?php
 
+use \Firebase\JWT\JWT;
+
+
+$secret_key = "test_secret";
+
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Max-Age: 1000");
-header("Access-Control-Allow-Headers: X-Requested-With, Content-Type, Origin, Cache-Control, Pragma, Authorization, Accept, Accept-Encoding");
+header("Access-Control-Allow-Headers: alg, X-Requested-With, Content-Type, Origin, Cache-Control, Pragma, Authorization, Accept, Accept-Encoding");
 header("Access-Control-Allow-Methods: PUT, POST, GET, OPTIONS, DELETE");
 
 require_once "bootstrap.php";
@@ -67,7 +72,7 @@ if($request_type == "CREATE_USER"){
     $entityManager->persist($newUser);
     try{
         $entityManager->flush();
-        echo "SUCCESSFULLY CREATED USER";
+        echo error_msg("created_user",generateJWT($newUser->getId()));
 
     }
     catch (Exception $e) {
@@ -94,32 +99,43 @@ if($request_type == "CREATE_USER"){
 
         if($checkHash == $existingUser->getHash()){
             error_log("USER EXISTS");
-            echo error_msg("hash_matches","Successful login");
+            echo error_msg("hash_matches",generateJWT($existingUser->getId()));
             return;
         }
     }
+} else if($request_type == "GET_AUTH"){
+    $jwt = $_GET['jwt'];
+
+    
+    try{
+        JWT::$leeway = 60; // $leeway in seconds
+        $decoded = JWT::decode($jwt, $secret_key, array('HS256'));
+    }
+    catch (Exception $e) {
+        echo 'Caught exception: ',  $e->getMessage(), "\n";
+    }
+
+    if(isset($decoded)){
+        echo json_encode("true");
+    }
+
 }
 
-// if(!isset($id_token)){
-//     return; 
-// }
-
-
-// $entityManager->persist($newOrgACL);
-// $entityManager->flush();
-
-
-
-
-// $newMemberRole = new MemberRole();
-// $newMemberRole->setMember($newUser);
-// $newMemberRole->setOrganization($newOrganization);
-
-
-// $entityManager->persist($newMemberRole);
-// $entityManager->flush();
 
 function error_msg($code,$message){
     return json_encode(["code" => $code , "message" => $message ]);
 }
+
+function generateJWT($id){
+    global $secret_key;
+    $payload = array(
+        "id" -> $id
+    );
+
+    error_log(json_encode($secret_key));
+
+    $jwt = JWT::encode($payload, $secret_key);
+    return $jwt;
+}
+
 ?>

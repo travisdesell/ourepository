@@ -11,6 +11,10 @@ import emitter from "./services/emitter"
 import Sidebar from './components/Sidebar';
 import OrganizationPage from './pages/Organization';
 import UserStatusPage from './pages/UserStatus';
+
+import apiService from "./services/api";
+
+
 function App() {
 
 
@@ -23,20 +27,41 @@ function App() {
   const [protectedRoutes, setProtectedRoutes] = React.useState([])
 
   React.useEffect(()=>{
-    if (localStorage.getItem('user')) {
-      setProtectedRoutes(protected_routes)
-    }else{
-      setProtectedRoutes([])
-    }
 
-    emitter.addListener("storage", () => {
-      if (localStorage.getItem('user')) {
-        setProtectedRoutes(protected_routes)
+    let user_token = localStorage.getItem('user')
+
+    let revealRoutes = async () => {
+      if (user_token) {
+        let res = await apiService.isAuth(user_token)
+        console.log(res);
+
+        if( res.data == "true"){
+          setProtectedRoutes(protected_routes)
+        }else{
+          setProtectedRoutes([])
+        }
       }else{
         setProtectedRoutes([])
       }
-    });
+  
+      emitter.addListener("storage", async () => {
+        if (user_token) {
+          let res = await apiService.isAuth(user_token)
+          console.log(res);
+  
+          if( res.data == "true"){
+            setProtectedRoutes(protected_routes)
+          }else{
+            setProtectedRoutes([])
+          }
+        }else{
+          setProtectedRoutes([])
+        }
+      });
 
+    }
+    
+    revealRoutes()
 
     },[])
 

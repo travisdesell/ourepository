@@ -26,6 +26,10 @@ const LoginPage = (props) => {
         if(res.data.code=="user_exists"){
           alert(res.data.message)
         }
+        if(res.data.code == "created_user"){
+          localStorage.setItem("user",res.data.message) 
+          emitter.emit("storage")    
+        }
       }catch(err){
         console.log(err);
       }
@@ -45,10 +49,9 @@ const LoginPage = (props) => {
         console.log(res);
 
         if(res.data.code=="hash_matches"){
-          localStorage.setItem("user","true")     
+          localStorage.setItem("user",res.data.message)     
           setSignUp(true)
-          emitter.emit("storage")
-          alert(res.data.message)
+          alert("Successfully logged in")
         }
 
       }
