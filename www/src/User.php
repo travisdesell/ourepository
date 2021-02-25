@@ -23,6 +23,9 @@ class User
     protected $email;
 
     /** @ORM\Column(type="string") */
+    protected $username;
+
+    /** @ORM\Column(type="string") */
     protected $shake;
 
     /** @ORM\Column(type="string") */
@@ -31,8 +34,19 @@ class User
     /** @ORM\Column(type="boolean") */
     protected $admin;
 
+    /** @ORM\Column(type="string") */
+    protected $given_name;
+
+    /** @ORM\Column(type="string") */
+    protected $family_name;
+
     public function __construct() {
         $this->memberRoles = new ArrayCollection();
+    }
+
+    public function getUserName()
+    {
+        return $this->username;
     }
 
     public function getId()
@@ -54,6 +68,31 @@ class User
     public function getHash()
     {
         return $this->hash;
+    }
+
+    public function getGivenName()
+    {
+        return $this->given_name;
+    }
+
+    public function getFamilyName()
+    {
+        return $this->family_name;
+    }
+
+    public function setUserName($username)
+    {
+        $this->username = $username;
+    }
+
+    public function setGivenName($given_name)
+    {
+        $this->given_name = $given_name;
+    }
+
+    public function setFamilyName($family_name)
+    {
+        $this->family_name = $family_name;
     }
 
     public function setEmail($email)
