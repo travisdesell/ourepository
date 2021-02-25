@@ -54,6 +54,12 @@ def main():
 
     labels = ['butterfly', 'ladybug']
 
+    # create clean output directory
+    output_dir = 'test/'
+    if os.path.exists(output_dir):
+        shutil.rmtree(output_dir)
+    os.makedirs(output_dir)
+
     item_ims = {}
     coords_dfs = {}
     for label in labels:
@@ -64,20 +70,13 @@ def main():
             im, coords = add_item(im, item_ims[label])
             coords_dfs[label].loc[i] = coords
 
-    # create clean output directory
-    output_dir = 'test/'
-    if os.path.exists(output_dir):
-        shutil.rmtree(output_dir)
-    os.makedirs(output_dir)
-
-    im.save('test/test.png')
-
-    for label in labels:
         coords_dfs[label].to_csv(f'test/{label}_coords.csv', index=False, header=True)
         with open(f'test/{label}_coords.csv', 'r+') as f:
             content = f.read()
             f.seek(0, 0)
             f.write(f'#label: {label}\n'+content)
+
+    im.save('test/test.png')
 
 
 if __name__ == '__main__':
