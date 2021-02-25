@@ -26,6 +26,20 @@ class ApiService {
           });
     }
 
+    loginUser(email, password){
+        return axios({
+            method: 'post',
+            url: '/test_bed.php',
+            data: new URLSearchParams({
+                request:"LOGIN_USER",
+                email: email,
+                password,
+                id_token:1
+            }),
+            responseType: 'text'
+          });
+    }
+
 }
 
 const apiService = new ApiService()
