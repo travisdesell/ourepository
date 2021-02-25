@@ -51,13 +51,18 @@ def crop(pil_image):
 
 def main():
     im = Image.open('grass.jpg').convert('RGBA')
-    item_im = Image.open('butterfly.png')
-    df = pd.DataFrame(columns=['x1', 'y1', 'x2', 'y2'])
-    label = 'butterfly'
 
-    for i in range(50):
-        im, coords = add_item(im, item_im)
-        df.loc[i] = coords
+    labels = ['butterfly', 'ladybug']
+
+    item_ims = {}
+    coords_dfs = {}
+    for label in labels:
+        item_ims[label] = Image.open(f'{label}.png')
+        coords_dfs[label] = pd.DataFrame(columns=['x1', 'y1', 'x2', 'y2'])
+
+        for i in range(50):
+            im, coords = add_item(im, item_ims[label])
+            coords_dfs[label].loc[i] = coords
 
     # create clean output directory
     output_dir = 'test/'
@@ -66,12 +71,13 @@ def main():
     os.makedirs(output_dir)
 
     im.save('test/test.png')
-    df.to_csv('test/test.csv', index=False, header=True)
 
-    with open('test/test.csv', 'r+') as f:
-        content = f.read()
-        f.seek(0, 0)
-        f.write(f'#label: {label}\n'+content)
+    for label in labels:
+        coords_dfs[label].to_csv(f'test/{label}_coords.csv', index=False, header=True)
+        with open(f'test/{label}_coords.csv', 'r+') as f:
+            content = f.read()
+            f.seek(0, 0)
+            f.write(f'#label: {label}\n'+content)
 
 
 if __name__ == '__main__':
