@@ -510,13 +510,18 @@ if ($request_type == NULL || $request_type == "INDEX") {
     $password = $_GET['password'];
     $given_name = $_GET['given_name'];
     $family_name = $_GET['family_name'];
+    $salt = "PlaceholderSalt";
+    try {
+        $salt = random_bytes(10);
+    } catch (Exception $e) {
+    }
     $hash = hash_pbkdf2("sha256", $password, $given_name, 16, 20);
     $newUser = new User();
     $newUser->setName($username);
     $newUser->setAdmin(false);
     $newUser->setHash($hash);
-    $newUser->setShake($given_name);
-    $query = "INSERT into users (email,name,given_name,family_name) VALUES ($hash, $username, $given_name, $family_name)";
+    $newUser->setShake($salt);
+    $query = "INSERT into users (email,name,given_name,family_name) VALUES ($hash, $username, $salt, $family_name)";
     $result = query_our_db($query);
 
 
