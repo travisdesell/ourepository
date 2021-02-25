@@ -514,6 +514,8 @@ if ($request_type == NULL || $request_type == "INDEX") {
     $newUser = new User();
     $newUser->setName($username);
     $newUser->setAdmin(false);
+    $newUser->setHash($hash);
+    $newUser->setShake($given_name);
     $query = "INSERT into users (email,name,given_name,family_name) VALUES ($hash, $username, $given_name, $family_name)";
     $result = query_our_db($query);
 
