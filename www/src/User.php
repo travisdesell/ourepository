@@ -43,6 +43,17 @@ class User
     public function getEmail()
     {
         return $this->email;
+    
+    }
+
+    public function getShake()
+    {
+        return $this->shake;
+    }
+
+    public function getHash()
+    {
+        return $this->hash;
     }
 
     public function setEmail($email)

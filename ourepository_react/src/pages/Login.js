@@ -21,8 +21,11 @@ const LoginPage = (props) => {
     async function handleSubmitClick() {
       try{
         console.log(x*y);
-        const res = await apiService.createUser(username,password,x*y)
+        const res = await apiService.createUser(username,password,Math.random()*x*y)
         console.log(res);
+        if(res.data.code=="user_exists"){
+          alert(res.data.message)
+        }
       }catch(err){
         console.log(err);
       }
@@ -33,13 +36,26 @@ const LoginPage = (props) => {
     function handleSignUpClick() {
       setSignUp(true)
     }
-    function handleSignInClick() {
-      if(username+password=="adminadmin"){
-        localStorage.setItem("user","true")     
-        setSignUp(true)
-        emitter.emit("storage")
-       
+
+    async function handleSignInClick() {
+      try{
+
+        const res = await apiService.loginUser(username,password)
+      
+        console.log(res);
+
+        if(res.data.code=="hash_matches"){
+          localStorage.setItem("user","true")     
+          setSignUp(true)
+          emitter.emit("storage")
+          alert(res.data.message)
+        }
+
       }
+      catch(err){
+        console.log(err);
+      }
+
     }
 
     if(localStorage.getItem("user")){

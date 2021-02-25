@@ -37,13 +37,18 @@ if($request_type == "CREATE_USER"){
     //TODO: Check if User is already created
 
     $email = $_POST['email'];
-    $existingUser=$entityManager->find("User",(string)$email);
 
-    error_log(json_encode($existingUser));
+    
+    $existingUser=$entityManager->getRepository('User')
+                                ->findOneBy(array('email' => $email));
+
+
+
 
     if (isset($existingUser)){
-        error_log("USRE EXISTS");
-        echo "USER Exists";
+        error_log(json_encode($existingUser->getEmail()));
+        error_log("USER EXISTS");
+        echo error_msg("user_exists","A user with this email already exists");
         return;
     }
 
@@ -69,6 +74,30 @@ if($request_type == "CREATE_USER"){
         echo 'Caught exception: ',  $e->getMessage(), "\n";
     }
 
+} else if($request_type == "LOGIN_USER"){
+    $email = $_POST['email'];
+
+    
+    $existingUser=$entityManager->getRepository('User')
+                                ->findOneBy(array('email' => $email));
+
+    $password = $_POST['password'];
+
+
+
+    error_log(json_encode($existingUser->getEmail()));
+
+    if (isset($existingUser)){
+        $shake = $existingUser->getShake();
+
+        $checkHash = hash_pbkdf2("sha256", $password, $shake, 16, 20);
+
+        if($checkHash == $existingUser->getHash()){
+            error_log("USER EXISTS");
+            echo error_msg("hash_matches","Successful login");
+            return;
+        }
+    }
 }
 
 // if(!isset($id_token)){
@@ -89,4 +118,8 @@ if($request_type == "CREATE_USER"){
 
 // $entityManager->persist($newMemberRole);
 // $entityManager->flush();
+
+function error_msg($code,$message){
+    return json_encode(["code" => $code , "message" => $message ]);
+}
 ?>
