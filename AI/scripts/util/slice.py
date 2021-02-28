@@ -6,7 +6,8 @@ from itertools import product
 logger = logging.getLogger(__name__)
 
 
-def generate_slice_coords(mosaic_width, mosaic_height, model_width, model_height, stride_length, annotations_df):
+def generate_slice_coords(mosaic_width, mosaic_height, model_width, model_height, stride_length):
+
     # determine upper left corner of each slice
     # uses sliding window
     slice_x_coords = list(range(0, mosaic_width - model_width, stride_length))
@@ -14,6 +15,12 @@ def generate_slice_coords(mosaic_width, mosaic_height, model_width, model_height
     slice_y_coords = list(range(0, mosaic_height - model_height, stride_length))
     slice_y_coords.append(mosaic_height - model_height)
     slice_coords_list = list(product(slice_x_coords, slice_y_coords))
+
+    return slice_coords_list
+
+
+def generate_slice_coords_with_annotations(mosaic_width, mosaic_height, model_width, model_height, stride_length, annotations_df):
+    slice_coords_list = generate_slice_coords(mosaic_width, mosaic_height, model_width, model_height, stride_length)
     slice_coords_dict = {key: list() for key in slice_coords_list}
 
     total_annotations = 0

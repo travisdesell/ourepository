@@ -14,19 +14,75 @@
 # limitations under the License.
 # ==============================================================================
 
-r"""Creates and runs TF2 object detection models.
-
-For local training/evaluation run:
-PIPELINE_CONFIG_PATH=path/to/pipeline.config
-MODEL_DIR=/tmp/model_outputs
-NUM_TRAIN_STEPS=10000
-SAMPLE_1_OF_N_EVAL_EXAMPLES=1
-python model_main_tf2.py -- \
-  --model_dir=$MODEL_DIR --num_train_steps=$NUM_TRAIN_STEPS \
-  --sample_1_of_n_eval_examples=$SAMPLE_1_OF_N_EVAL_EXAMPLES \
-  --pipeline_config_path=$PIPELINE_CONFIG_PATH \
-  --alsologtostderr
 """
+# TODO Flags must be adjusted a bit.
+
+       USAGE: model_main_tf2.py [flags]
+flags:
+
+model_main_tf2.py:
+  --checkpoint_dir: Path to directory holding a checkpoint.  If `checkpoint_dir`
+    is provided, this binary operates in eval-only mode, writing resulting
+    metrics to `model_dir`.
+  --checkpoint_every_n: Integer defining how often we checkpoint.
+    (default: '50')
+    (an integer)
+  --[no]continue_from_checkpoint: whether training should continue from a
+    checkpoint
+    (default: 'false')
+  --data_dir: directory containing mosaic and CSVs to train on
+    (default: 'C:/Users/Ian/Documents/College/Fourth Year/Fall Semester/Software
+    Engineering Project/ourepository/AI/scripts\\../test/test')
+  --[no]eval_on_train_data: Enable evaluating on train data (only supported in
+    distributed training).
+    (default: 'false')
+  --eval_timeout: Number of seconds to wait for anevaluation checkpoint before
+    exiting.
+    (default: '3600')
+    (an integer)
+  --model_dir: Path to output model directory where event and checkpoint files
+    will be written.
+  --model_name: the name of the pretrained model from the TF Object Detection
+    model zoo
+    (default: 'faster_rcnn_resnet50_v1_640x640_coco17_tpu-8')
+  --name: a name that uniquely identifies this mosaic and training data
+    (default: 'test')
+  --num_train_steps: Number of train steps.
+    (an integer)
+  --num_workers: When num_workers > 1, training uses
+    MultiWorkerMirroredStrategy. When num_workers = 1 it uses MirroredStrategy.
+    (default: '1')
+    (an integer)
+  --pipeline_config_path: Path to pipeline config file.
+  --[no]record_summaries: Whether or not to record summaries during training.
+    (default: 'true')
+  --sample_1_of_n_eval_examples: Will sample one of every n eval input examples,
+    where n is provided.
+    (an integer)
+  --sample_1_of_n_eval_on_train_examples: Will sample one of every n train input
+    examples for evaluation, where n is provided. This is only used if
+    `eval_training_data` is True.
+    (default: '5')
+    (an integer)
+  --tpu_name: Name of the Cloud TPU for Cluster Resolvers.
+  --[no]use_tpu: Whether the job is executing on a TPU.
+    (default: 'false')
+"""
+
+# r"""Creates and runs TF2 object detection models.
+#
+# For local training/evaluation run:
+# PIPELINE_CONFIG_PATH=path/to/pipeline.config
+# MODEL_DIR=/tmp/model_outputs
+# NUM_TRAIN_STEPS=10000
+# SAMPLE_1_OF_N_EVAL_EXAMPLES=1
+# python model_main_tf2.py -- \
+#   --model_dir=$MODEL_DIR --num_train_steps=$NUM_TRAIN_STEPS \
+#   --sample_1_of_n_eval_examples=$SAMPLE_1_OF_N_EVAL_EXAMPLES \
+#   --pipeline_config_path=$PIPELINE_CONFIG_PATH \
+#   --alsologtostderr
+# """
+
 import os
 import shutil
 import sys
@@ -41,6 +97,8 @@ from scripts.util.download_model import download_and_unpack_model
 from scripts.util.edit_pipeline_config import edit_pipeline_config
 
 # TODO change TF logging. Do not know how to make it use this logger. May have to configure separately.
+from scripts.util.file_utils import create_directory_if_not_exists
+
 logger = logging.getLogger(__name__)
 
 flags.DEFINE_string('pipeline_config_path', None, 'Path to pipeline config '
@@ -75,7 +133,7 @@ flags.DEFINE_integer(
                       'MultiWorkerMirroredStrategy. When num_workers = 1 it uses '
                       'MirroredStrategy.')
 flags.DEFINE_integer(
-    'checkpoint_every_n', 1000, 'Integer defining how often we checkpoint.')
+    'checkpoint_every_n', 50, 'Integer defining how often we checkpoint.')
 flags.DEFINE_boolean('record_summaries', True,
                      ('Whether or not to record summaries during'
                       ' training.'))
@@ -118,15 +176,11 @@ def main(unused_argv):
 
     # user models
     user_models_dir = os.path.join(os.path.dirname(__file__), '../models')
-    if not os.path.exists(user_models_dir):
-        os.mkdir(user_models_dir)
-        logger.info(f'Created {user_models_dir}')
+    create_directory_if_not_exists(user_models_dir)
 
     # path to directory containing user-trained models for this mosaic
     mosaic_models_dir = os.path.join(user_models_dir, FLAGS.name)
-    if not os.path.exists(mosaic_models_dir):
-        os.mkdir(mosaic_models_dir)
-        logger.info(f'Created {mosaic_models_dir}')
+    create_directory_if_not_exists(mosaic_models_dir)
 
     # path to directory containing the specific user-trained model for this mosaic
     mosaic_model_dir = os.path.join(mosaic_models_dir, FLAGS.model_name)
@@ -143,7 +197,6 @@ def main(unused_argv):
     mosaic_annotations_dir = os.path.join(os.path.dirname(__file__), '../annotations/' + FLAGS.name)
     num_classes = len([f for f in os.listdir(FLAGS.data_dir) if f.lower().endswith('.csv')])
     pipeline_config_path = edit_pipeline_config(pretrained_model_dir, mosaic_model_dir, num_classes, mosaic_annotations_dir)
-    logger.info(f'Created {pipeline_config_path}')
 
 
     # flags.mark_flag_as_required('model_dir')

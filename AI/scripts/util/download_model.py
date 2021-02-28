@@ -13,32 +13,31 @@ import requests
 import shutil
 import sys
 
+from scripts.util.file_utils import create_directory_if_not_exists
+
 logger = logging.getLogger(__name__)
-
-# pretrained models
-PRETRAINED_MODELS_DIR = os.path.join(os.path.dirname(__file__), '../../pre-trained-models')
-if not os.path.exists(PRETRAINED_MODELS_DIR):
-    os.mkdir(PRETRAINED_MODELS_DIR)
-    logger.info(f'Created {PRETRAINED_MODELS_DIR}')
-
-# pretrained model archives
-MODEL_ARCHIVE_DIR = os.path.join(PRETRAINED_MODELS_DIR, 'archives')
-if not os.path.exists(MODEL_ARCHIVE_DIR):
-    os.mkdir(MODEL_ARCHIVE_DIR)
-    logger.info(f'Created {MODEL_ARCHIVE_DIR}')
 
 
 def download_and_unpack_model(model_name, model_date='20200711'):
+
+    # pretrained models
+    pretrained_models_dir = os.path.join(os.path.dirname(__file__), '../../pre-trained-models')
+    create_directory_if_not_exists(pretrained_models_dir)
+
+    # pretrained model archives
+    model_archive_dir = os.path.join(pretrained_models_dir, 'archives')
+    create_directory_if_not_exists(model_archive_dir)
+
     base_url = 'http://download.tensorflow.org/models/object_detection/tf2/'
     model_file = model_name + '.tar.gz'
-    model_archive_path = os.path.join(MODEL_ARCHIVE_DIR, model_file)
+    model_archive_path = os.path.join(model_archive_dir, model_file)
     retry = False
 
     # if the tar.gz exists, unpack it
     if os.path.exists(model_archive_path):
         logger.info(f'Attempting to unpack {model_archive_path}...')
         try:
-            shutil.unpack_archive(model_archive_path, os.path.dirname(MODEL_ARCHIVE_DIR))
+            shutil.unpack_archive(model_archive_path, os.path.dirname(model_archive_dir))
         except EOFError:
             logger.info('Cannot unpack. Archive is corrupt. Attempting to retry...')
             retry = True
@@ -60,7 +59,7 @@ def download_and_unpack_model(model_name, model_date='20200711'):
         # unpack tar.gz
         logger.info(f'Attempting to unpack {model_archive_path}...')
         try:
-            shutil.unpack_archive(model_archive_path, os.path.dirname(MODEL_ARCHIVE_DIR))
+            shutil.unpack_archive(model_archive_path, os.path.dirname(model_archive_dir))
         except EOFError:
             logger.info('Archive cannot be unpacked')
             sys.exit(1)

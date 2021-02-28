@@ -11,10 +11,10 @@ logger = logging.getLogger(__name__)
 
 
 def edit_pipeline_config(pretrained_model_dir, output_dir, num_classes, annotations_dir):
-    pipeline_config_filename = pretrained_model_dir + '/pipeline.config'
+    pipeline_config_path = pretrained_model_dir + '/pipeline.config'
     pipeline_config = pipeline_pb2.TrainEvalPipelineConfig()
 
-    with tf.io.gfile.GFile(pipeline_config_filename, "r") as f:
+    with tf.io.gfile.GFile(pipeline_config_path, 'r') as f:
         proto_str = f.read()
         text_format.Merge(proto_str, pipeline_config)
 
@@ -47,5 +47,7 @@ def edit_pipeline_config(pretrained_model_dir, output_dir, num_classes, annotati
     output_path = output_dir + '/pipeline.config'
     with tf.io.gfile.GFile(output_path, "wb") as f:
         f.write(config_text)
+
+    logger.info(f'Created {output_path}')
 
     return output_path

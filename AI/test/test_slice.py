@@ -1,7 +1,7 @@
 import unittest
 import pandas as pd
 
-from scripts.util.slice import generate_slice_coords
+from scripts.util.slice import generate_slice_coords_with_annotations
 
 
 class TestSlice(unittest.TestCase):
@@ -25,8 +25,8 @@ class TestSlice(unittest.TestCase):
 
         annotations_df = pd.DataFrame(data, columns=['x1', 'x2', 'y1', 'y2'])
 
-        return generate_slice_coords(self.mosaic_width, self.mosaic_height, self.model_width, self.model_height,
-                                     self.stride_length, annotations_df)
+        return generate_slice_coords_with_annotations(self.mosaic_width, self.mosaic_height, self.model_width, self.model_height,
+                                                      self.stride_length, annotations_df)
 
     def get_slice_coords_dict_empty_removed(self, data):
         """

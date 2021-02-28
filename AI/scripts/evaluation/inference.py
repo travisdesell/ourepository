@@ -1,162 +1,107 @@
-from PIL import Image, ImageDraw
-import numpy as np
-import pandas as pd
-import os
-import shutil
-import click
-import sys
+"""
+Run inference on a mosaic.
 
-from scripts.util.progress_bar import progressBar
-from scripts.util.slice import generate_slice_coords
+usage: inference.py [-h] [-n NAME] [-i IMAGE_PATH] [-m MODEL_NAME]
+                    [-w MODEL_WIDTH] [--model_height MODEL_HEIGHT]
+                    [-s STRIDE_LENGTH]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -n NAME, --name NAME  a name that uniquely identifies the mosaic that the
+                        model was trained on
+  -i IMAGE_PATH, --image_path IMAGE_PATH
+                        the path to the image to run the inference on
+  -m MODEL_NAME, --model_name MODEL_NAME
+                        the name of the pretrained model from the TF Object
+                        Detection model zoo
+  -w MODEL_WIDTH, --model_width MODEL_WIDTH
+                        the width of the input to the model
+  --model_height MODEL_HEIGHT
+                        the height of the input to the model
+  -s STRIDE_LENGTH, --stride_length STRIDE_LENGTH
+                        how far to move sliding window for each slice
+"""
+
+__author__ = 'Ian Randman'
+
+import argparse
+import logging
+import os
+import warnings
+
+from tqdm import tqdm
+
 from scripts.evaluation.model_inference import load_from_saved_model, inference
+from scripts.util.mosaic_utils import load_mosaic, get_image_window
+from scripts.util.slice import generate_slice_coords
 
 # Python doesn't like me importing rasterio before tensorflow, so this goes down here
 import rasterio as rio
-from rasterio.windows import Window
 
-DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../test'))
-OUT_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../images/inference',
-                                       DATA_DIR.split('\\')[-1]))
+logger = logging.getLogger(__name__)
+warnings.filterwarnings("ignore", category=rio.errors.NotGeoreferencedWarning)
 
-# DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../original-data'))
-# CARIBOU_DIR = os.path.abspath(os.path.join(DATA_DIR, 'caribou'))
-# OUT_DIR = os.path.abspath(os.path.join(CARIBOU_DIR, 'inference'))  # TODO change
 
-# # check whether the output directory exists
-# if os.path.exists(OUT_DIR):
-#     # check whether slice creation should start from the beginning
-#     if click.confirm('Do you want to remove existing output?'):
-#         shutil.rmtree(OUT_DIR)
-#         os.makedirs(OUT_DIR)
-#     else:
-#         sys.exit(1)
-#         # # check whether slice creation should continue from where it left off
-#         # if click.confirm('Do you want to continue from where you left off?'):
-#         #     CONTINUE_CHECKPOINT = True
-#         # else:
-#         #     # if the user does not want to delete existing output and does not want to continue from where it left
-#         #     # off, exit program
-#         #     sys.exit(1)
-# else:
-#     # create output directory if it does not yet exist
-#     os.makedirs(OUT_DIR)
+def main(name, image_path, model_name, model_width, model_height, stride_length):
 
-# Training Specs
-MODEL_INPUT_HEIGHT = 640  # TODO must this be same as model?
-MODEL_INPUT_WIDTH = 640
+    assert model_width == model_height  # TODO necessary?
 
-assert MODEL_INPUT_HEIGHT == MODEL_INPUT_WIDTH  # TODO necessary?
+    # load the mosaic
+    mosaic_dataset, mosaic_width, mosaic_height = load_mosaic(image_path)
 
-# how far to move sliding window for each slice
-STRIDE_LENGTH = MODEL_INPUT_HEIGHT
+    # get the top left corner coordinate for each slice to inference on
+    slice_coords_list = generate_slice_coords(mosaic_width, mosaic_height, model_width, model_width, stride_length)
 
-# IMAGE_FILENAME = os.path.join(DATA_DIR, '20160718_camp_gm_02_75m_transparent_mosaic_group1.tif')
-# CSV_FILENAME = os.path.join(DATA_DIR, 'test.csv')
-IMAGE_FILENAME = os.path.join(DATA_DIR, 'test.png')
-CSV_FILENAME = os.path.join(DATA_DIR, 'test.csv')
+    # load the model
+    detect_fn, category_index = load_from_saved_model(name, model_name)
 
-# load in tif mosaic
-mosaic_dataset = rio.open(IMAGE_FILENAME)
+    # iterate over all slices
+    for coord in tqdm(slice_coords_list):
+        x, y = coord  # top left corner for this slice
 
-MOSAIC_WIDTH = mosaic_dataset.width
-MOSAIC_HEIGHT = mosaic_dataset.height
+        # get the image of this slice
+        image = get_image_window(mosaic_dataset, x, y, model_width, model_height)
 
-# create dataframe containing annotation data
-annotations_df = pd.read_csv(CSV_FILENAME, comment='#')
+        # TODO don't plot, gather annotations, merge inferences for all slices
+        # inference on this slice
+        inference(image, detect_fn, category_index)
 
-slice_coords_dict = generate_slice_coords(MOSAIC_WIDTH, MOSAIC_HEIGHT, MODEL_INPUT_WIDTH, MODEL_INPUT_WIDTH,
-                                          STRIDE_LENGTH, annotations_df)
+    # close resources
+    mosaic_dataset.close()
 
-# TODO remove
-# remove all slices without an annotation (performed here to make progress bar more accurate)
-slice_coords_dict_all = slice_coords_dict
-slice_coords_dict = {coord: annotations for (coord, annotations) in slice_coords_dict.items() if len(annotations) > 0}
-percent_containing_annotations = 100 * len(slice_coords_dict) / len(slice_coords_dict_all)
-logger.info(f'{round(percent_containing_annotations, 2)}% of all slices contain annotations')
 
-detect_fn, category_index = load_from_saved_model()
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-n',
+                        '--name',
+                        help='a name that uniquely identifies the mosaic that the model was trained on',
+                        type=str,
+                        default='test')  # TODO must be changed to account for user/project
+    parser.add_argument('-i',
+                        '--image_path',
+                        help='the path to the image to run the inference on',
+                        type=str,
+                        default=os.path.join(os.path.dirname(__file__), '../../test/test/test.png'))
+    parser.add_argument('-m',
+                        '--model_name',
+                        help='the name of the pretrained model from the TF Object Detection model zoo',
+                        type=str,
+                        default='faster_rcnn_resnet50_v1_640x640_coco17_tpu-8')
+    parser.add_argument('-w',
+                        '--model_width',
+                        help='the width of the input to the model',
+                        type=int,
+                        default=640)
+    parser.add_argument('--model_height',
+                        help='the height of the input to the model',
+                        type=int,
+                        default=640)
+    parser.add_argument('-s',
+                        '--stride_length',
+                        help='how far to move sliding window for each slice',
+                        type=int,
+                        default=640)
 
-# loop over slices
-# for coord in slice_coords_dict: TODO maybe put back
-for coord in progressBar(slice_coords_dict, prefix='Progress:', suffix='Complete', length=50):
-    x, y = coord  # top left corner for this slice
-    filename_prefix = f'sample_{x}_{y}'  # name of file without extension
+    args = parser.parse_args()
 
-    # if saved image is corrupt, retry up to 5 times total
-    retry = 0
-
-    while 0 <= retry < 5:
-        # read band slices using Window views
-        sample_red = mosaic_dataset.read(1, window=Window(x, y, MODEL_INPUT_WIDTH, MODEL_INPUT_HEIGHT))
-        sample_green = mosaic_dataset.read(2, window=Window(x, y, MODEL_INPUT_WIDTH, MODEL_INPUT_HEIGHT))
-        sample_blue = mosaic_dataset.read(3, window=Window(x, y, MODEL_INPUT_WIDTH, MODEL_INPUT_HEIGHT))
-        sample_alpha = mosaic_dataset.read(4, window=Window(x, y, MODEL_INPUT_WIDTH, MODEL_INPUT_HEIGHT))
-
-        # add new axis for RGBA values
-        sample_red = sample_red[:, :, np.newaxis]
-        sample_green = sample_green[:, :, np.newaxis]
-        sample_blue = sample_blue[:, :, np.newaxis]
-        sample_alpha = sample_alpha[:, :, np.newaxis]
-
-        # concatenate bands along new RGBA axis
-        sample = np.concatenate([sample_red, sample_green, sample_blue, sample_alpha], axis=2)
-
-        # create image
-        image = Image.fromarray(sample, mode='RGBA')  # create image
-
-        # # concatenate bands along new RGBA axis
-        # sample = np.concatenate([sample_red, sample_green, sample_blue], axis=2)
-        #
-        # # create image
-        # image = Image.fromarray(sample, mode='RGB')  # create image
-
-        # annotate image
-        overlay = Image.new('RGBA', image.size, (0, 0, 0, 0))
-        draw = ImageDraw.Draw(overlay)  # create Draw object
-
-        filepath = f'{OUT_DIR}/{filename_prefix}'  # full filepath of output files excluding extension
-        # with open(filename_prefix + '.csv', 'w') as csv_file:
-        # writer = csv.writer(csv_file)
-        # writer.writerow(['x1', 'y1', 'x2', 'y2'])
-        rel_annotations = list()
-
-        ###############################################################################################################
-        annotations = slice_coords_dict[coord]  # annotations for this slice
-        overlay_data = (annotations, x, y)
-        image = image.convert('RGB')
-        inference(image, detect_fn, category_index, overlay_data)
-
-        # TODO INFERENCE ANNOTATIONS FOR THIS SLICE
-        ###############################################################################################################
-
-        # # iterate over all annotations in slice
-        # for x1, y1, x2, y2 in annotations:
-        #     # calculate relative coordinates for annotation in slice
-        #     rel_x1 = x1 - x
-        #     rel_y1 = y1 - y
-        #     rel_x2 = x2 - x
-        #     rel_y2 = y2 - y
-        #
-        #     rel_annotations.append((rel_x1, rel_y1, rel_x2, rel_y2))
-        #
-        #     # draw rectangle to represent annotation
-        #     draw.rectangle((rel_x1, rel_y1, rel_x2, rel_y2), fill=(255, 0, 0, 50),
-        #                    outline=(255, 255, 255))  # add annotations
-        #
-        # # save relative coordinates to file
-        # # writer.writerow([rel_x1, rel_y1, rel_x2, rel_y2])  # write relative bounds to file
-        #
-        # # Save image. Uncomment next line to add annotation overlay to image.
-        # image = Image.alpha_composite(image, overlay)
-        # image_path = filepath + '.png'
-        # image.save(image_path)
-        #
-        # # retry if saved image is corrupt
-        # if cv2.imread(image_path) is None:
-        #     retry += 1
-        # else:
-        #     retry -= 1
-        retry -= 1  # TODO remove
-
-# close resources
-mosaic_dataset.close()
+    main(args.name, args.image_path, args.model_name, args.model_width, args.model_height, args.stride_length)
