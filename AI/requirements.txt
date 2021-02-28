@@ -1,3 +1,4 @@
+tensorflow=2.2.0
 Pillow
 numpy
 matplotlib

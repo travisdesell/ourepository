@@ -168,7 +168,7 @@ def main(unused_argv):
     # TODO what flags should be required?
     # TODO how to handle checkpoint
 
-    # pretrained model from Tensorflow Object Detection model zoo
+    # pretrained model from TensorFlow Object Detection model zoo
     pretrained_model_dir = os.path.join(os.path.join(os.path.dirname(__file__), '../pre-trained-models/'),
                                         FLAGS.model_name)
     if not os.path.exists(pretrained_model_dir):

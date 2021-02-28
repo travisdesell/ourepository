@@ -1,5 +1,5 @@
 """
-Download and unpack a Tensorflow Object Detection Model.
+Download and unpack a TensorFlow Object Detection model.
 The model zoo can be found at:
 https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf2_detection_zoo.md
 """

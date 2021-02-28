@@ -1,5 +1,11 @@
 # Machine Learning Documentation for OURepository
 
+## Prerequisites
+
+Run `pip install requirements.txt`.
+
+Install [TensorFlow Object Detection API](https://tensorflow-object-detection-api-tutorial.readthedocs.io/en/latest/install.html#tensorflow-object-detection-api-installation).
+
 ## Preliminary steps for training and inferencing:
 
 All the following commands should be run from the AI directory.

@@ -1,5 +1,5 @@
 """
-From a list of labels, generate the label protbuf to be used in a Tensorflow Object Detection model.
+From a list of labels, generate the label protbuf to be used in a TensorFlow Object Detection model.
 """
 
 __author__ = 'David Dunlap, Ian Randman'
