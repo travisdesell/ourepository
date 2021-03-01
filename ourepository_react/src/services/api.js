@@ -36,6 +36,7 @@ class ApiService {
                 password,
                 id_token:1
             }),
+            withCredentials: true,
             responseType: 'text'
           });
     }

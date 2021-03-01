@@ -1,14 +1,21 @@
 <?php
+session_start();
+
+if(!isset($_SESSION["count"])){
+    $_SESSION["count"] = 0;
+}else{
+    $_SESSION["count"] = $_SESSION["count"]+1;
+}
 
 use \Firebase\JWT\JWT;
 
 
 $secret_key = "test_secret";
 
-header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Origin: "."http://".getenv("REACT_DOMAIN").":".getenv("REACT_PORT"));
 header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Max-Age: 1000");
-header("Access-Control-Allow-Headers: alg, X-Requested-With, Content-Type, Origin, Cache-Control, Pragma, Authorization, Accept, Accept-Encoding");
+header("Access-Control-Allow-Headers: alg, X-Requested-With, Content-Type, Origin, Cache-Control, Pragma, Authorization, Accept, Accept-Encoding,xhrfields,crossdomain");
 header("Access-Control-Allow-Methods: PUT, POST, GET, OPTIONS, DELETE");
 
 require_once "bootstrap.php";
@@ -82,7 +89,8 @@ if($request_type == "CREATE_USER"){
 } else if($request_type == "LOGIN_USER"){
     $email = $_POST['email'];
 
-    
+    error_log(json_encode("SESSION COUNT: " . $_SESSION["count"]));
+
     $existingUser=$entityManager->getRepository('User')
                                 ->findOneBy(array('email' => $email));
 
@@ -90,9 +98,9 @@ if($request_type == "CREATE_USER"){
 
 
 
-    error_log(json_encode($existingUser->getEmail()));
 
     if (isset($existingUser)){
+        error_log(json_encode($existingUser->getEmail()));
         $shake = $existingUser->getShake();
 
         $checkHash = hash_pbkdf2("sha256", $password, $shake, 16, 20);
@@ -102,6 +110,9 @@ if($request_type == "CREATE_USER"){
             echo error_msg("hash_matches",generateJWT($existingUser->getId()));
             return;
         }
+    }else{
+        echo json_encode(session_id());
+        return;
     }
 } else if($request_type == "GET_AUTH"){
     $jwt = $_GET['jwt'];

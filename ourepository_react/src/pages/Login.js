@@ -4,9 +4,12 @@ import { withRouter , Redirect, Link } from "react-router-dom";
 import emitter from "../services/emitter"
 import apiService from "../services/api"
 import useMousePosition from "../hooks/useMousePosition"; 
+import { useCookies } from 'react-cookie';
+const { REACT_APP_PHP_DOMAIN,REACT_APP_PHP_PORT } = process.env;
 
 const LoginPage = (props) => {
 
+    const [cookies, setCookie, removeCookie] = useCookies(['session_id']);
     const [signUp, setSignUp] = React.useState(false)
     const [username, setUsername] = React.useState('')
     const [password, setPassword] = React.useState('')
@@ -43,10 +46,12 @@ const LoginPage = (props) => {
 
     async function handleSignInClick() {
       try{
-
+        console.log(REACT_APP_PHP_DOMAIN, REACT_APP_PHP_PORT)
         const res = await apiService.loginUser(username,password)
       
         console.log(res);
+
+        setCookie("session_id",res.data);
 
         if(res.data.code=="hash_matches"){
           localStorage.setItem("user",res.data.message)     

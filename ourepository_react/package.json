@@ -11,6 +11,7 @@
     "node-fetch": "^2.6.1",
     "postcss": "^8.1.1",
     "react": "^16.13.1",
+    "react-cookie": "^4.0.3",
     "react-dom": "^16.13.1",
     "react-router-dom": "^5.2.0",
     "react-scripts": "3.4.3",
@@ -22,7 +23,7 @@
     "build:tailwind": "tailwindcss build src/tailwind.css -o src/tailwind.output.css",
     "prestart": "npm run build:tailwind",
     "prebuild": "npm run build:tailwind",
-    "start": "react-scripts start",
+    "start": "PORT=$REACT_PORT REACT_APP_PHP_PORT=$PHP_PORT REACT_APP_PHP_DOMAIN=$PHP_DOMAIN react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
