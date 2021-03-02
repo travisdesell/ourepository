@@ -33,7 +33,7 @@ from tqdm import tqdm
 
 from scripts.evaluation.model_inference import load_from_saved_model, inference
 from scripts.util.mosaic_utils import load_mosaic, get_image_window
-from scripts.util.slice import generate_slice_coords
+from scripts.util.slice_utils import generate_slice_coords
 
 # Python doesn't like me importing rasterio before tensorflow, so this goes down here
 import rasterio as rio

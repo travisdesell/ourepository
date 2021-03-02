@@ -163,17 +163,11 @@ def create_tf_example(group, path, label_map):
 
 
 def create_tf_example_new(annotations, image, label_map):
-    # with tf.gfile.GFile(os.path.join(path, '{}'.format(group.filename)), 'rb') as fid:
-    #     encoded_image = fid.read()
     encoded_image_io = io.BytesIO()
     image.save(encoded_image_io, 'png')
     encoded_image = encoded_image_io.getvalue()
-    # encoded_image_io = io.BytesIO(encoded_image)
-    # image = Image.open(encoded_image_io)
     width, height = image.size
 
-    # filename = group.filename.encode('utf8')
-    # image_format = b'png'
     xmins = []
     xmaxs = []
     ymins = []
@@ -182,20 +176,12 @@ def create_tf_example_new(annotations, image, label_map):
     classes = []
 
     for x1, y1, x2, y2, annotation_class in annotations:
-        xmins.append(x1 / width)
-        xmaxs.append(x2 / width)
-        ymins.append(y1 / height)
-        ymaxs.append(y2 / height)
+        xmins.append(x1)
+        xmaxs.append(x2)
+        ymins.append(y1)
+        ymaxs.append(y2)
         classes_text.append(annotation_class.encode('utf8'))
         classes.append(class_text_to_int(annotation_class, label_map))
-
-    # for index, row in group.object.iterrows():
-    #     xmins.append(row['xmin'] / width)
-    #     xmaxs.append(row['xmax'] / width)
-    #     ymins.append(row['ymin'] / height)
-    #     ymaxs.append(row['ymax'] / height)
-    #     classes_text.append(row['class'].encode('utf8'))
-    #     classes.append(class_text_to_int(row['class'], label_map))
 
     tf_example = tf.train.Example(features=tf.train.Features(feature={
         'image/height': dataset_util.int64_feature(height),

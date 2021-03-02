@@ -1,7 +1,7 @@
 import unittest
 import pandas as pd
 
-from scripts.util.slice import generate_slice_coords_with_annotations
+from scripts.util.slice_utils import generate_slice_coords_with_annotations
 
 
 class TestSlice(unittest.TestCase):
