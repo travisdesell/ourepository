@@ -41,7 +41,7 @@ from scripts.util.make_proto import create_label_proto
 from scripts.util.mosaic_utils import load_mosaic, get_image_window
 from scripts.util.slice_utils import generate_slice_coords_with_annotations, transform
 
-from generate_tfrecord import create_tf_example_new
+from generate_tfrecord import create_tf_example
 from scripts.util.visualization_utils import show_bounding_boxes
 
 logger = logging.getLogger(__name__)
@@ -159,10 +159,10 @@ def make_slices(slice_coords_dict, mosaic_dataset, label_map, model_input_width,
         # only apply transformation if this is a training slice
         if in_train_split[coord]:
             transformed_image, transformed_annotations = transform(image, rel_annotations)
-            tf_example = create_tf_example_new(transformed_annotations, transformed_image, label_map)
+            tf_example = create_tf_example(transformed_annotations, transformed_image, label_map)
             train_writer.write(tf_example.SerializeToString())
         else:
-            tf_example = create_tf_example_new(rel_annotations, image, label_map)
+            tf_example = create_tf_example(rel_annotations, image, label_map)
             test_writer.write(tf_example.SerializeToString())
 
         # uncomment to show image along with annotations
