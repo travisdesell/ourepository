@@ -30,10 +30,10 @@ def load_from_saved_model(name, model_name):
     for gpu in gpus:
         tf.config.experimental.set_memory_growth(gpu, True)
 
-    saved_model_path = os.path.join(os.path.dirname(__file__), '../../exported-models', name, model_name)
+    saved_model_path = os.path.join(os.path.dirname(__file__), '../../exported-models', name, model_name, 'saved_model')
     label_map_path = os.path.join(os.path.dirname(__file__), '../../annotations', name, 'label_map.pbtxt')
 
-    logger.info('Loading model...', end='')
+    logger.info('Loading model...')
     start_time = time.time()
 
     # Load saved model and build the detection function
@@ -51,6 +51,7 @@ def load_from_saved_model(name, model_name):
 
 
 def inference(image, detect_fn, category_index):
+    image = image.convert('RGB')
     image_np = np.array(image)
 
     # Things to try:

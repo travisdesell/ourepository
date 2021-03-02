@@ -56,6 +56,7 @@ def main(name, image_path, model_name, model_width, model_height, stride_length)
     detect_fn, category_index = load_from_saved_model(name, model_name)
 
     # iterate over all slices
+    logger.info('Performing inference on full image...')
     for coord in tqdm(slice_coords_list):
         x, y = coord  # top left corner for this slice
 

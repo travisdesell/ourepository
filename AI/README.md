@@ -24,7 +24,7 @@ All the following commands should be run from the AI directory.
    predicted annotations overlaid on top. The current configuration of matplotlib may cause issues if run from the 
    command line.
    
-Please look at the referenced files for more details on program arguments. By default, it will run on a test dataset
+Please look at the referenced files for more details on program arguments. By default, it will run on a test dataset.
    
 ## Troubleshooting
 
