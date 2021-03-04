@@ -72,23 +72,6 @@ def generate_slice_coords_with_annotations(mosaic_width, mosaic_height, model_wi
     return slice_coords_dict
 
 
-def perspective_transform_point(matrix, p):
-    """
-    Applies a perspective transformation matrix to a point.
-
-    :param matrix: the transformation matrix
-    :param p: the x, y point
-    :return: the transformed x, y point
-    """
-
-    px = (matrix[0][0] * p[0] + matrix[0][1] * p[1] + matrix[0][2]) / (
-    (matrix[2][0] * p[0] + matrix[2][1] * p[1] + matrix[2][2]))
-    py = (matrix[1][0] * p[0] + matrix[1][1] * p[1] + matrix[1][2]) / (
-    (matrix[2][0] * p[0] + matrix[2][1] * p[1] + matrix[2][2]))
-
-    return int(px), int(py)
-
-
 def perspective_transform(image, normalized_annotations, theta=0.7, gamma=0.3):
     """
     This is an implementation of perspective transform data augmentation as described in:
@@ -130,8 +113,15 @@ def perspective_transform(image, normalized_annotations, theta=0.7, gamma=0.3):
         y_tl, y_bl, y_tr, y_br = np.array((y1, y1, y2, y2)) * height
 
         # transform each coordinate
-        p_tl, p_bl, p_tr, p_br = [perspective_transform_point(matrix, p) for p in zip((x_tl, x_bl, x_tr, x_br),
-                                                                                      (y_tl, y_bl, y_tr, y_br))]
+        pts = zip((x_tl, x_bl, x_tr, x_br), (y_tl, y_bl, y_tr, y_br))
+        p_tl, p_bl, p_tr, p_br = \
+            np.squeeze(
+                cv2.perspectiveTransform(
+                    np.array(
+                        [[[x, y]] for x, y in pts], dtype='float32'
+                    ),
+                    matrix
+                ))
 
         # get coordinates of new bounding box based on extrema; must convert back to normalized coordinates
         x_min = min(p_tl[0], p_bl[0], p_tr[0], p_br[0]) / width

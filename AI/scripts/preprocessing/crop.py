@@ -155,19 +155,20 @@ def make_slices(slice_coords_dict, mosaic_dataset, label_map, model_input_width,
 
             rel_annotations.append((rel_x1, rel_y1, rel_x2, rel_y2, label))
 
-        # create the TFExample
+        # create the TF Example
         # only apply transformation if this is a training slice
         if in_train_split[coord]:
             transformed_image, transformed_annotations = transform(image, rel_annotations)
+
+            # uncomment to show image along with annotations
+            show_bounding_boxes(image, rel_annotations)
+            show_bounding_boxes(transformed_image, transformed_annotations)
+
             tf_example = create_tf_example(transformed_annotations, transformed_image, label_map)
             train_writer.write(tf_example.SerializeToString())
         else:
             tf_example = create_tf_example(rel_annotations, image, label_map)
             test_writer.write(tf_example.SerializeToString())
-
-        # uncomment to show image along with annotations
-        # show_bounding_boxes(transformed_image, transformed_annotations)
-        # show_bounding_boxes(image, rel_annotations)
 
     # close resources
     train_writer.close()
