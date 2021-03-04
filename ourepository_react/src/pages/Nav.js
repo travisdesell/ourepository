@@ -2,14 +2,17 @@
 
 import React from 'react';
 import {Link, Route, Redirect} from "react-router-dom";
+import apiService from '../services/api';
 import emitter from "../services/emitter"
+import { useCookies } from 'react-cookie';
 
 
 const Nav = (props) => {
 
   const logOutBtn = <a onClick={handleLogOut} class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4"><Link to="/">Logout</Link></a>
   const logInBtn = <a class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4"> <Link to="/login">Login</Link></a>
-  
+  const [cookies, setCookie, removeCookie] = useCookies(['session_id']);
+
   const [navbarOpen, setNavbarOpen] = React.useState(false);
   const [userBtn, setUserBtn] = React.useState(<></>);
 
@@ -55,7 +58,11 @@ const Nav = (props) => {
   
 
     function handleLogOut(){
+        apiService.logout();
+        removeCookie("PHPSESSID");
+        removeCookie("session_id");
         localStorage.removeItem("user")
+
         setUserBtn(<a class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4" > <Link to="/login">Login</Link></a>)
 
     }

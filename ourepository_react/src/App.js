@@ -28,35 +28,32 @@ function App() {
 
   React.useEffect(()=>{
 
-    let user_token = localStorage.getItem('user')
 
     let revealRoutes = async () => {
-      if (user_token) {
-        let res = await apiService.isAuth(user_token)
+        let res = await apiService.isAuth()
         console.log(res);
 
         if( res.data == "true"){
+          localStorage.setItem("user",true)
+
           setProtectedRoutes(protected_routes)
         }else{
+          console.log("AINT AUTH");
           setProtectedRoutes([])
         }
-      }else{
-        setProtectedRoutes([])
-      }
   
       emitter.addListener("storage", async () => {
-        if (user_token) {
-          let res = await apiService.isAuth(user_token)
+          let res = await apiService.isAuth()
           console.log(res);
   
           if( res.data == "true"){
+            localStorage.setItem("user",true)
+
             setProtectedRoutes(protected_routes)
           }else{
             setProtectedRoutes([])
           }
-        }else{
-          setProtectedRoutes([])
-        }
+
       });
 
     }

@@ -49,11 +49,13 @@ if($request_type == "CREATE_USER"){
     //TODO: Check if User is already created
 
     $email = $_POST['email'];
+    $username = $_POST['username'];
+    $given_name = $_POST['given_name'];
+    $family_name = $_POST['family_name'];
 
     
     $existingUser=$entityManager->getRepository('User')
                                 ->findOneBy(array('email' => $email));
-
 
 
 
@@ -72,14 +74,29 @@ if($request_type == "CREATE_USER"){
     $newUser->setEmail($email);
     $newUser->setShake($shake);
 
+    $newUser->setUserName($username);
+    $newUser->setGivenName($given_name);
+    $newUser->setFamilyName($family_name);
+
+    $newUser->setEmail($email);
+    $newUser->setShake($shake);
+
     $hash = hash_pbkdf2("sha256", $password, $shake, 16, 20);
 
     $newUser->setHash($hash);
     $newUser->setAdmin(false);
     $entityManager->persist($newUser);
+
     try{
         $entityManager->flush();
-        echo error_msg("created_user",generateJWT($newUser->getId()));
+
+        $existingUser=$entityManager->getRepository('User')
+        ->findOneBy(array('email' => $email));
+        error_log("USER EXISTS");
+
+        $_SESSION["uid"]= $existingUser->getId();
+        $_SESSION["id"]= session_id();
+        echo error_msg("created_user",$_SESSION["id"]);
 
     }
     catch (Exception $e) {
@@ -88,26 +105,25 @@ if($request_type == "CREATE_USER"){
 
 } else if($request_type == "LOGIN_USER"){
     $email = $_POST['email'];
+    error_log(json_encode("email: " . $_POST['email']));
 
-    error_log(json_encode("SESSION COUNT: " . $_SESSION["count"]));
 
     $existingUser=$entityManager->getRepository('User')
                                 ->findOneBy(array('email' => $email));
 
     $password = $_POST['password'];
 
-
-
-
     if (isset($existingUser)){
-        error_log(json_encode($existingUser->getEmail()));
+        error_log(json_encode("SESSION COUNT: " . $_SESSION["count"]));
         $shake = $existingUser->getShake();
 
         $checkHash = hash_pbkdf2("sha256", $password, $shake, 16, 20);
 
         if($checkHash == $existingUser->getHash()){
             error_log("USER EXISTS");
-            echo error_msg("hash_matches",generateJWT($existingUser->getId()));
+            $_SESSION["uid"]= $existingUser->getId();
+            $_SESSION["id"]=session_id();
+            echo error_msg("hash_matches",$_SESSION["id"]);
             return;
         }
     }else{
@@ -115,18 +131,21 @@ if($request_type == "CREATE_USER"){
         return;
     }
 } else if($request_type == "GET_AUTH"){
-    $jwt = $_GET['jwt'];
-
     
-    try{
-        JWT::$leeway = 60; // $leeway in seconds
-        $decoded = JWT::decode($jwt, $secret_key, array('HS256'));
-    }
-    catch (Exception $e) {
-        echo 'Caught exception: ',  $e->getMessage(), "\n";
+    error_log(session_id()."SESSION".$_SESSION["id"]);
+
+    if($_SESSION["id"] == session_id()){
+        echo json_encode("true");
+    }else{
+        echo json_encode("false");
+
     }
 
-    if(isset($decoded)){
+}else if($request_type == "LOGOUT_USER"){
+    
+    if($_SESSION["id"] == session_id()){
+        session_unset();
+        session_destroy();
         echo json_encode("true");
     }
 

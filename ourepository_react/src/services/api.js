@@ -11,7 +11,7 @@ class ApiService {
     }
 
 
-    createUser(email, password,shake){
+    createUser(email,username,given_name,family_name,password,shake){
         return axios({
             method: 'post',
             url: '/test_bed.php',
@@ -19,6 +19,9 @@ class ApiService {
                 request:"CREATE_USER",
                 email: email,
                 password,
+                username,
+                given_name,
+                family_name,
                 id_token:1,
                 shake:shake
             }),
@@ -41,14 +44,26 @@ class ApiService {
           });
     }
 
-    isAuth(jwt){
+    isAuth(){
         return axios({
             method: 'get',
             url: '/test_bed.php',
             params: {
-                request:"GET_AUTH",
-                jwt:jwt
+                request:"GET_AUTH"
             },
+            withCredentials: true,
+            responseType: 'text'
+          });
+    }
+
+    logout(){
+        return axios({
+            method: 'get',
+            url: '/test_bed.php',
+            params: {
+                request:"LOGOUT_USER"
+            },
+            withCredentials: true,
             responseType: 'text'
           });
     }
