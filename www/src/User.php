@@ -23,9 +23,6 @@ class User
     protected $email;
 
     /** @ORM\Column(type="string") */
-    protected $username;
-
-    /** @ORM\Column(type="string") */
     protected $shake;
 
     /** @ORM\Column(type="string") */
@@ -40,13 +37,11 @@ class User
     /** @ORM\Column(type="string") */
     protected $family_name;
 
+    /** @ORM\Column (type="string") */
+    protected $description;
+
     public function __construct() {
         $this->memberRoles = new ArrayCollection();
-    }
-
-    public function getUserName()
-    {
-        return $this->username;
     }
 
     public function getId()
@@ -80,9 +75,9 @@ class User
         return $this->family_name;
     }
 
-    public function setUserName($username)
+    public function getDescription()
     {
-        $this->username = $username;
+        return $this->description;
     }
 
     public function setGivenName($given_name)
@@ -108,6 +103,11 @@ class User
     public function setShake($shake)
     {
         $this->shake = $shake;
+    }
+
+    public function setDescription($description)
+    {
+        $this->description = $description;
     }
 
     public function isAdmin()

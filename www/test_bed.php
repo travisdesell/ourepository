@@ -80,6 +80,7 @@ if($request_type == "CREATE_USER"){
 
     $newUser->setEmail($email);
     $newUser->setShake($shake);
+    $newUser->setDescription("");
 
     $hash = hash_pbkdf2("sha256", $password, $shake, 16, 20);
 
