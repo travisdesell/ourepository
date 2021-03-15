@@ -7,10 +7,14 @@ import sys
 logger = logging.getLogger(__name__)
 
 
+def full_path(path):
+    return os.path.abspath(path)
+
+
 def create_directory_if_not_exists(dir_name):
     if not os.path.exists(dir_name):
         os.mkdir(dir_name)
-        logger.info(f'Created {dir_name}')
+        logger.info(f'Created {full_path(dir_name)}')
 
 
 def get_labels_from_csvs(csv_filenames):

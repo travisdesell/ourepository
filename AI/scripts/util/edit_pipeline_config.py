@@ -7,6 +7,8 @@ import tensorflow as tf
 from google.protobuf import text_format
 from object_detection.protos import pipeline_pb2
 
+from scripts.util.file_utils import full_path
+
 logger = logging.getLogger(__name__)
 
 
@@ -48,6 +50,6 @@ def edit_pipeline_config(pretrained_model_dir, output_dir, num_classes, annotati
     with tf.io.gfile.GFile(output_path, "wb") as f:
         f.write(config_text)
 
-    logger.info(f'Created {output_path}')
+    logger.info(f'Created {full_path(output_path)}')
 
     return output_path

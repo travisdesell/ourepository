@@ -36,7 +36,7 @@ from tqdm import tqdm
 
 import tensorflow.compat.v1 as tf
 
-from scripts.util.file_utils import create_directory_if_not_exists, get_labels_from_csvs
+from scripts.util.file_utils import create_directory_if_not_exists, get_labels_from_csvs, full_path
 from scripts.util.make_proto import create_label_proto
 from scripts.util.mosaic_utils import load_mosaic, get_image_window
 from scripts.util.slice_utils import generate_slice_coords_with_annotations, transform
@@ -161,8 +161,8 @@ def make_slices(slice_coords_dict, mosaic_dataset, label_map, model_input_width,
             transformed_image, transformed_annotations = transform(image, rel_annotations)
 
             # uncomment to show image along with annotations
-            show_bounding_boxes(image, rel_annotations)
-            show_bounding_boxes(transformed_image, transformed_annotations)
+            # show_bounding_boxes(image, rel_annotations)
+            # show_bounding_boxes(transformed_image, transformed_annotations)
 
             tf_example = create_tf_example(transformed_annotations, transformed_image, label_map)
             train_writer.write(tf_example.SerializeToString())
@@ -172,9 +172,9 @@ def make_slices(slice_coords_dict, mosaic_dataset, label_map, model_input_width,
 
     # close resources
     train_writer.close()
-    logger.info('Successfully created the TFRecord file: {}'.format(train_output_path))
+    logger.info('Successfully created the TFRecord file: {}'.format(full_path(train_output_path)))
     test_writer.close()
-    logger.info('Successfully created the TFRecord file: {}'.format(test_output_path))
+    logger.info('Successfully created the TFRecord file: {}'.format(full_path(test_output_path)))
 
 
 def main(name, data_dir, model_width, model_height, stride_length, ratio):

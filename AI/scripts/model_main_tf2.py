@@ -97,7 +97,7 @@ from scripts.util.download_model import download_and_unpack_model
 from scripts.util.edit_pipeline_config import edit_pipeline_config
 
 # TODO change TF logging. Do not know how to make it use this logger. May have to configure separately.
-from scripts.util.file_utils import create_directory_if_not_exists
+from scripts.util.file_utils import create_directory_if_not_exists, full_path
 
 logger = logging.getLogger(__name__)
 
@@ -186,13 +186,13 @@ def main(unused_argv):
     mosaic_model_dir = os.path.join(mosaic_models_dir, FLAGS.model_name)
     if os.path.exists(mosaic_model_dir):
         if FLAGS.continue_from_checkpoint:
-            logger.error(f'Cannot find {mosaic_model_dir}')
+            logger.error(f'Cannot find {full_path(mosaic_model_dir)}')
             sys.exit(1)
         else:
             shutil.rmtree(mosaic_model_dir)
+            logger.info(f'Removed {full_path(mosaic_model_dir)}')
 
-    os.mkdir(mosaic_model_dir)
-    logger.info(f'Created {mosaic_model_dir}')
+    create_directory_if_not_exists(mosaic_model_dir)
 
     mosaic_annotations_dir = os.path.join(os.path.dirname(__file__), '../annotations/' + FLAGS.name)
     num_classes = len([f for f in os.listdir(FLAGS.data_dir) if f.lower().endswith('.csv')])

@@ -236,7 +236,7 @@ def main(_):
         mosaic_model_dir, FLAGS.use_side_inputs, FLAGS.side_input_shapes,
         FLAGS.side_input_types, FLAGS.side_input_names)
 
-    logger.info(f'Created {mosaic_model_dir}')
+    logger.info(f'Model export completed')
 
 
 if __name__ == '__main__':

@@ -13,7 +13,7 @@ import requests
 import shutil
 import sys
 
-from scripts.util.file_utils import create_directory_if_not_exists
+from scripts.util.file_utils import create_directory_if_not_exists, full_path
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ def download_and_unpack_model(model_name, model_date='20200711'):
 
     # if the tar.gz exists, unpack it
     if os.path.exists(model_archive_path):
-        logger.info(f'Attempting to unpack {model_archive_path}...')
+        logger.info(f'Attempting to unpack {full_path(model_archive_path)}...')
         try:
             shutil.unpack_archive(model_archive_path, os.path.dirname(model_archive_dir))
         except EOFError:
@@ -57,7 +57,7 @@ def download_and_unpack_model(model_name, model_date='20200711'):
             progress_bar.close()
 
         # unpack tar.gz
-        logger.info(f'Attempting to unpack {model_archive_path}...')
+        logger.info(f'Attempting to unpack {full_path(model_archive_path)}...')
         try:
             shutil.unpack_archive(model_archive_path, os.path.dirname(model_archive_dir))
         except EOFError:
