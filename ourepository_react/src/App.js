@@ -8,42 +8,86 @@ import {Redirect, Route, Switch, BrowserRouter} from "react-router-dom";
 import HomePage from './pages/Home';
 import LandingPage from './pages/Landing';
 import emitter from "./services/emitter"
-function App() {
-  const [loginRedirect, setLoginRedirect] = React.useState(<Redirect exact from="/landing" to="/" />)
-  React.useEffect(()=>{
-    if (localStorage.getItem('user')) {
-      setLoginRedirect(<Redirect exact from="/" to="/landing" />)
-    }else{
-      setLoginRedirect(<Redirect from="/landing" to="/" />)
-    }
+import Sidebar from './components/Sidebar';
+import OrganizationPage from './pages/Organization';
+import UserStatusPage from './pages/UserStatus';
 
-    emitter.addListener("storage", () => {
-      if (localStorage.getItem('user')) {
-        setLoginRedirect(<Redirect exact from="/" to="/landing" />)
-      }else{
-        setLoginRedirect(<Redirect from="/landing" to="/" />)
-      }
-    });
+import apiService from "./services/api";
+
+
+function App() {
+
+
+  const protected_routes = [
+    {path: "/landing", page: LandingPage},
+    {path: "/organization/:id" ,page: OrganizationPage},
+    {path: "/UserStatus", page:UserStatusPage}
+  ]
+
+  const [protectedRoutes, setProtectedRoutes] = React.useState([])
+
+  React.useEffect(()=>{
+
+
+    let revealRoutes = async () => {
+        let res = await apiService.isAuth()
+        console.log(res);
+
+        if( res.data == "true"){
+          localStorage.setItem("user",true)
+
+          setProtectedRoutes(protected_routes)
+        }else{
+          console.log("AINT AUTH");
+          setProtectedRoutes([])
+        }
+  
+      emitter.addListener("storage", async () => {
+          let res = await apiService.isAuth()
+          console.log(res);
+  
+          if( res.data == "true"){
+            localStorage.setItem("user",true)
+
+            setProtectedRoutes(protected_routes)
+          }else{
+            setProtectedRoutes([])
+          }
+
+      });
+
+    }
     
-      
+    revealRoutes()
 
     },[])
+
   return (
-      <div className="App">        
-      <BrowserRouter>
+      <div className="App">
+
+      <BrowserRouter forceRefresh={true}>
         <header className="App-header">
-        <Nav></Nav>
+          <Nav></Nav>
+          {localStorage.getItem("user") ? <Sidebar></Sidebar> : <></>}
+
+
+
 
         <Switch>
-        {loginRedirect}
-        <Route exact path="/" component={HomePage}></Route>
+        <Route exact path="/" >
+          {localStorage.getItem("user") ? <Redirect to="/landing" /> : <HomePage></HomePage>}
+        </Route>
         <Route path="/login" component={LoginPage}></Route>
-        <Route path="/landing" component={LandingPage}></Route>
+        {protectedRoutes.map((route)=>{
+
+          return <Route path={route.path} component={route.page}></Route>
+
+        })}
 
         </Switch>
-        
 
-        </header>      
+        </header>
+
         </BrowserRouter>
 
     </div>

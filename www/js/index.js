@@ -1353,15 +1353,15 @@ function initialize_mosaics(responseText) {
 var initialized_mosaics = false;
 
 function onSignIn(googleUser) {
-    profile = googleUser.getBasicProfile();
-    id_token = googleUser.getAuthResponse().id_token;
-    console.log("set id token: " + id_token);
+    // profile = googleUser.getBasicProfile();
+    // id_token = googleUser.getAuthResponse().id_token;
+    // console.log("set id token: " + id_token);
 
-    console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
-    console.log('Name: ' + profile.getName());
-    console.log('Image URL: ' + profile.getImageUrl());
-    console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
-
+    // console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
+    // console.log('Name: ' + profile.getName());
+    // console.log('Image URL: ' + profile.getImageUrl());
+    // console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
+    id_token = "user"
     initialized_mosaics = true;
     serverRequest("INDEX", initialize_mosaics);
 
@@ -1369,13 +1369,13 @@ function onSignIn(googleUser) {
 }
 
 function signOut() {
-    var auth2 = gapi.auth2.getAuthInstance();
+    // var auth2 = gapi.auth2.getAuthInstance();
 
-    auth2.signOut().then(function () {
-        console.log('User signed out.');
+    // auth2.signOut().then(function () {
+    //     console.log('User signed out.');
 
-        window.location.href = "./";
-    });
+    //     window.location.href = "./";
+    // });
 }
 
 function initialize_splash(responseText) {
@@ -1400,31 +1400,35 @@ function serverRequest(requestType, responseFunction) {
 function login() {
     console.log("login keep alive!");
 
-    gapi.load('auth2', function() {
-        gapi.auth2.init({
-            client_id: CLIENT_ID
-        }).then(function(){
-            auth2 = gapi.auth2.getAuthInstance();
-            //console.log("SIGNED IN?" + auth2.isSignedIn.get()); //now this always returns correctly        
+    // gapi.load('auth2', function() {
+    //     gapi.auth2.init({
+    //         client_id: CLIENT_ID
+    //     }).then(function(){
+    //         auth2 = gapi.auth2.getAuthInstance();
+    //         //console.log("SIGNED IN?" + auth2.isSignedIn.get()); //now this always returns correctly        
 
-            if (auth2.isSignedIn.get()) {
-                id_token = auth2.currentUser.get().getAuthResponse().id_token;
-                console.log("set id token: " + id_token);
+    //         if (auth2.isSignedIn.get()) {
+    //             id_token = auth2.currentUser.get().getAuthResponse().id_token;
+    //             console.log("set id token: " + id_token);
 
-                if (!initialized_mosaics) {
-                    serverRequest("INDEX", initialize_mosaics);
-                }
-            } else {
-                id_token = 'NONE';
-                serverRequest("INDEX", initialize_splash);
-            }
-        });
-    });
+    //             if (!initialized_mosaics) {
+    //                 serverRequest("INDEX", initialize_mosaics);
+    //             }
+    //         } else {
+    //             id_token = 'NONE';
+    //             serverRequest("INDEX", initialize_splash);
+    //         }
+    //     });
+    // });
 
 
-    setTimeout(login, 5 * 60 * 1000);  //1 minutes
+    // setTimeout(login, 5 * 60 * 1000);  //1 minutes
+    id_token = "user"
+    if (!initialized_mosaics) {
+        serverRequest("INDEX", initialize_mosaics);
+    }
 }
 
 $(document).ready(function() {
-    //login();
+    login();
 });

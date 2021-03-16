@@ -8,7 +8,7 @@ require_once($cwd[__FILE__] . "/../db/my_query.php");
 require_once($cwd[__FILE__] . "/upload.php"); //for rrmdir
 require_once($cwd[__FILE__] . "/marks.php"); //for create_polygon_points
 require_once($cwd[__FILE__] . "/settings.php"); //for mosaic directories
-require_once($cwd[__FILE__] . "/../../Mustache.php/src/Mustache/Autoloader.php");
+require_once($cwd[__FILE__] . "/Mustache.php/src/Mustache/Autoloader.php");
 Mustache_Autoloader::register();
 
 function ordinal_suffix($num) {
@@ -214,7 +214,6 @@ function display_index($user_id) {
     while (($users_row = $users_result->fetch_assoc()) != NULL) {
         $projects['users'][] = $users_row;
     }
-
 
     $projects_template = file_get_contents($cwd[__FILE__] . "/templates/mosaics_template.html");
 

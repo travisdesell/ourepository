@@ -32,10 +32,13 @@ function print_header($additional_css, $additional_js, $title="Open UAS Reposito
 <script src='https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js' integrity='sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T' crossorigin='anonymous'></script>
     -->
 
+    <!--
 
     <script src='https://apis.google.com/js/platform.js' async defer></script>
     <meta name='google-signin-client_id' content='$CLIENT_ID'>
     <script>var CLIENT_ID = '$CLIENT_ID';</script>
+    -->
+
 ";
 
 

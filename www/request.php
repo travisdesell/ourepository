@@ -1,4 +1,9 @@
 <?php
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Credentials: true");
+header("Access-Control-Max-Age: 1000");
+header("Access-Control-Allow-Headers: X-Requested-With, Content-Type, Origin, Cache-Control, Pragma, Authorization, Accept, Accept-Encoding");
+header("Access-Control-Allow-Methods: PUT, POST, GET, OPTIONS, DELETE");
 
 $cwd[__FILE__] = __FILE__;
 if (is_link($cwd[__FILE__])) $cwd[__FILE__] = readlink($cwd[__FILE__]);
@@ -7,8 +12,8 @@ $cwd[__FILE__] = dirname($cwd[__FILE__]);
 require_once($cwd[__FILE__] . "/../db/my_query.php");
 require_once($cwd[__FILE__] . "/user.php");
 require_once($cwd[__FILE__] . "/settings.php");
+connect_our_db();
 
-/*
 error_log("BEFORE GET USER ID!");
 foreach ($_FILES as $file) {
     error_log("file: " . json_encode($file));
@@ -21,7 +26,7 @@ foreach ($_GET as $key => $value) {
 foreach ($_POST as $key => $value) {
     error_log("_POST['$key']: '$value'");
 }
-*/
+
 
 // Get $id_token via HTTPS POST.
 if (isset($_POST['id_token'])) {
@@ -158,7 +163,7 @@ if ($request_type == NULL || $request_type == "INDEX") {
         }
     }
 
-    $name = "$BASE_DIRECTORY$name";
+    $name = "$BASE_DIRECTORY$owner_id/$name";
 
     error_log("got a request for a tile: '$name'");
     $fp = fopen($name, 'rb');
@@ -228,7 +233,6 @@ if ($request_type == NULL || $request_type == "INDEX") {
     process_chunk($user_id);
 } else if ($request_type == "TILE_PROGRESS") {
     require_once($cwd[__FILE__] . "/upload.php");
-
     $md5_hash = $our_db->real_escape_string($_POST['md5_hash']);
     $mosaic_info = get_mosaic_info($user_id, $md5_hash);
 
@@ -501,6 +505,42 @@ if ($request_type == NULL || $request_type == "INDEX") {
     $label_id = $our_db->real_escape_string($_POST['label_id']);
 
     get_predictions($user_id, $job_id, $mosaic_id, $label_id);
+} else if ($request_type == "REGISTER_USER"){
+    $username = $_GET['username'];
+    $password = $_GET['password'];
+    $given_name = $_GET['given_name'];
+    $family_name = $_GET['family_name'];
+    $salt = "PlaceholderSalt";
+    try {
+        $salt = random_bytes(10);
+    } catch (Exception $e) {
+    }
+    $hash = hash_pbkdf2("sha256", $password, $given_name, 16, 20);
+    $newUser = new User();
+    $newUser->setName($username);
+    $newUser->setAdmin(false);
+    $newUser->setHash($hash);
+    $newUser->setShake($salt);
+    $query = "INSERT into users (email,name,given_name,family_name) VALUES ($hash, $username, $salt, $family_name)";
+    $result = query_our_db($query);
+
+
+} else if($request_type == "CUSTOM_LOGIN"){
+    $username = $_GET['username'];
+    $password = $_GET['password'];
+    $query = "SELECT given_name FROM users WHERE $username = name";
+    $salt = query_our_db($query);
+    $hash = hash_pbkdf2("sha256", $password, $salt, 16, 20);
+    $query = "SELECT id FROM users WHERE $username = name and email = $hash";
+    $result = query_our_db($query);
+    if ($result != null){
+        $response['login_result'] = "successful login";
+    }
+    else{
+        $response['login_result'] = "The username or password was incorrect";
+    }
+
+    echo json_encode($response);
 }
 
 ?>

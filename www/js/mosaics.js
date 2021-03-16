@@ -3161,29 +3161,30 @@ function signOut() {
 function login() {
     console.log("login keep alive!");
 
-    gapi.load('auth2', function() {
-        gapi.auth2.init({
-            client_id: CLIENT_ID
-        }).then(function(){
-            auth2 = gapi.auth2.getAuthInstance();
-            //console.log("SIGNED IN?" + auth2.isSignedIn.get()); //now this always returns correctly        
+    // gapi.load('auth2', function() {
+    //     gapi.auth2.init({
+    //         client_id: CLIENT_ID
+    //     }).then(function(){
+    //         auth2 = gapi.auth2.getAuthInstance();
+    //         //console.log("SIGNED IN?" + auth2.isSignedIn.get()); //now this always returns correctly        
 
-            if (auth2.isSignedIn.get()) {
-                id_token = auth2.currentUser.get().getAuthResponse().id_token;
-                if (!initialized_mosaic) {
-                    //mosaic_id is set in mosaic.php from $_GET
-                    if (!initialized_mosaic) {
-                        serverRequest("MOSAIC&mosaic_id=" + mosaic_id, initialize_mosaic);
-                    }
-                }
-            } else {
-                id_token = 'NONE';
-                //mosaic_id is set in mosaic.php from $_GET
-                serverRequest("MOSAIC&mosaic_id=" + mosaic_id, initialize_splash);
-            }
-        });
-    });
+    //         if (auth2.isSignedIn.get()) {
+    //             id_token = auth2.currentUser.get().getAuthResponse().id_token;
+    //             if (!initialized_mosaic) {
+    //                 //mosaic_id is set in mosaic.php from $_GET
+    //                 if (!initialized_mosaic) {
+    //                     serverRequest("MOSAIC&mosaic_id=" + mosaic_id, initialize_mosaic);
+    //                 }
+    //             }
+    //         } else {
+    //             id_token = 'NONE';
+    //             //mosaic_id is set in mosaic.php from $_GET
+    //             serverRequest("MOSAIC&mosaic_id=" + mosaic_id, initialize_splash);
+    //         }
+    //     });
+    // });
 
+    serverRequest("MOSAIC&mosaic_id=" + mosaic_id, initialize_mosaic);
 
     setTimeout(login, 5 * 60 * 1000);  //1 minutes
 }

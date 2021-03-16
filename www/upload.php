@@ -5,6 +5,7 @@ if (is_link($cwd[__FILE__])) $cwd[__FILE__] = readlink($cwd[__FILE__]);
 $cwd[__FILE__] = dirname($cwd[__FILE__]);
 
 require_once($cwd[__FILE__] . "/settings.php");
+require_once($cwd[__FILE__] . "/../db/my_query.php");
 
 /**
  * 
@@ -51,7 +52,10 @@ function get_mosaic_info($owner_id, $md5_hash) {
 }
 
 function initiate_upload($owner_id) {
+    connect_our_db();
     global $our_db, $UPLOAD_DIRECTORY;
+    error_log(json_encode($_POST));
+    error_log(json_encode($our_db));
 
     $filename = $our_db->real_escape_string($_POST['filename']);
     $identifier = $our_db->real_escape_string($_POST['identifier']);

@@ -4,13 +4,13 @@ import './index.css';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 import './tailwind.output.css';
-import {BrowserRouter, Route, Switch} from "react-router-dom";
-import HomePage from './pages/Home';
-import LoginPage from './pages/Login';
+import { CookiesProvider } from "react-cookie";
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />    
+  <CookiesProvider>
+    <App />
+  </CookiesProvider>,
   </React.StrictMode>,
   document.getElementById('root')
 );
