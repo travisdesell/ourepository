@@ -74,7 +74,6 @@ if($request_type == "CREATE_USER"){
     $newUser->setEmail($email);
     $newUser->setShake($shake);
 
-    $newUser->setUserName($username);
     $newUser->setGivenName($given_name);
     $newUser->setFamilyName($family_name);
 
@@ -107,7 +106,6 @@ if($request_type == "CREATE_USER"){
 } else if($request_type == "LOGIN_USER"){
     $email = $_POST['email'];
     error_log(json_encode("email: " . $_POST['email']));
-
 
     $existingUser=$entityManager->getRepository('User')
                                 ->findOneBy(array('email' => $email));

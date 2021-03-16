@@ -11,7 +11,7 @@ class ApiService {
     }
 
 
-    createUser(email,username,given_name,family_name,password,shake){
+    createUser(email,given_name,family_name,password,shake){
         return axios({
             method: 'post',
             url: '/test_bed.php',
@@ -19,7 +19,6 @@ class ApiService {
                 request:"CREATE_USER",
                 email: email,
                 password,
-                username,
                 given_name,
                 family_name,
                 id_token:1,

@@ -13,6 +13,7 @@ import OrganizationPage from './pages/Organization';
 import UserStatusPage from './pages/UserStatus';
 
 import apiService from "./services/api";
+import CreateOrgPage from './pages/CreateOrg';
 
 
 function App() {
@@ -21,7 +22,8 @@ function App() {
   const protected_routes = [
     {path: "/landing", page: LandingPage},
     {path: "/organization/:id" ,page: OrganizationPage},
-    {path: "/UserStatus", page:UserStatusPage}
+    {path: "/UserStatus", page:UserStatusPage},
+    {path: "/create-org", page:CreateOrgPage}
   ]
 
   const [protectedRoutes, setProtectedRoutes] = React.useState([])

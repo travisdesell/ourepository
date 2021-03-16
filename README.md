@@ -44,3 +44,9 @@ To run on windows simply type
 dev.sh
 
 ```
+
+### Important files
+
+```
+www/bootstrap.php
+```
