@@ -5,9 +5,10 @@
 connect_xcel_db.sh
 db_info.php
 
+www/vendor/
+
 # AI
 AI/original-data/
-
 
 AI/annotations/*
 AI/images/*
@@ -16,6 +17,7 @@ AI/*.zip
 AI/pre-trained-models/
 AI/models/
 AI/exported-models/
+AI/inferences/
 
 AI/test/test.*
 AI/test/test/*

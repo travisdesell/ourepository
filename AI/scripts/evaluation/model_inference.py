@@ -11,6 +11,9 @@ from object_detection.utils import label_map_util
 from object_detection.utils import visualization_utils as viz_utils
 
 import matplotlib as mpl
+
+from scripts.util.visualization_utils import place_detections_on_image
+
 mpl.use('module://backend_interagg')
 import matplotlib.pyplot as plt
 # matplotlib.use('TkAgg')
@@ -41,7 +44,7 @@ def load_from_saved_model(name, model_name):
 
     end_time = time.time()
     elapsed_time = end_time - start_time
-    logger.info('Done! Took {} seconds'.format(elapsed_time))
+    logger.info('Finished loading model! Took {} seconds'.format(elapsed_time))
 
     # load label map data (for plotting)
     category_index = label_map_util.create_category_index_from_labelmap(label_map_path,
@@ -80,20 +83,11 @@ def inference(image, detect_fn, category_index):
     # detection_classes should be ints.
     detections['detection_classes'] = detections['detection_classes'].astype(np.int64)
 
-    image_np_with_detections = image_np.copy()
+    # delete some unnecessary fields
+    del detections['raw_detection_boxes']
+    del detections['raw_detection_scores']
 
-    viz_utils.visualize_boxes_and_labels_on_image_array(
-        image_np_with_detections,
-        detections['detection_boxes'],
-        detections['detection_classes'],
-        detections['detection_scores'],
-        category_index,
-        use_normalized_coordinates=True,
-        max_boxes_to_draw=40,
-        min_score_thresh=.30,
-        agnostic_mode=False)
+    # uncomment to show detections on image
+    # place_detections_on_image(image, detections, category_index)
 
-    plt.figure()
-    plt.imshow(image_np_with_detections)
-
-    plt.show()
+    return detections
