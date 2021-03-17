@@ -56,4 +56,9 @@ class MemberRole
     {
         $this->organization = $organization;
     }
+
+    public function setRole($role)
+    {
+        $this->role = $role;
+    } 
 }

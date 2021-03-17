@@ -32,14 +32,35 @@ class OrgACL
         return $this->id;
     }
 
-    public function getName()
+    public function getPermission()
     {
-        return $this->name;
+        return $this->permission;
     }
 
-    public function setName($name)
+    public function getRole()
     {
-        $this->name = $name;
+        return $this->role;
+    }
+    
+    public function getOrganization()
+    {
+        return $this->role;
+    }
+
+    public function setPermission($permission)
+    {
+        $this->permission = $permission;
+    }
+
+
+    public function setRole($role)
+    {
+        $this->role = $role;
+    }
+
+    public function setOrganization($organization)
+    {
+        $this->organization = $organization;
     }
 }
 

@@ -16,6 +16,7 @@ const LoginPage = (props) => {
     const [given_name, setGivenName] = React.useState('')
     const [family_name, setFamilyName] = React.useState('')
 
+
     const { x, y } = useMousePosition();
 
     let button;

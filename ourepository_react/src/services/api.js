@@ -67,6 +67,33 @@ class ApiService {
           });
     }
 
+    createOrg(name, visible){
+        return axios({
+            method: 'post',
+            url: '/test_bed.php',
+            data: new URLSearchParams({
+                request:"CREATE_ORG",
+                name,
+                visible,
+                id_token:1
+            }),
+            withCredentials: true,
+            responseType: 'text'
+          });
+    }
+
+    getOrgs(){
+        return axios({
+            method: 'get',
+            url: '/test_bed.php',
+            params: {
+                request:"GET_ORGS"
+            },
+            withCredentials: true,
+            responseType: 'text'
+          });
+    }
+
 }
 
 const apiService = new ApiService()
