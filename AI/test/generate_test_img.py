@@ -1,9 +1,24 @@
+"""
+Generate a (relatively) small test image with randomized objects along with their annotation.
+Output the image and a CSV for each of the labels.
+
+"""
+
+__author__ = 'David Dunlap'
+
+import logging
+
 from PIL import Image
 from random import randint
 import numpy as np
 import pandas as pd
 import os
 import shutil
+
+from scripts.util.file_utils import full_path
+
+logger = logging.getLogger(__name__)
+
 
 
 def add_item(base, item):
@@ -70,13 +85,19 @@ def main():
             im, coords = add_item(im, item_ims[label])
             coords_dfs[label].loc[i] = coords
 
-        coords_dfs[label].to_csv(f'test/{label}_coords.csv', index=False, header=True)
-        with open(f'test/{label}_coords.csv', 'r+') as f:
+        label_path = f'test/{label}_coords.csv'
+        coords_dfs[label].to_csv(label_path, index=False, header=True)
+        with open(label_path, 'r+') as f:
             content = f.read()
             f.seek(0, 0)
             f.write(f'#label: {label}\n'+content)
 
-    im.save('test/test.png')
+        logger.info(f'Created {full_path(label_path)}')
+
+    image_path = os.path.join(os.path.dirname(__file__), 'test/test.png')
+    im.save(image_path)
+
+    logger.info(f'Created {full_path(image_path)}')
 
 
 if __name__ == '__main__':

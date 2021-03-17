@@ -146,6 +146,7 @@ from google.protobuf import text_format
 from object_detection import exporter_lib_v2
 from object_detection.protos import pipeline_pb2
 
+from scripts.util.edit_pipeline_config import load_config
 from scripts.util.file_utils import create_directory_if_not_exists
 
 tf.enable_v2_behavior()
@@ -227,10 +228,11 @@ def main(_):
     # path to pipeline config for this mosaic for this model
     pipeline_config_path = trained_mosaic_model_dir + '/pipeline.config'
 
-    pipeline_config = pipeline_pb2.TrainEvalPipelineConfig()
-    with tf.io.gfile.GFile(pipeline_config_path, 'r') as f:
-        text_format.Merge(f.read(), pipeline_config)
+    # load the pipeline configuration
+    pipeline_config = load_config(pipeline_config_path)
     text_format.Merge(FLAGS.config_override, pipeline_config)
+
+    # export the model
     exporter_lib_v2.export_inference_graph(
         FLAGS.input_type, pipeline_config, trained_mosaic_model_dir,
         mosaic_model_dir, FLAGS.use_side_inputs, FLAGS.side_input_shapes,

@@ -1,3 +1,8 @@
+"""
+Provides utilities for the slices that are generated from each mosaic.
+Includes generating the coordinates of each slice and transforming the image for the slice.
+"""
+
 __author__ = 'Ian Randman'
 
 import logging
@@ -11,26 +16,61 @@ from PIL import Image
 logger = logging.getLogger(__name__)
 
 
-def generate_slice_coords(mosaic_width, mosaic_height, model_width, model_height, stride_length):
+def generate_slice_coords(mosaic_width, mosaic_height, slice_width, slice_height, stride_length):
+    """
+    Chop up an image into slices for easier handling.
+    Generate a list of (x, y) coordinates for the top left corner of each slice. Slices may overlap, and so a stride
+    length determines the spacing between slices. To ensure that all slices have the same dimensions, the slices on
+    the right/bottom of the image may be less than a stride length away from adjacent slices in each direction.
+
+    :param mosaic_width: the width of the mosaic to create slices of
+    :param mosaic_height: the height of the mosaic to create slices of
+    :param slice_width: the width of the slices to make
+    :param slice_height: the height of the slices to make
+    :param stride_length: the number of pixels in each direction to space out slices
+    :return: a list containing the coordinates of the top left corner of each slice
+    """
+
     # determine upper left corner of each slice
     # uses sliding window
-    slice_x_coords = list(range(0, mosaic_width - model_width, stride_length))
-    slice_x_coords.append(mosaic_width - model_width)
-    slice_y_coords = list(range(0, mosaic_height - model_height, stride_length))
-    slice_y_coords.append(mosaic_height - model_height)
+
+    # get x and y coordinates for each slice
+    slice_x_coords = list(range(0, mosaic_width - slice_width, stride_length))
+    slice_x_coords.append(mosaic_width - slice_width) # right-most slices
+    slice_y_coords = list(range(0, mosaic_height - slice_height, stride_length))
+    slice_y_coords.append(mosaic_height - slice_height) # bottom-most slices
+
+    # cartesian product of x and y coordinates results in coordinate pairs for full array
     slice_coords_list = list(product(slice_x_coords, slice_y_coords))
 
+    # return the list of coordinates
     return slice_coords_list
 
 
-def generate_slice_coords_with_annotations(mosaic_width, mosaic_height, model_width, model_height, stride_length,
+def generate_slice_coords_with_annotations(mosaic_width, mosaic_height, slice_width, slice_height, stride_length,
                                            annotations_df):
-    slice_coords_list = generate_slice_coords(mosaic_width, mosaic_height, model_width, model_height, stride_length)
+    """
+    Chop up an image into slices for easier handling.
+    Associate each slice with all of the annotation bounding boxes fully contained within the slice.
+
+
+    :param mosaic_width: the width of the mosaic to create slices of
+    :param mosaic_height: the height of the mosaic to create slices of
+    :param slice_width: the width of the slices to make
+    :param slice_height: the height of the slices to make
+    :param stride_length: the number of pixels in each direction to space out slices
+    :param annotations_df: a dataframe where each row contains (x1, y1, x2, y2, label) for each annotation
+    :return: a dict where the key is the (x, y) for top left of the slice, and the value is a list of 5-tuples
+        containing (x1, y1, x2, y2, label) for each annotation in the slice
+    """
+
+    # generate the (x, y) coordinates for the top left of each slice
+    slice_coords_list = generate_slice_coords(mosaic_width, mosaic_height, slice_width, slice_height, stride_length)
+    # initialize the dictionary with an empty list for each slice
     slice_coords_dict = {key: list() for key in slice_coords_list}
 
-    total_annotations = 0
-
     # iterate over all annotations
+    total_annotations = 0
     for index, row in annotations_df.iterrows():
         # get corners of annotation
         x1 = row['x1']
@@ -49,18 +89,19 @@ def generate_slice_coords_with_annotations(mosaic_width, mosaic_height, model_wi
         # Start coordinate must be the start of a slice; cannot be between slices (if so, go to next slice).
         # Repeat for x and y.
 
-        # Start is the left-most/top-most coordinate of the left-most/top-most slice that would contain this annotation.
-        # End is the left-most/top-most coordinate of the right-most/bottom-most slice that would contain this annotation.
+        # Start is the left-most/top-most coordinate of the left-most/top-most slice that would contain this
+        # annotation. End is the left-most/top-most coordinate of the right-most/bottom-most slice that would contain
+        # this annotation.
 
-        x_start = max(0, x2 - model_width)
+        x_start = max(0, x2 - slice_width)
         x_start = (int(x_start / stride_length) + (x_start % stride_length != 0)) * stride_length
-        x_start = min(x_start, mosaic_width - model_width)
-        x_end = min(x2 - annotation_width, mosaic_width - model_width)
+        x_start = min(x_start, mosaic_width - slice_width)
+        x_end = min(x2 - annotation_width, mosaic_width - slice_width)
 
-        y_start = max(0, y2 - model_height)
+        y_start = max(0, y2 - slice_height)
         y_start = (int(y_start / stride_length) + (y_start % stride_length != 0)) * stride_length
-        y_start = min(y_start, mosaic_height - model_height)
-        y_end = min(y2 - annotation_height, mosaic_height - model_height)
+        y_start = min(y_start, mosaic_height - slice_height)
+        y_end = min(y2 - annotation_height, mosaic_height - slice_height)
 
         # add this annotation to all slices that include it
         for coord in product(range(x_start, x_end + 1, stride_length), range(y_start, y_end + 1, stride_length)):
@@ -69,6 +110,7 @@ def generate_slice_coords_with_annotations(mosaic_width, mosaic_height, model_wi
 
     logger.info(f"{total_annotations} total annotations over all slices")
 
+    # return the dict of the slices to the annotations contained within them
     return slice_coords_dict
 
 
@@ -79,9 +121,9 @@ def perspective_transform(image, normalized_annotations, theta=0.7, gamma=0.3):
 
     An image is transformed along with the annotations it contains.
 
-    :param image: the PIL image
+    :param image: a PIL image
     :param normalized_annotations: the normalized annotations (x1, y1, x2, y2, label)
-    :param theta: the image plane rotation
+    :param theta: the image plane rotation (maybe)
     :param gamma: unknown TODO ?
     :return: the transformed image and transformed normalized annotations
     """
@@ -106,6 +148,7 @@ def perspective_transform(image, normalized_annotations, theta=0.7, gamma=0.3):
     pts2 = np.float32([A_theta, B_theta, C_theta, D_theta])
     matrix = cv2.getPerspectiveTransform(pts1, pts2)
 
+    # iterate over all annotations and apply the perspective transform
     transformed_annotations = list()
     for x1, y1, x2, y2, label in normalized_annotations:
         # coordinates for all four corners of annotation; must use absolute coordinates
@@ -129,12 +172,16 @@ def perspective_transform(image, normalized_annotations, theta=0.7, gamma=0.3):
         y_min = min(p_tl[1], p_bl[1], p_tr[1], p_br[1]) / height
         y_max = max(p_tl[1], p_bl[1], p_tr[1], p_br[1]) / height
 
+        # collect the new annotation
         transformed_annotations.append((x_min, y_min, x_max, y_max, label))
 
+    # apply the perspective transform to the image; must convert to OpenCV image first
     open_cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGBA2mRGBA)
     result = cv2.warpPerspective(open_cv_image, matrix, (width, height))
 
-    # TODO transform results in white borders. Paper describes methods such as reflection to mitigate effects.
+    # TODO transform results in transparent borders.
+    # Paper describes methods such as reflection or cropping to mitigate effects.
+    # Must decide how to handle affected annotations.
 
     return Image.fromarray(result), transformed_annotations
 
@@ -148,5 +195,10 @@ def transform(image, normalized_annotations):
     :return: the transformed image and transformed normalized annotations
     """
 
-    # TODO add other transformations?; randomize?
-    return perspective_transform(image, normalized_annotations)
+    # TODO add other transformations?; change randomization?
+
+    # randomly choose whether to apply a perspective transformation
+    if random.random() < 0.5:
+        return perspective_transform(image, normalized_annotations)
+    else:
+        return image, normalized_annotations

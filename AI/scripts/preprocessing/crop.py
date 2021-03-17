@@ -1,6 +1,6 @@
 """
 Split up a large mosaic into overlapping slices to be used as part of a machine learning pipeline. Create TFRecords
-for training and testing using these slices.
+for training and testing using these slices. Only slices that contain annotations are used for training and evaluation.
 
 usage: crop.py [-H] [-n NAME] [-d DATA_DIR] [-w MODEL_WIDTH] [-h MODEL_HEIGHT]
                [-s STRIDE_LENGTH] [-r RATIO]
@@ -36,9 +36,9 @@ from tqdm import tqdm
 
 import tensorflow.compat.v1 as tf
 
-from scripts.util.file_utils import create_directory_if_not_exists, get_labels_from_csvs, full_path
+from scripts.util.file_utils import create_directory_if_not_exists, get_labels_from_csvs, full_path, load_mosaic, \
+    get_image_window
 from scripts.util.make_proto import create_label_proto
-from scripts.util.mosaic_utils import load_mosaic, get_image_window
 from scripts.util.slice_utils import generate_slice_coords_with_annotations, transform
 
 from generate_tfrecord import create_tf_example
@@ -48,21 +48,51 @@ logger = logging.getLogger(__name__)
 
 
 def create_train_test_split(train_test_ratio, slice_coords_dict):
-    in_train_split = dict()
+    """
+    Determine which slices are used for training and which for evaluation.
+
+    :param train_test_ratio: the ratio of train records to test record
+    :param slice_coords_dict: a dict whose keys are the (x, y) coordinates of the top left of each slice
+    :return: a dict where the key is the (x, y) for the slice, and the value is a boolean indicating whether this
+        slice is part of the train split
+    """
+
+    # get the list of slice coordinates and randomly shuffle them
     coords_list = list(slice_coords_dict.keys())
     random.shuffle(coords_list)
+
+    in_train_split = dict()
+
+    # find the index of the list that corresponds to the ratio
     first_half = int(len(coords_list) * train_test_ratio)
+
+    # all slices to the left will be in the train split
     for coord in coords_list[:first_half]:
         in_train_split[coord] = True
+    # the rest of the slices will be in the test split
     for coord in coords_list[first_half:]:
         in_train_split[coord] = False
 
+    # the dict mapping slices to whether they are in the train or test split
     return in_train_split
 
 
 def setup(name, data_dir, model_width, model_height, stride_length):
+    """
+    Create directories for annotation output that will be used for TensorFlow.
+    Gather all the annotation labels and create a label map for them.
+    Gather all the annotations and determine which slices contain each.
 
-    # annotations
+    :param name: a name that uniquely identifies this mosaic and training data
+    :param data_dir: directory containing mosaic and CSVs to train on
+    :param model_width: the width of the input to the model
+    :param model_height: the height of the input to the model
+    :param stride_length: how far to move sliding window for each slice
+    :return: a dict mapping slice coordinates to the annotations contained within them, the mosaic DatasetReader,
+        the generated label map, the path to the train TFRecord, and the path to the test TFRecord
+    """
+
+    # directory containing all annotations
     annotations_dir = os.path.join(os.path.dirname(__file__), '../../annotations')
     create_directory_if_not_exists(annotations_dir)
 
@@ -70,28 +100,30 @@ def setup(name, data_dir, model_width, model_height, stride_length):
     mosaic_annotations_dir = os.path.join(annotations_dir, name)
     create_directory_if_not_exists(mosaic_annotations_dir)
 
+    # determine paths to train and test TFRecords
     train_output_path = os.path.join(mosaic_annotations_dir, 'train.record')
     test_output_path = os.path.join(mosaic_annotations_dir, 'test.record')
 
-    # get image filename
+    # get image filename; should be one image file in directory
     valid_images = ('.jpg', '.jpeg', '.png', '.tif')
-    image_filenames = [f for f in os.listdir(data_dir) if f.lower().endswith(valid_images)]
-    if len(image_filenames) == 0:
+    image_paths = [f for f in os.listdir(data_dir) if f.lower().endswith(valid_images)]
+    if len(image_paths) == 0:
         logger.error('No image found in directory')
         sys.exit(1)
-    if len(image_filenames) > 1:
+    if len(image_paths) > 1:
         logger.error('Ambiguous image file')
         logger.error('Only one image file allowed in directory')
         sys.exit(1)
-    image_filename = os.path.join(data_dir, image_filenames[0])
+    image_path = os.path.join(data_dir, image_paths[0])
 
-    # get CSV filenames
+    # get CSV filenames from directory
     csv_filenames = [f for f in os.listdir(data_dir) if f.lower().endswith('.csv')]
     if len(csv_filenames) == 0:
         logger.error('No CSVs found in directory')
         sys.exit(1)
     csv_filenames = [os.path.join(data_dir, filename) for filename in csv_filenames]
 
+    # gather all the label names from the CSVs
     csv_filename_to_label = get_labels_from_csvs(csv_filenames)
 
     # create label map
@@ -101,8 +133,9 @@ def setup(name, data_dir, model_width, model_height, stride_length):
     label_map = label_map_util.load_labelmap(label_map_path)
 
     # load in mosaic
-    mosaic_dataset, mosaic_width, mosaic_height = load_mosaic(image_filename)
+    mosaic_dataset, mosaic_width, mosaic_height = load_mosaic(image_path)
 
+    # iterate over each label CSV and add annotations to dataframe
     annotations_df_list = list()
     for csv_filename in csv_filenames:
         # create dataframe containing annotation data
@@ -111,10 +144,11 @@ def setup(name, data_dir, model_width, model_height, stride_length):
         annotations_df_list.append(df)
     total_annotations_df = pd.concat(annotations_df_list)
 
+    # generate dict mapping slice coordinates to a list of the annotations contained within the slice
     slice_coords_dict = generate_slice_coords_with_annotations(
         mosaic_width, mosaic_height, model_width, model_height, stride_length, total_annotations_df)
 
-    # TODO remove (maybe)
+    # TODO possibly keep some slices without annotations
     # remove all slices without an annotation (performed here to make progress bar more accurate)
     slice_coords_dict_all = slice_coords_dict
     slice_coords_dict = {coord: annotations for (coord, annotations) in slice_coords_dict.items() if
@@ -127,6 +161,20 @@ def setup(name, data_dir, model_width, model_height, stride_length):
 
 def make_slices(slice_coords_dict, mosaic_dataset, label_map, model_input_width, model_input_height,
                 train_test_ratio, train_output_path, test_output_path):
+    """
+    Slice up the mosaic, then create TFRecords for training and evaluation from these slices.
+
+    :param slice_coords_dict: a dict where the key is the (x, y) for top left of the slice, and the value is a list of 5-tuples
+        containing (x1, y1, x2, y2, label) for each annotation in the slice
+    :param mosaic_dataset: the mosaic DatasetReader
+    :param label_map: the label map object containing information about annotation classes
+    :param model_input_width: the width of the input to the model
+    :param model_input_height: the height of the input to the model
+    :param train_test_ratio: the train/test split ratio
+    :param train_output_path: the path to the train TFRecord
+    :param test_output_path: the path to the test TFRecord
+    :return:
+    """
 
     # open writers for the train and test TFRecords
     train_writer = tf.python_io.TFRecordWriter(train_output_path)
@@ -139,9 +187,12 @@ def make_slices(slice_coords_dict, mosaic_dataset, label_map, model_input_width,
     logger.info('Creating slices and TFExamples')
     time.sleep(0.1)
     for coord in tqdm(slice_coords_dict):
-        annotations = slice_coords_dict[coord]  # annotations for this slice
-        x, y = coord  # top left corner for this slice
+        # get the annotations fully contained within this slice
+        annotations = slice_coords_dict[coord]
+        # top left corner for this slice
+        x, y = coord
 
+        # get the PIL image for this slice
         image = get_image_window(mosaic_dataset, x, y, model_input_width, model_input_height)
 
         # iterate over all annotations in slice
@@ -158,6 +209,7 @@ def make_slices(slice_coords_dict, mosaic_dataset, label_map, model_input_width,
         # create the TF Example
         # only apply transformation if this is a training slice
         if in_train_split[coord]:
+            # transform the slice image and its annotations; may not apply transformation - see function for details
             transformed_image, transformed_annotations = transform(image, rel_annotations)
 
             # uncomment to show image along with annotations
@@ -178,9 +230,24 @@ def make_slices(slice_coords_dict, mosaic_dataset, label_map, model_input_width,
 
 
 def main(name, data_dir, model_width, model_height, stride_length, ratio):
+    """
+    Set up annotation-related directories. Process the annotations.
+    Slice up the mosaic, then create TFRecords for training and evaluation from these slices.
+
+    :param name: a name that uniquely identifies this mosaic and training data
+    :param data_dir: directory containing mosaic and CSVs to train on
+    :param model_width: the width of the input to the model
+    :param model_height: the height of the input to the model
+    :param stride_length: how far to move sliding window for each slice
+    :param ratio: the train/test split ratio
+    :return: none
+    """
+
+    # directory setup and annotation preprocessing
     slice_coords_dict, mosaic_dataset, label_map, train_output_path, test_output_path = \
         setup(name, data_dir, model_width, model_height, stride_length)
 
+    # slice up the image and create the TFRecords
     make_slices(slice_coords_dict, mosaic_dataset, label_map, model_width, model_height,
                 ratio, train_output_path, test_output_path)
 
