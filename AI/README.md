@@ -6,6 +6,8 @@ Run `pip install requirements.txt`.
 
 Install [TensorFlow Object Detection API](https://tensorflow-object-detection-api-tutorial.readthedocs.io/en/latest/install.html#tensorflow-object-detection-api-installation).
 
+In `scripts/__init__.py`, reconfigure the root directory for all output if desired.
+
 ## Preliminary steps for training and inference:
 
 All the following commands should be run from the AI directory.
