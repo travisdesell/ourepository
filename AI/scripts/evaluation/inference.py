@@ -37,11 +37,13 @@ from tqdm import tqdm
 from scripts.evaluation.model_inference import load_from_saved_model, inference
 from scripts.util.file_utils import create_directory_if_not_exists, full_path, load_mosaic, get_image_window
 from scripts.util.slice_utils import generate_slice_coords
+from scripts.util.visualization_utils import place_detections_on_image
+
+from scripts import ROOT_DIR
 
 # Python doesn't like me importing rasterio before tensorflow, so this goes down here
 import rasterio as rio
 
-from scripts.util.visualization_utils import place_detections_on_image
 
 logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore", category=rio.errors.NotGeoreferencedWarning)
@@ -59,7 +61,7 @@ def create_dirs(name, image_path, model_name):
     """
 
     # directory for all inferences
-    inference_dir = os.path.join(os.path.dirname(__file__), '../../inferences')
+    inference_dir = os.path.join(ROOT_DIR, 'inferences')
     create_directory_if_not_exists(inference_dir)
 
     # directory for the inferences for the mosaic the model was trained on

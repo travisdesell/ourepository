@@ -144,10 +144,11 @@ from absl import flags
 import tensorflow.compat.v2 as tf
 from google.protobuf import text_format
 from object_detection import exporter_lib_v2
-from object_detection.protos import pipeline_pb2
 
 from scripts.util.edit_pipeline_config import load_config
 from scripts.util.file_utils import create_directory_if_not_exists
+
+from scripts import ROOT_DIR
 
 tf.enable_v2_behavior()
 
@@ -211,10 +212,10 @@ def main(_):
     # TODO what flags should be required?
 
     # path to directory containing the specific user-trained model for this mosaic
-    trained_mosaic_model_dir = os.path.join(os.path.dirname(__file__), '../models', FLAGS.name, FLAGS.model_name)
+    trained_mosaic_model_dir = os.path.join(ROOT_DIR, 'models', FLAGS.name, FLAGS.model_name)
 
     # user exported models
-    user_models_dir = os.path.join(os.path.dirname(__file__), '../exported-models')
+    user_models_dir = os.path.join(ROOT_DIR, 'exported-models')
     create_directory_if_not_exists(user_models_dir)
 
     # path to directory containing user-trained exported models for this mosaic

@@ -44,6 +44,8 @@ from scripts.util.slice_utils import generate_slice_coords_with_annotations, tra
 from generate_tfrecord import create_tf_example
 from scripts.util.visualization_utils import show_bounding_boxes
 
+from scripts import ROOT_DIR
+
 logger = logging.getLogger(__name__)
 
 
@@ -93,7 +95,7 @@ def setup(name, data_dir, model_width, model_height, stride_length):
     """
 
     # directory containing all annotations
-    annotations_dir = os.path.join(os.path.dirname(__file__), '../../annotations')
+    annotations_dir = os.path.join(ROOT_DIR, 'annotations')
     create_directory_if_not_exists(annotations_dir)
 
     # path to directory containing annotations for this mosaic

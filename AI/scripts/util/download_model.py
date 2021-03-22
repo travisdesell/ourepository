@@ -15,6 +15,8 @@ import sys
 
 from scripts.util.file_utils import create_directory_if_not_exists, full_path
 
+from scripts import ROOT_DIR
+
 logger = logging.getLogger(__name__)
 
 
@@ -29,7 +31,7 @@ def download_and_unpack_model(model_name, model_date='20200711'):
     """
 
     # pretrained models
-    pretrained_models_dir = os.path.join(os.path.dirname(__file__), '../../pre-trained-models')
+    pretrained_models_dir = os.path.join(ROOT_DIR, 'pre-trained-models')
     create_directory_if_not_exists(pretrained_models_dir)
 
     # pretrained model archives

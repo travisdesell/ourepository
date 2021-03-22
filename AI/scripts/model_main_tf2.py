@@ -95,10 +95,11 @@ import logging
 
 from scripts.util.download_model import download_and_unpack_model
 from scripts.util.edit_pipeline_config import edit_pipeline_config
-
-# TODO change TF logging. Do not know how to make it use this logger. May have to configure separately.
 from scripts.util.file_utils import create_directory_if_not_exists, full_path
 
+from scripts import ROOT_DIR
+
+# TODO change TF logging. Do not know how to make it use this logger. May have to configure separately.
 logger = logging.getLogger(__name__)
 
 flags.DEFINE_string('pipeline_config_path', None, 'Path to pipeline config '
@@ -169,13 +170,12 @@ def main(unused_argv):
     # TODO how to handle checkpoint
 
     # pretrained model from TensorFlow Object Detection model zoo
-    pretrained_model_dir = os.path.join(os.path.join(os.path.dirname(__file__), '../pre-trained-models/'),
-                                        FLAGS.model_name)
+    pretrained_model_dir = os.path.join(ROOT_DIR, 'pre-trained-models', FLAGS.model_name)
     if not os.path.exists(pretrained_model_dir):
         download_and_unpack_model(FLAGS.model_name)
 
     # user models
-    user_models_dir = os.path.join(os.path.dirname(__file__), '../models')
+    user_models_dir = os.path.join(ROOT_DIR, 'models')
     create_directory_if_not_exists(user_models_dir)
 
     # path to directory containing user-trained models for this mosaic
@@ -194,7 +194,7 @@ def main(unused_argv):
 
     create_directory_if_not_exists(mosaic_model_dir)
 
-    mosaic_annotations_dir = os.path.join(os.path.dirname(__file__), '../annotations/' + FLAGS.name)
+    mosaic_annotations_dir = os.path.join(ROOT_DIR, 'annotations/' + FLAGS.name)
     num_classes = len([f for f in os.listdir(FLAGS.data_dir) if f.lower().endswith('.csv')])
     pipeline_config_path = edit_pipeline_config(pretrained_model_dir, mosaic_model_dir, num_classes, mosaic_annotations_dir)
 

@@ -15,6 +15,8 @@ from object_detection.utils import label_map_util
 
 from scripts.util.visualization_utils import place_detections_on_image
 
+from scripts import ROOT_DIR
+
 # pretty sure these do not work
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow logging (1)
 tf.get_logger().setLevel('ERROR')  # Suppress TensorFlow logging (2)
@@ -38,9 +40,9 @@ def load_from_saved_model(name, model_name):
         tf.config.experimental.set_memory_growth(gpu, True)
 
     # path to the SavedModel
-    saved_model_path = os.path.join(os.path.dirname(__file__), '../../exported-models', name, model_name, 'saved_model')
+    saved_model_path = os.path.join(ROOT_DIR, 'exported-models', name, model_name, 'saved_model')
     # path to the label map for the model
-    label_map_path = os.path.join(os.path.dirname(__file__), '../../annotations', name, 'label_map.pbtxt')
+    label_map_path = os.path.join(ROOT_DIR, 'annotations', name, 'label_map.pbtxt')
 
     logger.info('Loading model...')
     start_time = time.time()
