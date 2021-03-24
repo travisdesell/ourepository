@@ -5,13 +5,6 @@ const url = "api_v2.php"
 
 class ApiService {
 
-    sampleRequest(){
-        return fetch("http://localhost:5000/request.php?id_token=1&request=IMAGE&mosaic_id=1&file=benzene.png", {
-            method: 'GET'
-          }
-          )
-    }
-
 
     createUser(email,given_name,family_name,password,shake){
         return axios({

@@ -226,9 +226,16 @@ if($request_type == "CREATE_USER"){
 
     $orgs = $query->getResult();
 
+    if(isset($orgs)){
+        echo rsp_msg("ORGS_RECEIVED_FAILED","no orgs were returned in the query");
+        return;
+    }
+
     error_log($orgs[0]->getName());
 
-    echo json_encode($orgs,JSON_NUMERIC_CHECK);
+    echo rsp_msg("ORGS_RECEIVED",$orgs);
+
+    
 }
 
 

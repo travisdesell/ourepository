@@ -11,22 +11,19 @@ const LandingPage = (props) => {
 
   React.useEffect(()=>{
     navbarService.setHeading(<Link to="/">OURepository</Link>)
-    apiService.sampleRequest()
-    .then((res) => res.blob())
-    .then((blob) => {
-      var reader = new FileReader();
-      reader.readAsDataURL(blob); 
-      reader.onloadend = function() {
-          var base64data = reader.result;                
-          setImage(base64data);
-      }
-    })
     navbarService.setToolbar([])
     sidebarSerice.setHeader(<></>)
 
     apiService.getOrgs().then((data) => {
+      console.log("ORG DATA: "+JSON.stringify(data.data))
+      const resp = data.data
+      if (resp.code == "ORGS_RECEIVED_FAILED"){
+        return;
+      }
+      else if (data.data) {
+        setOrganizations(resp.message)
+      }
       console.log(data.data[0]);
-      setOrganizations(data.data)
     }).catch((err) => {
       console.log(err);
     })

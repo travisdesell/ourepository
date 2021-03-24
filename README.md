@@ -45,6 +45,18 @@ dev.sh
 
 ```
 
+
+#### Populating Database Schema
+while in www/
+##### Windows
+'''
+reload_schema.bat
+'''
+##### Linux/Mac
+'''
+./reload_schema.sh
+'''
+
 ### Important files
 
 ```

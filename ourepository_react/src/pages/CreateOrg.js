@@ -54,6 +54,9 @@ const CreateOrgPage = (props) => {
           alert(` Organization ' ${name} ' created `)
           setCreated(true)
         }
+        else{
+          alert(data.data.message)
+        }
 
 
       }).catch((err) => {
