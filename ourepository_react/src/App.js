@@ -32,16 +32,21 @@ function App() {
 
 
     let revealRoutes = async () => {
+
         let res = await apiService.isAuth()
+        
         console.log(res);
 
         if( res.data == "true"){
+
           localStorage.setItem("user",true)
 
           setProtectedRoutes(protected_routes)
+
         }else{
-          console.log("AINT AUTH");
+
           setProtectedRoutes([])
+
         }
   
       emitter.addListener("storage", async () => {
