@@ -5,7 +5,7 @@ use Doctrine\ORM\Mapping as ORM;
  * @ORM\Entity 
  * @ORM\Table(name="org_acl")
  */
-class OrgACL
+class OrgACL implements JsonSerializable
 {
     /** @ORM\Id 
      * @ORM\Column(type="integer") 
@@ -62,13 +62,14 @@ class OrgACL
     {
         $this->organization = $organization;
     }
+
+
+    public function jsonSerialize()
+    {
+        return array(
+            'permission' => $this->permission,
+        );
+    }
+
 }
 
-// Pseudocode
-// shareMosaic(){
-// 	checkUser(user){
-// 		roles->user.roles	
-// 		roles->getRoles(organization)
-// 		roles.contain(permission)
-// 	}
-// }

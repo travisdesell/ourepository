@@ -14,6 +14,7 @@ import UserStatusPage from './pages/UserStatus';
 
 import apiService from "./services/api";
 import CreateOrgPage from './pages/CreateOrg';
+import OrgSettingsPage from './pages/OrgSettings';
 
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
   const protected_routes = [
     {path: "/landing", page: LandingPage},
     {path: "/organization/:id" ,page: OrganizationPage},
+    {path: "/org-settings/:id" ,page: OrgSettingsPage},
     {path: "/UserStatus", page:UserStatusPage},
     {path: "/create-org", page:CreateOrgPage}
   ]
@@ -29,7 +31,6 @@ function App() {
   const [protectedRoutes, setProtectedRoutes] = React.useState([])
 
   React.useEffect(()=>{
-
 
     let revealRoutes = async () => {
 
@@ -44,6 +45,8 @@ function App() {
           setProtectedRoutes(protected_routes)
 
         }else{
+
+          localStorage.removeItem("user")
 
           setProtectedRoutes([])
 

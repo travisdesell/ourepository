@@ -86,6 +86,58 @@ class ApiService {
           });
     }
 
+    getOrgByName(name){
+        return axios({
+            method: 'get',
+            url ,
+            params: {
+                request:"GET_AUTH_ORG_BY_NAME",
+                name
+            },
+            withCredentials: true,
+            responseType: 'text'
+          });
+    }
+
+    hasPermission(permission,organization){
+        return axios({
+            method: 'get',
+            url ,
+            params: {
+                request:"HAS_ORG_PERMISSION",
+                permission,
+                organization
+            },
+            withCredentials: true,
+            responseType: 'text'
+          });
+    }
+
+    getOrgRoles(organization){
+        return axios({
+            method: 'get',
+            url ,
+            params: {
+                request:"GET_ORG_ROLES",
+                organization
+            },
+            withCredentials: true,
+            responseType: 'text'
+          });
+    }
+    getRolePermissions(role){
+        return axios({
+            method: 'get',
+            url ,
+            params: {
+                request:"GET_ROLE_PERMISSIONS",
+                role_id: role['id'] 
+            },
+            withCredentials: true,
+            responseType: 'text'
+          });
+    }
+
 }
 
 const apiService = new ApiService()

@@ -1,5 +1,14 @@
 <?php
-// bootstrap.php
+
+// bootstrap.php is the configuration for Doctrine ORM 
+
+// Import this file to obtain the Entitymanager to start communicating with the Database Objects
+
+// More information can be found here: https://www.doctrine-project.org/projects/doctrine-orm/en/2.8/reference/configuration.html
+
+
+
+
 use Doctrine\ORM\Tools\Setup;
 use Doctrine\ORM\EntityManager;
 
@@ -12,9 +21,7 @@ $proxyDir = null;
 $cache = null;
 $useSimpleAnnotationReader = false;
 $config = Setup::createAnnotationMetadataConfiguration(array(__DIR__."/src"), $isDevMode, $proxyDir, $cache, $useSimpleAnnotationReader);
-// or if you prefer yaml or XML
-//$config = Setup::createXMLMetadataConfiguration(array(__DIR__."/config/xml"), $isDevMode);
-//$config = Setup::createYAMLMetadataConfiguration(array(__DIR__."/config/yaml"), $isDevMode);
+
 
 // database configuration parameters
 // the connection configuration

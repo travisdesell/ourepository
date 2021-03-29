@@ -197,8 +197,8 @@ if($request_type == "CREATE_USER"){
     $newOrganization->setVisible($visible);
 
     $newMemberRole->setOrganization($newOrganization);
-    $newRole->setOrganization($newOrganization);
-    $newRole2->setOrganization($newOrganization);
+    $adminRole->setOrganization($newOrganization);
+    $defaultRole->setOrganization($newOrganization);
     $newOrgACL->setOrganization($newOrganization);
 
     $entityManager->persist($newOrganization);
@@ -221,22 +221,147 @@ if($request_type == "CREATE_USER"){
 
     $uid = $_SESSION['uid'];
 
+    try{
+        $query = $entityManager->createQuery('SELECT o FROM Organization o JOIN o.memberRoles m WHERE m.member = '.$uid);
+        $orgs = $query->getResult();
+        if(!isset($orgs)){
+            echo rsp_msg("ORGS_RECEIVED_FAILED","no orgs were returned in the query");
+            return;
+        }
     
-    $query = $entityManager->createQuery('SELECT o FROM Organization o JOIN o.memberRoles m WHERE m.member = '.$uid);
+        error_log($orgs[0]->getName());
+    
+        echo rsp_msg("ORGS_RECEIVED",$orgs);
+    }
 
-    $orgs = $query->getResult();
+    catch (Exception $e){
+        echo 'Caught exception: ',  $e->getMessage(), "\n";
 
-    if(isset($orgs)){
-        echo rsp_msg("ORGS_RECEIVED_FAILED","no orgs were returned in the query");
+    }
+
+
+
+    
+}else if($request_type == "GET_AUTH_ORG_BY_NAME"){
+    if($_SESSION["id"] != session_id()){
+        echo json_encode("USER NOT AUTHENTICATED");
         return;
     }
 
-    error_log($orgs[0]->getName());
+    $uid = $_SESSION['uid'];
+    $name = $_GET['name'];
 
-    echo rsp_msg("ORGS_RECEIVED",$orgs);
+    try{
 
-    
+        $query = $entityManager->createQuery('SELECT o FROM Organization o JOIN o.memberRoles m WHERE m.member = '.$uid.' AND  o.name = \''.$name.'\'');
+        $orgs = $query->getResult();
+       if(!isset($orgs)){
+        echo rsp_msg("ORGS_RECEIVED_FAILED","no orgs were returned in the query");
+        return;
+    }
+        echo rsp_msg("ORGS_RECEIVED",$orgs[0]);
+    }
+
+    catch (Exception $e){
+        echo 'Caught exception: ',  $e->getMessage(), "\n";
+
+    }
+
+}else if($request_type == "HAS_ORG_PERMISSION"){
+    if($_SESSION["id"] != session_id()){
+        echo json_encode("USER NOT AUTHENTICATED");
+        return;
+    }
+
+    $uid = $_SESSION['uid'];
+    $permission = $_GET['permission'];
+    $organization = $_GET['organization'];
+
+
+    try{
+
+        $query = $entityManager->createQuery('SELECT o FROM OrgACL o JOIN o.organization g WITH g.name = :org JOIN g.memberRoles m WITH m.member = :uid AND m.role = o.role WHERE o.permission IN (:permissions)');
+        $query->setParameter('org', $organization);
+        $query->setParameter('uid', $uid);
+        $query->setParameter('permissions', array('all',$permission));
+
+
+        $acls = $query->getResult();
+        if(!isset($acls)){
+            echo rsp_msg("NO_ORG_PERMISSION","The user does not have the proper permissions");
+            return;
+        }
+        echo rsp_msg("HAS_ORG_PERMISSION",$acls);
+    }
+
+    catch (Exception $e){
+        echo 'Caught exception: ',  $e->getMessage(), "\n";
+
+    }
+
+    return;
+
+}else if($request_type == "GET_ORG_ROLES"){
+    if($_SESSION["id"] != session_id()){
+        echo json_encode("USER NOT AUTHENTICATED");
+        return;
+    }
+
+    $uid = $_SESSION['uid'];
+    $organization = $_GET['organization'];
+
+
+    try{
+
+        $query = $entityManager->createQuery('SELECT r FROM Role r JOIN r.organization g WITH g.name = :org JOIN g.memberRoles m WITH m.member = :uid');
+        $query->setParameter('org', $organization);
+        $query->setParameter('uid', $uid);
+
+
+        $roles = $query->getResult();
+        if(!isset($roles)){
+            echo rsp_msg("NO_ORG_ROLE","Failed to retrieves roles from organization");
+            return;
+        }
+        echo rsp_msg("ORG_ROLES_RECEIVED",$roles);
+    }
+    catch (Exception $e){
+        echo 'Caught exception: ',  $e->getMessage(), "\n";
+
+    }
+
+    return;
+}else if($request_type == "GET_ROLE_PERMISSIONS"){
+    if($_SESSION["id"] != session_id()){
+        echo json_encode("USER NOT AUTHENTICATED");
+        return;
+    }
+
+    $uid = $_SESSION['uid'];
+    $roleId = $_GET['role_id'];
+
+
+    try{
+
+        $query = $entityManager->createQuery('SELECT a FROM OrgACL a JOIN a.role r WITH r.id = :role_id');
+        $query->setParameter('role_id', $roleId);
+
+
+        $roles = $query->getResult();
+        if(!isset($roles)){
+            echo rsp_msg("NO_ROLE_PERMISSIONS","Failed to retrieve permissions for this role");
+            return;
+        }
+        echo rsp_msg("ROLE_PERMISSIONS_RECEIVED",$roles);
+    }
+    catch (Exception $e){
+        echo 'Caught exception: ',  $e->getMessage(), "\n";
+
+    }
+
+    return;
 }
+
 
 
 function rsp_msg($code,$message){

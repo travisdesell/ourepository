@@ -45,7 +45,7 @@ const LandingPage = (props) => {
 
         <div class="bg-gray-700 shadow-md rounded px-8 pt-6 pb-8">
 
-        <buttton class="bg-gray-600  shadow-md rounded px-4 pt-3 pb-4"><Link to="/create-org">Create Organization</Link> </buttton>
+        <button class="bg-gray-600  shadow-md rounded px-4 pt-3 pb-4"><Link to="/create-org">Create Organization</Link> </button>
           
         </div>
         
