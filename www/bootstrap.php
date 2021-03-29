@@ -16,6 +16,9 @@ use Doctrine\ORM\Tools\Setup;
 use Doctrine\ORM\EntityManager;
 
 require_once "vendor/autoload.php";
+require_once "../db/db_info.php";
+
+global $our_db, $our_db_name, $our_db_user, $our_db_password, $our_db_host;
 
 // Create a simple "default" Doctrine ORM configuration for Annotations
 
@@ -30,10 +33,10 @@ $config = Setup::createAnnotationMetadataConfiguration(array(__DIR__."/src"), $i
 // the connection configuration
 $dbParams = array(
     'driver'   => 'pdo_mysql',
-    'user'     => 'jon',
-    'password' => 'password',
-    'dbname'   => 'our',
-    'url' => 'mysql://jon:password@localhost:3306/our',
+    'user'     => $our_db_user,
+    'password' => $our_db_password,
+    'dbname'   => $our_db_name,
+    'url' => 'mysql://'.$our_db_user.':'.$our_db_password.'@'.$our_db_host.'/'.$our_db_name,
 
 );
 
