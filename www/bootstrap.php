@@ -4,7 +4,10 @@
 
 // Import this file to obtain the Entitymanager to start communicating with the Database Objects
 
+// Look at api_v2.php to see how bootstrap is imported and used
+
 // More information can be found here: https://www.doctrine-project.org/projects/doctrine-orm/en/2.8/reference/configuration.html
+
 
 
 
