@@ -41,7 +41,7 @@ from scripts.util.file_utils import create_directory_if_not_exists, get_labels_f
 from scripts.util.make_proto import create_label_proto
 from scripts.util.slice_utils import generate_slice_coords_with_annotations, transform
 
-from generate_tfrecord import create_tf_example
+from scripts.preprocessing.generate_tfrecord import create_tf_example
 from scripts.util.visualization_utils import show_bounding_boxes
 
 from scripts import ROOT_DIR
