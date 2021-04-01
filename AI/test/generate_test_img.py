@@ -65,12 +65,12 @@ def crop(pil_image):
 
 
 def main():
-    im = Image.open('grass.jpg').convert('RGBA')
-
+    image_path = os.path.join(os.path.dirname(__file__), 'grass.jpg')
+    im = Image.open(image_path).convert('RGBA')
     labels = ['butterfly', 'ladybug']
 
     # create clean output directory
-    output_dir = 'test/'
+    output_dir = os.path.join(os.path.dirname(__file__), 'test')
     if os.path.exists(output_dir):
         shutil.rmtree(output_dir)
     os.makedirs(output_dir)
@@ -78,14 +78,15 @@ def main():
     item_ims = {}
     coords_dfs = {}
     for label in labels:
-        item_ims[label] = Image.open(f'{label}.png')
+        image_path = os.path.join(os.path.dirname(__file__), f'{label}.png')
+        item_ims[label] = Image.open(image_path)
         coords_dfs[label] = pd.DataFrame(columns=['x1', 'y1', 'x2', 'y2'])
 
         for i in range(50):
             im, coords = add_item(im, item_ims[label])
             coords_dfs[label].loc[i] = coords
 
-        label_path = f'test/{label}_coords.csv'
+        label_path = os.path.join(os.path.dirname(__file__), f'test/{label}_coords.csv')
         coords_dfs[label].to_csv(label_path, index=False, header=True)
         with open(label_path, 'r+') as f:
             content = f.read()
