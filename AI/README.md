@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-Run `pip install requirements.txt`.
+Run `pip install -r requirements.txt`.
 
 Install [TensorFlow Object Detection API](https://tensorflow-object-detection-api-tutorial.readthedocs.io/en/latest/install.html#tensorflow-object-detection-api-installation).
 
