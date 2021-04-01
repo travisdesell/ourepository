@@ -14,8 +14,8 @@ from object_detection.utils import visualization_utils as viz_utils
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
-# may fail depending on installation of matplotlib
-mpl.use('module://backend_interagg')
+# May fail depending on installation of matplotlib. If so, Google matplotlib backend for the system you are on.
+mpl.use('TkAgg')
 
 logger = logging.getLogger(__name__)
 
