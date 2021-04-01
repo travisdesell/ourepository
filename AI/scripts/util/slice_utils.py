@@ -179,9 +179,10 @@ def perspective_transform(image, normalized_annotations, theta=0.7, gamma=0.3):
     open_cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGBA2mRGBA)
     result = cv2.warpPerspective(open_cv_image, matrix, (width, height))
 
-    # TODO transform results in transparent borders.
-    # Paper describes methods such as reflection or cropping to mitigate effects.
-    # Must decide how to handle affected annotations.
+    # TODO
+    # Transform results in transparent borders.
+    # Paper describes methods such as reflection, cropping, or filling in with black to mitigate effects.
+    # Must decide how to handle affected annotations if reflection or cropping is selected.
 
     return Image.fromarray(result), transformed_annotations
 
@@ -196,6 +197,12 @@ def transform(image, normalized_annotations):
     """
 
     # TODO add other transformations?; change randomization?
+    # flip horizontally
+    # image_np = np.fliplr(image_np).copy()
+
+    # convert image to grayscale
+    # image_np = np.tile(
+    #     np.mean(image_np, 2, keepdims=True), (1, 1, 3)).astype(np.uint8)
 
     # randomly choose whether to apply a perspective transformation
     if random.random() < 0.5:

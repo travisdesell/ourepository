@@ -75,14 +75,6 @@ def inference(image, detect_fn, label_dict):
     image = image.convert('RGB')
     image_np = np.array(image)
 
-    # things to try to test robustness of model:
-    # flip horizontally
-    # image_np = np.fliplr(image_np).copy()
-
-    # convert image to grayscale
-    # image_np = np.tile(
-    #     np.mean(image_np, 2, keepdims=True), (1, 1, 3)).astype(np.uint8)
-
     # the input needs to be a tensor, convert it using `tf.convert_to_tensor`
     input_tensor = tf.convert_to_tensor(image_np)
     # the model expects a batch of images, so add an axis with `tf.newaxis`

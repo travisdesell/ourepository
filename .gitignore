@@ -14,12 +14,9 @@ AI/original-data/
 AI/annotations/*
 AI/images/*
 
-AI/*.zip
 AI/pre-trained-models/
 AI/models/
 AI/exported-models/
 AI/inferences/
 
-AI/test/test.*
 AI/test/test/*
-

@@ -15,6 +15,13 @@
 # ==============================================================================
 
 """
+Tool to export an object detection model for inference.
+
+Prepares an object detection tensorflow graph for inference using model
+configuration and a trained checkpoint. Outputs associated checkpoint files,
+a SavedModel, and a copy of the model config.
+
+
 # TODO Flags must be adjusted a bit.
 
        USAGE: exporter_main_v2.py [flags]
@@ -54,86 +61,19 @@ exporter_main_v2.py:
   --trained_checkpoint_dir: Path to trained checkpoint directory
   --[no]use_side_inputs: If True, uses side inputs as well as image inputs.
     (default: 'false')
-"""
 
-# r"""Tool to export an object detection model for inference.
-#
-# Prepares an object detection tensorflow graph for inference using model
-# configuration and a trained checkpoint. Outputs associated checkpoint files,
-# a SavedModel, and a copy of the model config.
-#
-# The inference graph contains one of three input nodes depending on the user
-# specified option.
-#   * `image_tensor`: Accepts a uint8 4-D tensor of shape [1, None, None, 3]
-#   * `float_image_tensor`: Accepts a float32 4-D tensor of shape
-#     [1, None, None, 3]
-#   * `encoded_image_string_tensor`: Accepts a 1-D string tensor of shape [None]
-#     containing encoded PNG or JPEG images. Image resolutions are expected to be
-#     the same if more than 1 image is provided.
-#   * `tf_example`: Accepts a 1-D string tensor of shape [None] containing
-#     serialized TFExample protos. Image resolutions are expected to be the same
-#     if more than 1 image is provided.
-#
-# and the following output nodes returned by the model.postprocess(..):
-#   * `num_detections`: Outputs float32 tensors of the form [batch]
-#       that specifies the number of valid boxes per image in the batch.
-#   * `detection_boxes`: Outputs float32 tensors of the form
-#       [batch, num_boxes, 4] containing detected boxes.
-#   * `detection_scores`: Outputs float32 tensors of the form
-#       [batch, num_boxes] containing class scores for the detections.
-#   * `detection_classes`: Outputs float32 tensors of the form
-#       [batch, num_boxes] containing classes for the detections.
-#
-#
-# Example Usage:
-# --------------
-# python exporter_main_v2.py \
-#     --input_type image_tensor \
-#     --pipeline_config_path path/to/ssd_inception_v2.config \
-#     --trained_checkpoint_dir path/to/checkpoint \
-#     --output_directory path/to/exported_model_directory
-#     --use_side_inputs True/False \
-#     --side_input_shapes dim_0,dim_1,...dim_a/.../dim_0,dim_1,...,dim_z \
-#     --side_input_names name_a,name_b,...,name_c \
-#     --side_input_types type_1,type_2
-#
-# The expected output would be in the directory
-# path/to/exported_model_directory (which is created if it does not exist)
-# holding two subdirectories (corresponding to checkpoint and SavedModel,
-# respectively) and a copy of the pipeline config.
-#
-# Config overrides (see the `config_override` flag) are text protobufs
-# (also of type pipeline_pb2.TrainEvalPipelineConfig) which are used to override
-# certain fields in the provided pipeline_config_path.  These are useful for
-# making small changes to the inference graph that differ from the training or
-# eval config.
-#
-# Example Usage (in which we change the second stage post-processing score
-# threshold to be 0.5):
-#
-# python exporter_main_v2.py \
-#     --input_type image_tensor \
-#     --pipeline_config_path path/to/ssd_inception_v2.config \
-#     --trained_checkpoint_dir path/to/checkpoint \
-#     --output_directory path/to/exported_model_directory \
-#     --config_override " \
-#             model{ \
-#               faster_rcnn { \
-#                 second_stage_post_processing { \
-#                   batch_non_max_suppression { \
-#                     score_threshold: 0.5 \
-#                   } \
-#                 } \
-#               } \
-#             }"
-#
-# If side inputs are desired, the following arguments could be appended
-# (the example below is for Context R-CNN).
-#    --use_side_inputs True \
-#    --side_input_shapes 1,2000,2057/1 \
-#    --side_input_names context_features,valid_context_size \
-#    --side_input_types tf.float32,tf.int32
-# """
+TODO: The following flag may be kept or removed depending on how we want to handle user setting of config
+    --config_override " \
+            model{ \
+              faster_rcnn { \
+                second_stage_post_processing { \
+                  batch_non_max_suppression { \
+                    score_threshold: 0.5 \
+                  } \
+                } \
+              } \
+            }"
+"""
 
 import logging
 import os

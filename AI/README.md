@@ -21,10 +21,12 @@ All the following commands should be run from the AI directory.
    stopping needs to be implemented, or num_steps must be defined.
 1. Run `python scripts/exporter_main_v2.py` to export the model.
 1. Evaluation can be performed using either a Tensorflow SavedModel or a Checkpoint. We will use SavedModel. Run 
-   `python scripts/evaluation/inference.py`. This currently outputs a plot for the inference of each slice. Set a 
-   breakpoint on line 43 to see the inference for each slice. This will be changed to output a single image with all 
-   predicted annotations overlaid on top. The current configuration of matplotlib may cause issues if run from the 
-   command line.
+   `python scripts/evaluation/inference.py`. This output a single image with all predicted annotations overlaid on 
+   top. Also, a CSV for each category with the predictions will be outputted.
+   
+In the `crop.py` and `inference.py` scripts, it can be configured to show a matplotlib plot for each slice. See 
+`visualization_utils.py` for more details. The current configuration of matplotlib may cause issues if run from the  
+command line.
    
 Please look at the referenced files for more details on program arguments. By default, it will run on a test dataset.
 

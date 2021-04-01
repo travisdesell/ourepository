@@ -231,7 +231,7 @@ def main(name, image_path, model_name, model_width, model_height, stride_length)
     """
 
     # ensure the input to the model is square to avoid distortion
-    assert model_width == model_height  # TODO necessary?
+    assert model_width == model_height
 
     # load the mosaic
     mosaic_dataset, mosaic_width, mosaic_height = load_mosaic(image_path)\
