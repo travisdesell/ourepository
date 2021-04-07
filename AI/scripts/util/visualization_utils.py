@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 # May fail depending on installation of matplotlib. If so, Google matplotlib backend for the system you are on.
-mpl.use('TkAgg')
+#mpl.use('TkAgg')
 
 logger = logging.getLogger(__name__)
 

@@ -107,7 +107,7 @@ def setup(name, data_dir, model_width, model_height, stride_length):
     test_output_path = os.path.join(mosaic_annotations_dir, 'test.record')
 
     # get image filename; should be one image file in directory
-    valid_images = ('.jpg', '.jpeg', '.png', '.tif', '.tiff')
+    valid_images = ('.jpg', '.jpeg', '.tif', '.tiff')
     image_paths = [f for f in os.listdir(data_dir) if f.lower().endswith(valid_images)]
     if len(image_paths) == 0:
         logger.error('No image found in directory')

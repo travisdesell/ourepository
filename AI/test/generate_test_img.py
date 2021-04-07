@@ -95,7 +95,7 @@ def main():
 
         logger.info(f'Created {full_path(label_path)}')
 
-    image_path = os.path.join(os.path.dirname(__file__), 'test/test.png')
+    image_path = os.path.join(os.path.dirname(__file__), 'test/test.tif')
     im.save(image_path)
 
     logger.info(f'Created {full_path(image_path)}')

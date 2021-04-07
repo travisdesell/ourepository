@@ -283,7 +283,7 @@ if __name__ == '__main__':
                         '--image_path',
                         help='the path to the image to run the inference on',
                         type=str,
-                        default=os.path.join(os.path.dirname(__file__), '../../test/test/test.png'))
+                        default=os.path.join(os.path.dirname(__file__), '../../test/test/test.tif'))
     parser.add_argument('-m',
                         '--model_name',
                         help='the name of the pretrained model from the TF Object Detection model zoo',
