@@ -138,6 +138,47 @@ class ApiService {
           });
     }
 
+    changeRolePermissions(role, changes){
+        return axios({
+            method: 'post',
+            url ,
+            data: new URLSearchParams({
+                request:"CHANGE_ROLE_PERMISSIONS",
+                role_id: role['id'],
+                changes
+            }),
+            withCredentials: true,
+            responseType: 'text'
+          });
+    }
+
+    addRole(role_name, changes){
+        return axios({
+            method: 'post',
+            url ,
+            data: new URLSearchParams({
+                request:"ADD_ROLE",
+                role_name,
+                changes
+            }),
+            withCredentials: true,
+            responseType: 'text'
+          });
+    }
+
+    deleteRole(role){
+        return axios({
+            method: 'post',
+            url ,
+            data: new URLSearchParams({
+                request:"DELETE_ROLE",
+                role_id: role['id']
+            }),
+            withCredentials: true,
+            responseType: 'text'
+          });
+    }
+
 }
 
 const apiService = new ApiService()

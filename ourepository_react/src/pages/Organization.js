@@ -78,6 +78,7 @@ const OrganizationPage = (props) => {
         <Route path={`${path}/project/:project`}>
                 <Project></Project>
                 
+                
         </Route>
         </Switch>
     </div>

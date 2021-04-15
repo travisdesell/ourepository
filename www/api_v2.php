@@ -360,6 +360,191 @@ if($request_type == "CREATE_USER"){
     }
 
     return;
+}else if($request_type == "CHANGE_ROLE_PERMISSIONS"){
+    if($_SESSION["id"] != session_id()){
+        echo json_encode("USER NOT AUTHENTICATED");
+        return;
+    }
+
+    $uid = $_SESSION['uid'];
+    $roleId = $_POST['role_id'];
+    $changes = $_POST['changes'];
+
+    //The change object contains keys and values that represent permissions 
+    //and a boolean representing whether to add(true) or remove(false) a permission
+    //Model -
+    // {Permissions: boolean  }
+    // Ex -
+    // {all: true}
+    // {add_members: false}
+
+    $changeObj = json_decode($changes);
+
+    if(!isset($changes)){
+        return;
+    }
+
+    try{
+        
+
+
+        $query = $entityManager->createQuery('SELECT o FROM Organization o JOIN o.memberRoles m WHERE m.member = '.$uid.' AND  m.role = \''.$roleId.'\'');
+        $org = $query->getResult()[0];
+        error_log(json_encode($org));
+        $role=$entityManager->getRepository('Role')
+                            ->findOneBy(array('id' => $roleId));
+
+        foreach($changeObj as $key => $value) {
+
+            error_log($key . " => " . $value);
+
+            if($value){
+
+                $newOrgACL = new OrgACL();
+
+                $newOrgACL->setOrganization($org);
+
+                $newOrgACL->setRole($role);
+
+                $newOrgACL->setPermission($key);
+
+                $entityManager->persist($newOrgACL);
+                
+
+
+            }else{
+
+                $query = $entityManager->createQuery('SELECT a FROM OrgACL a JOIN a.role r WITH r.id = :role_id WHERE a.permission = :permission');
+                $query->setParameter('permission', $key);
+                $query->setParameter('role_id', $roleId);
+
+                $res = $query->getResult()[0];
+
+                $entityManager->remove($res);
+
+
+            }
+        
+        }
+
+        echo rsp_msg("ROLE_PERMISSIONS_CHANGED",$roles);
+
+
+    }
+    catch(Exception $e){
+        error_log(json_encode($e));
+    }
+
+    $entityManager->flush();
+
+
+    return;
+
+}else if($request_type == "ADD_ROLE"){
+    if($_SESSION["id"] != session_id()){
+        echo json_encode("USER NOT AUTHENTICATED");
+        return;
+    }
+
+    $uid = $_SESSION['uid'];
+    $roleName = $_POST['role_name'];
+    $changes = $_POST['changes'];
+
+    //The change object contains keys and values that represent permissions 
+    //and a boolean representing whether to add(true) or remove(false) a permission
+    //Model -
+    // {Permissions: boolean  }
+    // Ex -
+    // {all: true}
+    // {add_members: false}
+
+    $changeObj = json_decode($changes);
+
+    if(!isset($changes)){
+        return;
+    }
+
+    try{
+        
+
+
+        $query = $entityManager->createQuery('SELECT o FROM Organization o JOIN o.memberRoles m WHERE m.member = '.$uid);
+        $org = $query->getResult()[0];
+        error_log(json_encode($org));
+        $role= new Role();
+        $role->setName($roleName);
+        $role->setOrganization($org);
+
+        $entityManager->persist($role);
+
+        foreach($changeObj as $key => $value) {
+
+            error_log($key . " => " . $value);
+
+            if($value){
+
+                $newOrgACL = new OrgACL();
+
+                $newOrgACL->setOrganization($org);
+
+                $newOrgACL->setRole($role);
+
+                $newOrgACL->setPermission($key);
+
+                $entityManager->persist($newOrgACL);
+                
+            }
+        
+        }
+
+        echo rsp_msg("ROLE_DELETED",$roles);
+
+
+    }
+    catch(Exception $e){
+        error_log(json_encode($e));
+    }
+
+    $entityManager->flush();
+
+    return;
+}else if($request_type == "DELETE_ROLE"){
+    if($_SESSION["id"] != session_id()){
+        echo json_encode("USER NOT AUTHENTICATED");
+        return;
+    }
+
+    $uid = $_SESSION['uid'];
+    $roleId = $_POST['role_id'];
+
+    try{
+        
+
+
+        $query = $entityManager->createQuery('SELECT o FROM Organization o JOIN o.memberRoles m WHERE m.member = '.$uid.' AND  m.role = \''.$roleId.'\'');
+        $org = $query->getResult()[0];
+        error_log(json_encode($org));
+        $role=$entityManager->getRepository('Role')
+                            ->findOneBy(array('id' => $roleId));
+        if(!isset($role)){
+            return;
+        }
+
+        $entityManager->remove($role);
+
+        echo rsp_msg("ROLE_DELETED",$role);
+
+
+    }
+    catch(Exception $e){
+        error_log(json_encode($e));
+    }
+
+    $entityManager->flush();
+
+
+    return;
+
 }
 
 
@@ -368,16 +553,16 @@ function rsp_msg($code,$message){
     return json_encode(["code" => $code , "message" => $message ]);
 }
 
-function generateJWT($id){
-    global $secret_key;
-    $payload = array(
-        "id" -> $id
-    );
+// function generateJWT($id){
+//     global $secret_key;
+//     $payload = array(
+//         "id" -> $id
+//     );
 
-    error_log(json_encode($secret_key));
+//     error_log(json_encode($secret_key));
 
-    $jwt = JWT::encode($payload, $secret_key);
-    return $jwt;
-}
+//     $jwt = JWT::encode($payload, $secret_key);
+//     return $jwt;
+// }
 
 ?>
