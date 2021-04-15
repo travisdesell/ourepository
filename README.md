@@ -62,3 +62,60 @@ reload_schema.bat
 ```
 www/bootstrap.php
 ```
+
+Note: if using Windows these commands will not work. instead you must manually create the db_info and settings files and manually insert the contents.
+
+To run on windows simply type 
+
+```
+dev.sh
+```
+#### Folder Walkthrough
+##### React
+
+###### API calls to the php server can be found here
+```
+./ourepository_react/src/services/apiService.js
+
+```
+
+###### Page routes can be found here
+```
+./ourepository_react/src/App.js
+
+
+```
+
+###### Pages and page components can be found here
+```
+./ourepository_react/src/pages
+./ourepository_react/src/components
+
+
+```
+
+
+###### TailwindCSS is our css framework, config found here
+```
+./ourepository_react/tailwind.config.js
+
+```
+
+
+#### File Structure Notes
+##### PHP
+
+###### API routes 
+```
+./ourepository/www/api_v2.php
+
+```
+
+###### Docrine ORM Entities
+```
+./ourepository/www/src/
+
+```
+
+
+
