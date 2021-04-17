@@ -497,7 +497,7 @@ if($request_type == "CREATE_USER"){
         
         }
 
-        echo rsp_msg("ROLE_DELETED",$roles);
+        echo rsp_msg("ROLE_ADDED",$roles);
 
 
     }

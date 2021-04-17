@@ -14,7 +14,7 @@ class OrgACL implements JsonSerializable
 
     /**
      * Many features have one product. This is the owning side.
-     * @ORM\ManyToOne(targetEntity="Role", cascade={"remove"})
+     * @ORM\ManyToOne(targetEntity="Role")
      * @ORM\JoinColumn(onDelete="CASCADE")
      */  
     protected $role;

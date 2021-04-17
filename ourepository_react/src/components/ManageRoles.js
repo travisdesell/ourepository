@@ -164,8 +164,11 @@ const ManageRoles = (props) => {
             const resp = data.data
             console.log("PERMISSIONS" + JSON.stringify(resp));
 
-            if(resp.code == "ROLE_ADDED"){
+            if(resp.code == "ROLE_DELETED"){
 
+                
+
+                setAddView(true)
                 setAddView(false)
             }
         })
