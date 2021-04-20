@@ -20,7 +20,6 @@ from scripts.util.file_utils import full_path
 logger = logging.getLogger(__name__)
 
 
-
 def add_item(base, item):
     """
     Adds a new item on top of the base image. The item will have a random scale, rotation, and location.

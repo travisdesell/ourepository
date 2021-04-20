@@ -59,7 +59,7 @@ def load_from_saved_model(name, model_name):
     return detect_fn, label_dict
 
 
-def inference(image, detect_fn, label_dict):
+def inference(image, detect_fn):
     """
     Perform an inference on an image using a TensorFlow object detection function.
 

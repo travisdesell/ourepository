@@ -70,6 +70,7 @@ model_main_tf2.py:
     (default: 'false')
 """
 
+import logging
 import os
 import shutil
 import sys
@@ -80,15 +81,12 @@ from absl import flags
 import tensorflow as tf
 from object_detection import model_lib_v2
 
-import logging
-
 from scripts.util.download_model import download_and_unpack_model
 from scripts.util.edit_pipeline_config import edit_pipeline_config
 from scripts.util.file_utils import create_directory_if_not_exists, full_path
 
 from scripts import ROOT_DIR
 
-# TODO change TF logging. Do not know how to make it use this logger. May have to configure separately.
 logger = logging.getLogger(__name__)
 
 flags.DEFINE_string('pipeline_config_path', None, 'Path to pipeline config '

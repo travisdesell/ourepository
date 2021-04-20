@@ -28,7 +28,6 @@ __author__ = 'Ian Randman'
 import argparse
 import logging
 import os
-import warnings
 
 import numpy as np
 from PIL import Image
@@ -41,12 +40,7 @@ from scripts.util.visualization_utils import place_detections_on_image
 
 from scripts import ROOT_DIR
 
-# Python doesn't like me importing rasterio before tensorflow, so this goes down here
-# import rasterio as rio
-
-
 logger = logging.getLogger(__name__)
-# warnings.filterwarnings("ignore", category=rio.errors.NotGeoreferencedWarning)
 
 
 def create_dirs(name, image_path, model_name):
@@ -253,7 +247,7 @@ def main(name, image_path, model_name, model_width, model_height, stride_length)
         image = get_image_window(mosaic_dataset, x, y, model_width, model_height)
 
         # inference on this slice and collect detections
-        detections = inference(image, detect_fn, label_dict)
+        detections = inference(image, detect_fn)
         denormalize_detections(detections, model_width, model_height)
         convert_relative_detections_to_absolute(detections, x, y)
         all_detections = append_detection(all_detections, detections)

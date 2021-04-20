@@ -93,8 +93,6 @@ from scripts.util.file_utils import create_directory_if_not_exists
 
 from scripts import ROOT_DIR
 
-# tf.enable_v2_behavior()
-
 logger = logging.getLogger(__name__)
 
 FLAGS = flags.FLAGS
