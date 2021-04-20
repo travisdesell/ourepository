@@ -15,7 +15,8 @@
 # ==============================================================================
 
 """
-# TODO Flags must be adjusted a bit.
+TODO Flags must be adjusted a bit for which are required and what is necessary for the file structure regarding
+organizations, projects, etc.
 
        USAGE: model_main_tf2.py [flags]
 flags:
@@ -152,7 +153,6 @@ FLAGS = flags.FLAGS
 
 
 def main(unused_argv):
-    # TODO what flags should be required?
     # TODO how to handle checkpoint
 
     # pretrained model from TensorFlow Object Detection model zoo
@@ -185,6 +185,7 @@ def main(unused_argv):
     pipeline_config_path = edit_pipeline_config(pretrained_model_dir, mosaic_model_dir, num_classes, mosaic_annotations_dir)
 
 
+    # TODO what flags should be required
     # flags.mark_flag_as_required('model_dir')
     # flags.mark_flag_as_required('pipeline_config_path')
     tf.config.set_soft_device_placement(True)

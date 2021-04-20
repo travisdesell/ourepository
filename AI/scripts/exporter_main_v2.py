@@ -22,7 +22,8 @@ configuration and a trained checkpoint. Outputs associated checkpoint files,
 a SavedModel, and a copy of the model config.
 
 
-# TODO Flags must be adjusted a bit.
+TODO Flags must be adjusted a bit for which are required and what is necessary for the file structure regarding
+organizations, projects, etc.
 
        USAGE: exporter_main_v2.py [flags]
 flags:
@@ -130,10 +131,6 @@ flags.DEFINE_string('side_input_names', '',
                     'assuming the names will be a comma-separated list of '
                     'strings. This flag is required if using side inputs.')
 
-# flags.mark_flag_as_required('pipeline_config_path')
-# flags.mark_flag_as_required('trained_checkpoint_dir')
-# flags.mark_flag_as_required('output_directory')
-
 # NEW FLAGS
 
 flags.DEFINE_string(
@@ -150,6 +147,9 @@ flags.DEFINE_string(
 
 def main(_):
     # TODO what flags should be required?
+    # flags.mark_flag_as_required('pipeline_config_path')
+    # flags.mark_flag_as_required('trained_checkpoint_dir')
+    # flags.mark_flag_as_required('output_directory')
 
     # path to directory containing the specific user-trained model for this mosaic
     trained_mosaic_model_dir = os.path.join(ROOT_DIR, 'models', FLAGS.name, FLAGS.model_name)
