@@ -8,7 +8,7 @@ __author__ = 'Ian Randman'
 import logging
 import os
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # suppress TensorFlow logging
 
 import numpy as np
 import tensorflow as tf
@@ -18,10 +18,6 @@ from object_detection.utils import label_map_util
 from scripts.util.visualization_utils import place_detections_on_image
 
 from scripts import ROOT_DIR
-
-# pretty sure these do not work
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow logging (1)
-tf.get_logger().setLevel('ERROR')  # Suppress TensorFlow logging (2)
 
 logger = logging.getLogger(__name__)
 

@@ -74,7 +74,7 @@ import os
 import shutil
 import sys
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # suppress TensorFlow logging
 
 from absl import flags
 import tensorflow as tf

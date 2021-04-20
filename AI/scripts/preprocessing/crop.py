@@ -30,7 +30,7 @@ import sys
 import time
 import logging
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # suppress TensorFlow logging
 
 import pandas as pd
 from object_detection.utils import label_map_util

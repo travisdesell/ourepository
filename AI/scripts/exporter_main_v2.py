@@ -79,7 +79,7 @@ TODO: The following flag may be kept or removed depending on how we want to hand
 import logging
 import os
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # suppress TensorFlow logging
 
 from absl import app
 from absl import flags
