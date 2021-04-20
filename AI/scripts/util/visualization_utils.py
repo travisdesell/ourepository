@@ -69,7 +69,7 @@ def place_detections_on_image(image, detections, label_dict, show_image=False):
     :return: a copy of the image with the detections
     """
 
-    logger.info('Displaying bounding boxes for detections...')
+    logger.info('Placing detections on image...')
 
     # convert the image to RGB then copy into NumPy array
     image = image.convert('RGB')
@@ -91,6 +91,7 @@ def place_detections_on_image(image, detections, label_dict, show_image=False):
 
     # determine whether to show the new image as a matplotlib figure
     if show_image:
+        logger.info('Displaying bounding boxes for detections...')
         show_image_as_figure(image_np_with_detections)
 
     # return the NumPy array image with the detections on top
