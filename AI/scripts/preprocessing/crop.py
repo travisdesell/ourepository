@@ -30,11 +30,13 @@ import sys
 import time
 import logging
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 import pandas as pd
 from object_detection.utils import label_map_util
 from tqdm import tqdm
 
-import tensorflow.compat.v1 as tf
+import tensorflow as tf
 
 from scripts.util.file_utils import create_directory_if_not_exists, get_labels_from_csvs, full_path, load_mosaic, \
     get_image_window
@@ -179,8 +181,8 @@ def make_slices(slice_coords_dict, mosaic_dataset, label_map, model_input_width,
     """
 
     # open writers for the train and test TFRecords
-    train_writer = tf.python_io.TFRecordWriter(train_output_path)
-    test_writer = tf.python_io.TFRecordWriter(test_output_path)
+    train_writer = tf.io.TFRecordWriter(train_output_path)
+    test_writer = tf.io.TFRecordWriter(test_output_path)
 
     # create train/test split
     in_train_split = create_train_test_split(train_test_ratio, slice_coords_dict)

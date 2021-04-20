@@ -10,6 +10,7 @@ __author__ = 'Ian Randman, John McCarroll'
 import logging
 import os
 import sys
+import warnings
 
 import numpy as np
 import rasterio as rio
@@ -17,6 +18,7 @@ from PIL import Image
 from rasterio.windows import Window
 
 logger = logging.getLogger(__name__)
+warnings.filterwarnings("ignore", category=rio.errors.NotGeoreferencedWarning)
 
 
 def full_path(path):

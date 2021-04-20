@@ -79,10 +79,12 @@ TODO: The following flag may be kept or removed depending on how we want to hand
 import logging
 import os
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 from absl import app
 from absl import flags
 
-import tensorflow.compat.v2 as tf
+import tensorflow as tf
 from google.protobuf import text_format
 from object_detection import exporter_lib_v2
 
@@ -91,7 +93,7 @@ from scripts.util.file_utils import create_directory_if_not_exists
 
 from scripts import ROOT_DIR
 
-tf.enable_v2_behavior()
+# tf.enable_v2_behavior()
 
 logger = logging.getLogger(__name__)
 
@@ -174,6 +176,7 @@ def main(_):
     text_format.Merge(FLAGS.config_override, pipeline_config)
 
     # export the model
+    logger.info(f'Model export has started...')
     exporter_lib_v2.export_inference_graph(
         FLAGS.input_type, pipeline_config, trained_mosaic_model_dir,
         mosaic_model_dir, FLAGS.use_side_inputs, FLAGS.side_input_shapes,

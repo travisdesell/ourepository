@@ -74,8 +74,10 @@ import os
 import shutil
 import sys
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 from absl import flags
-import tensorflow.compat.v2 as tf
+import tensorflow as tf
 from object_detection import model_lib_v2
 
 import logging
@@ -172,11 +174,14 @@ def main(unused_argv):
     mosaic_model_dir = os.path.join(mosaic_models_dir, FLAGS.model_name)
     if os.path.exists(mosaic_model_dir):
         if FLAGS.continue_from_checkpoint:
-            logger.error(f'Cannot find {full_path(mosaic_model_dir)}')
-            sys.exit(1)
+            logger.info(f'Continuing from checkpoint at {full_path(mosaic_model_dir)}')
         else:
             shutil.rmtree(mosaic_model_dir)
             logger.info(f'Removed {full_path(mosaic_model_dir)}')
+    else:
+        if FLAGS.continue_from_checkpoint:
+            logger.error(f'Cannot find {full_path(mosaic_model_dir)}')
+            sys.exit(1)
 
     create_directory_if_not_exists(mosaic_model_dir)
 
@@ -214,7 +219,7 @@ def main(unused_argv):
         else:
             strategy = tf.compat.v2.distribute.MirroredStrategy()
 
-
+        logger.info(f'Model training has started...')
         with strategy.scope():
             model_lib_v2.train_loop(
                 pipeline_config_path=pipeline_config_path,
@@ -223,6 +228,7 @@ def main(unused_argv):
                 use_tpu=FLAGS.use_tpu,
                 checkpoint_every_n=FLAGS.checkpoint_every_n,
                 record_summaries=FLAGS.record_summaries)
+        logger.info(f'Model training completed')
 
 
 if __name__ == '__main__':

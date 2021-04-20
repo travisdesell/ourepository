@@ -42,11 +42,11 @@ from scripts.util.visualization_utils import place_detections_on_image
 from scripts import ROOT_DIR
 
 # Python doesn't like me importing rasterio before tensorflow, so this goes down here
-import rasterio as rio
+# import rasterio as rio
 
 
 logger = logging.getLogger(__name__)
-warnings.filterwarnings("ignore", category=rio.errors.NotGeoreferencedWarning)
+# warnings.filterwarnings("ignore", category=rio.errors.NotGeoreferencedWarning)
 
 
 def create_dirs(name, image_path, model_name):
