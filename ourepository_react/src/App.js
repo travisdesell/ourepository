@@ -13,6 +13,8 @@ import OrganizationPage from './pages/Organization';
 import UserStatusPage from './pages/UserStatus';
 
 import apiService from "./services/api";
+import CreateOrgPage from './pages/CreateOrg';
+import OrgSettingsPage from './pages/OrgSettings';
 
 
 function App() {
@@ -21,25 +23,33 @@ function App() {
   const protected_routes = [
     {path: "/landing", page: LandingPage},
     {path: "/organization/:id" ,page: OrganizationPage},
-    {path: "/UserStatus", page:UserStatusPage}
+    {path: "/org-settings/:id" ,page: OrgSettingsPage},
+    {path: "/UserStatus", page:UserStatusPage},
+    {path: "/create-org", page:CreateOrgPage}
   ]
 
   const [protectedRoutes, setProtectedRoutes] = React.useState([])
 
   React.useEffect(()=>{
 
-
     let revealRoutes = async () => {
+
         let res = await apiService.isAuth()
+        
         console.log(res);
 
         if( res.data == "true"){
+
           localStorage.setItem("user",true)
 
           setProtectedRoutes(protected_routes)
+
         }else{
-          console.log("AINT AUTH");
+
+          localStorage.removeItem("user")
+
           setProtectedRoutes([])
+
         }
   
       emitter.addListener("storage", async () => {

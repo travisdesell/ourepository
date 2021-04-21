@@ -5,7 +5,7 @@ use Doctrine\ORM\Mapping as ORM;
  * @ORM\Entity 
  * @ORM\Table(name="roles")
  */
-class Role
+class Role implements JsonSerializable
 {
     /** @ORM\Id 
     * @ORM\Column(type="integer") 
@@ -49,5 +49,13 @@ class Role
     public function setOrganization($organization)
     {
         $this->organization = $organization;
+    }
+
+    public function jsonSerialize()
+    {
+        return array(
+            'id' => $this->id,
+            'name' => $this->name
+        );
     }
 }

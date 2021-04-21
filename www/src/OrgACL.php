@@ -5,7 +5,7 @@ use Doctrine\ORM\Mapping as ORM;
  * @ORM\Entity 
  * @ORM\Table(name="org_acl")
  */
-class OrgACL
+class OrgACL implements JsonSerializable
 {
     /** @ORM\Id 
      * @ORM\Column(type="integer") 
@@ -15,7 +15,8 @@ class OrgACL
     /**
      * Many features have one product. This is the owning side.
      * @ORM\ManyToOne(targetEntity="Role")
-     */    
+     * @ORM\JoinColumn(onDelete="CASCADE")
+     */  
     protected $role;
 
     /** @ORM\Column(type="string") */
@@ -32,22 +33,44 @@ class OrgACL
         return $this->id;
     }
 
-    public function getName()
+    public function getPermission()
     {
-        return $this->name;
+        return $this->permission;
     }
 
-    public function setName($name)
+    public function getRole()
     {
-        $this->name = $name;
+        return $this->role;
     }
+    
+    public function getOrganization()
+    {
+        return $this->role;
+    }
+
+    public function setPermission($permission)
+    {
+        $this->permission = $permission;
+    }
+
+
+    public function setRole($role)
+    {
+        $this->role = $role;
+    }
+
+    public function setOrganization($organization)
+    {
+        $this->organization = $organization;
+    }
+
+
+    public function jsonSerialize()
+    {
+        return array(
+            'permission' => $this->permission,
+        );
+    }
+
 }
 
-// Pseudocode
-// shareMosaic(){
-// 	checkUser(user){
-// 		roles->user.roles	
-// 		roles->getRoles(organization)
-// 		roles.contain(permission)
-// 	}
-// }

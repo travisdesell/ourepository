@@ -8,7 +8,7 @@ use Doctrine\Common\Collections\ArrayCollection;
  * @ORM\Entity 
  * @ORM\Table(name="organizations")
  */
-class Organization
+class Organization implements JsonSerializable
 {
     /** @ORM\Id 
      * @ORM\Column(type="integer") 
@@ -78,6 +78,19 @@ class Organization
     public function addMemberRole($memberRole)
     {
         $this->memberRoles->add($memberRole);
+    }
+
+    public function addRole($role)
+    {
+        $this->roles->add($role);
+    }
+
+    public function jsonSerialize()
+    {
+        return array(
+            'name' => $this->name,
+            'visible'=> $this->visible,
+        );
     }
 
 }

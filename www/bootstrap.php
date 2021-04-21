@@ -1,9 +1,24 @@
 <?php
-// bootstrap.php
+
+// bootstrap.php is the configuration for Doctrine ORM 
+
+// Import this file to obtain the Entitymanager to start communicating with the Database Objects
+
+// Look at api_v2.php to see how bootstrap is imported and used
+
+// More information can be found here: https://www.doctrine-project.org/projects/doctrine-orm/en/2.8/reference/configuration.html
+
+
+
+
+
 use Doctrine\ORM\Tools\Setup;
 use Doctrine\ORM\EntityManager;
 
 require_once "vendor/autoload.php";
+require_once "../db/db_info.php";
+
+global $our_db, $our_db_name, $our_db_user, $our_db_password, $our_db_host;
 
 // Create a simple "default" Doctrine ORM configuration for Annotations
 
@@ -12,18 +27,16 @@ $proxyDir = null;
 $cache = null;
 $useSimpleAnnotationReader = false;
 $config = Setup::createAnnotationMetadataConfiguration(array(__DIR__."/src"), $isDevMode, $proxyDir, $cache, $useSimpleAnnotationReader);
-// or if you prefer yaml or XML
-//$config = Setup::createXMLMetadataConfiguration(array(__DIR__."/config/xml"), $isDevMode);
-//$config = Setup::createYAMLMetadataConfiguration(array(__DIR__."/config/yaml"), $isDevMode);
+
 
 // database configuration parameters
 // the connection configuration
 $dbParams = array(
     'driver'   => 'pdo_mysql',
-    'user'     => 'jon',
-    'password' => 'password',
-    'dbname'   => 'our',
-    'url' => 'mysql://jon:password@localhost:3306/our',
+    'user'     => $our_db_user,
+    'password' => $our_db_password,
+    'dbname'   => $our_db_name,
+    'url' => 'mysql://'.$our_db_user.':'.$our_db_password.'@'.$our_db_host.'/'.$our_db_name,
 
 );
 

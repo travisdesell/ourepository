@@ -505,42 +505,6 @@ if ($request_type == NULL || $request_type == "INDEX") {
     $label_id = $our_db->real_escape_string($_POST['label_id']);
 
     get_predictions($user_id, $job_id, $mosaic_id, $label_id);
-} else if ($request_type == "REGISTER_USER"){
-    $username = $_GET['username'];
-    $password = $_GET['password'];
-    $given_name = $_GET['given_name'];
-    $family_name = $_GET['family_name'];
-    $salt = "PlaceholderSalt";
-    try {
-        $salt = random_bytes(10);
-    } catch (Exception $e) {
-    }
-    $hash = hash_pbkdf2("sha256", $password, $given_name, 16, 20);
-    $newUser = new User();
-    $newUser->setName($username);
-    $newUser->setAdmin(false);
-    $newUser->setHash($hash);
-    $newUser->setShake($salt);
-    $query = "INSERT into users (email,name,given_name,family_name) VALUES ($hash, $username, $salt, $family_name)";
-    $result = query_our_db($query);
-
-
-} else if($request_type == "CUSTOM_LOGIN"){
-    $username = $_GET['username'];
-    $password = $_GET['password'];
-    $query = "SELECT given_name FROM users WHERE $username = name";
-    $salt = query_our_db($query);
-    $hash = hash_pbkdf2("sha256", $password, $salt, 16, 20);
-    $query = "SELECT id FROM users WHERE $username = name and email = $hash";
-    $result = query_our_db($query);
-    if ($result != null){
-        $response['login_result'] = "successful login";
-    }
-    else{
-        $response['login_result'] = "The username or password was incorrect";
-    }
-
-    echo json_encode($response);
 }
 
 ?>

@@ -11,11 +11,11 @@ const LoginPage = (props) => {
 
     const [cookies, setCookie, removeCookie] = useCookies(['session_id']);
     const [signUp, setSignUp] = React.useState(false)
-    const [username, setUsername] = React.useState('')
     const [email, setEmail] = React.useState('')
     const [password, setPassword] = React.useState('')
     const [given_name, setGivenName] = React.useState('')
     const [family_name, setFamilyName] = React.useState('')
+
 
     const { x, y } = useMousePosition();
 
@@ -28,7 +28,7 @@ const LoginPage = (props) => {
     async function handleSubmitClick() {
       try{
         console.log(x*y);
-        const res = await apiService.createUser(email,username,given_name,family_name,password,Math.random()*x*y)
+        const res = await apiService.createUser(email,given_name,family_name,password,Math.random()*x*y)
         console.log(res);
         if(res.data.code=="user_exists"){
           alert(res.data.message)
@@ -116,10 +116,7 @@ const LoginPage = (props) => {
           <input onChange={event => setPassword(event.target.value)} class="shadow appearance-none border border-red rounded w-full py-2 px-3 text-black mb-3" id="password" type="password" placeholder="Password"/>
           <p class="text-red text-xs italic">Please choose a password.</p>
         </div>
-        {signUp && <><div class="mb-6">
-          <input onChange={event => setUsername(event.target.value)} class="shadow appearance-none border border-red rounded w-full py-2 px-3 text-black mb-3" id="username" type="text" placeholder="Username"/>
-          <p class="text-red text-xs italic">Please choose a username.</p>
-        </div> 
+        {signUp && <>
         <div class="mb-6">
         
         <input onChange={event => setGivenName(event.target.value)} class="shadow appearance-none border border-red rounded w-full py-2 px-3 text-black mb-3" id="given_name" type="text" placeholder="First Name"/>
