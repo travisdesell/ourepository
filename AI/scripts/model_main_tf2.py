@@ -153,7 +153,6 @@ FLAGS = flags.FLAGS
 
 
 def main(unused_argv):
-    # TODO how to handle checkpoint
 
     # pretrained model from TensorFlow Object Detection model zoo
     pretrained_model_dir = os.path.join(ROOT_DIR, 'pre-trained-models', FLAGS.model_name)
@@ -170,10 +169,12 @@ def main(unused_argv):
 
     # path to directory containing the specific user-trained model for this mosaic
     mosaic_model_dir = os.path.join(mosaic_models_dir, FLAGS.model_name)
+    # check whether model directory exists and whether to continue from checkpoint
     if os.path.exists(mosaic_model_dir):
         if FLAGS.continue_from_checkpoint:
             logger.info(f'Continuing from checkpoint at {full_path(mosaic_model_dir)}')
         else:
+            # if not continuing from checkpoint, delete the model and retrain
             shutil.rmtree(mosaic_model_dir)
             logger.info(f'Removed {full_path(mosaic_model_dir)}')
     else:
@@ -181,12 +182,17 @@ def main(unused_argv):
             logger.error(f'Cannot find {full_path(mosaic_model_dir)}')
             sys.exit(1)
 
+    # create the user-trained model directory
     create_directory_if_not_exists(mosaic_model_dir)
 
+    # path to directory containing the annotations for this user-trained model
     mosaic_annotations_dir = os.path.join(ROOT_DIR, 'annotations/' + FLAGS.name)
-    num_classes = len([f for f in os.listdir(FLAGS.data_dir) if f.lower().endswith('.csv')])
-    pipeline_config_path = edit_pipeline_config(pretrained_model_dir, mosaic_model_dir, num_classes, mosaic_annotations_dir)
 
+    # get the number of classes to train on
+    num_classes = len([f for f in os.listdir(FLAGS.data_dir) if f.lower().endswith('.csv')])
+
+    # make the pipeline configuration
+    pipeline_config_path = edit_pipeline_config(pretrained_model_dir, mosaic_model_dir, num_classes, mosaic_annotations_dir)
 
     # TODO what flags should be required
     # flags.mark_flag_as_required('model_dir')
