@@ -108,123 +108,150 @@ def setup(name, data_dir, model_width, model_height, stride_length):
     train_output_path = os.path.join(mosaic_annotations_dir, 'train.record')
     test_output_path = os.path.join(mosaic_annotations_dir, 'test.record')
 
-    # get image filename; should be one image file in directory
-    valid_images = ('.jpg', '.jpeg', '.tif', '.tiff')
-    image_paths = [f for f in os.listdir(data_dir) if f.lower().endswith(valid_images)]
-    if len(image_paths) == 0:
-        logger.error('No image found in directory')
-        sys.exit(1)
-    if len(image_paths) > 1:
-        logger.error('Ambiguous image file')
-        logger.error('Only one image file allowed in directory')
-        sys.exit(1)
-    image_path = os.path.join(data_dir, image_paths[0])
+    # check to make sure data directory only contains folders
+    for mosaic_dir_name in os.listdir(data_dir):
+        mosaic_dir = os.path.join(data_dir, mosaic_dir_name)
+        if os.path.isdir(mosaic_dir):
+            # check to make sure mosaic directory only contains files
+            for mosaic_file_name in os.listdir(mosaic_dir):
+                if not os.path.isfile(os.path.join(mosaic_dir, mosaic_file_name)):
+                    logger.error('Directory found in mosaic directory')
+                    logger.error('Only files allowed in mosaic directory')
+                    sys.exit(1)
+        else:
+            logger.error('File found in data directory')
+            logger.error('Only directories allowed in data directory')
+            sys.exit(1)
 
-    # get CSV filenames from directory
-    csv_filenames = [f for f in os.listdir(data_dir) if f.lower().endswith('.csv')]
-    if len(csv_filenames) == 0:
-        logger.error('No CSVs found in directory')
-        sys.exit(1)
-    csv_filenames = [os.path.join(data_dir, filename) for filename in csv_filenames]
+    # iterate over all mosaics
+    label_names = set()
+    slice_coords_dicts = list()
+    mosaic_datasets = list()
+    for mosaic_dir_name in os.listdir(data_dir):
+        mosaic_dir = os.path.join(data_dir, mosaic_dir_name)
 
-    # gather all the label names from the CSVs
-    csv_filename_to_label = get_labels_from_csvs(csv_filenames)
+        # get image filename; should be one image file in directory
+        valid_images = ('.jpg', '.jpeg', '.tif', '.tiff')
+        image_paths = [f for f in os.listdir(mosaic_dir) if f.lower().endswith(valid_images)]
+        if len(image_paths) == 0:
+            logger.error(f'No image found in mosaic directory: {full_path(mosaic_dir)}')
+            sys.exit(1)
+        if len(image_paths) > 1:
+            logger.error('Ambiguous image file')
+            logger.error(f'Only one image file allowed in mosaic directory: {full_path(mosaic_dir)}')
+            sys.exit(1)
+        image_path = os.path.join(mosaic_dir, image_paths[0])
+
+        # get CSV filenames from directory
+        csv_filenames = [f for f in os.listdir(mosaic_dir) if f.lower().endswith('.csv')]
+        if len(csv_filenames) == 0:
+            logger.error('No CSVs found in directory')
+            sys.exit(1)
+        csv_filenames = [os.path.join(mosaic_dir, filename) for filename in csv_filenames]
+
+        # gather all the label names from the CSVs
+        csv_filename_to_label = get_labels_from_csvs(csv_filenames)
+        label_names = label_names.union(set(csv_filename_to_label.values()))
+
+        # load in mosaic
+        mosaic_dataset, mosaic_width, mosaic_height = load_mosaic(image_path)
+        mosaic_datasets.append(mosaic_dataset)
+
+        # iterate over each label CSV and add annotations to dataframe
+        annotations_df_list = list()
+        for csv_filename in csv_filenames:
+            # create dataframe containing annotation data
+            df = pd.read_csv(csv_filename, comment='#')
+            df['label'] = csv_filename_to_label[csv_filename]
+            annotations_df_list.append(df)
+        total_annotations_df = pd.concat(annotations_df_list)
+
+        # generate dict mapping slice coordinates to a list of the annotations contained within the slice
+        slice_coords_dict = generate_slice_coords_with_annotations(
+            mosaic_width, mosaic_height, model_width, model_height, stride_length, total_annotations_df)
+
+        # TODO possibly keep some slices without annotations
+        # remove all slices without an annotation (performed here to make progress bar more accurate)
+        slice_coords_dict_all = slice_coords_dict
+        slice_coords_dict = {coord: annotations for (coord, annotations) in slice_coords_dict.items() if
+                             len(annotations) > 0}
+        slice_coords_dicts.append(slice_coords_dict)
+        percent_containing_annotations = 100 * len(slice_coords_dict) / len(slice_coords_dict_all)
+        logger.info(f'{round(percent_containing_annotations, 2)}% of all slices in mosaic contain annotations')
 
     # create label map
-    label_map_path = create_label_proto(list(csv_filename_to_label.values()), mosaic_annotations_dir)
+    label_map_path = create_label_proto(list(label_names), mosaic_annotations_dir)
 
     # load label map
     label_map = label_map_util.load_labelmap(label_map_path)
 
-    # load in mosaic
-    mosaic_dataset, mosaic_width, mosaic_height = load_mosaic(image_path)
-
-    # iterate over each label CSV and add annotations to dataframe
-    annotations_df_list = list()
-    for csv_filename in csv_filenames:
-        # create dataframe containing annotation data
-        df = pd.read_csv(csv_filename, comment='#')
-        df['label'] = csv_filename_to_label[csv_filename]
-        annotations_df_list.append(df)
-    total_annotations_df = pd.concat(annotations_df_list)
-
-    # generate dict mapping slice coordinates to a list of the annotations contained within the slice
-    slice_coords_dict = generate_slice_coords_with_annotations(
-        mosaic_width, mosaic_height, model_width, model_height, stride_length, total_annotations_df)
-
-    # TODO possibly keep some slices without annotations
-    # remove all slices without an annotation (performed here to make progress bar more accurate)
-    slice_coords_dict_all = slice_coords_dict
-    slice_coords_dict = {coord: annotations for (coord, annotations) in slice_coords_dict.items() if
-                         len(annotations) > 0}
-    percent_containing_annotations = 100 * len(slice_coords_dict) / len(slice_coords_dict_all)
-    logger.info(f'{round(percent_containing_annotations, 2)}% of all slices contain annotations')
-
-    return slice_coords_dict, mosaic_dataset, label_map, train_output_path, test_output_path
+    return slice_coords_dicts, mosaic_datasets, label_map, train_output_path, test_output_path
 
 
-def make_slices(slice_coords_dict, mosaic_dataset, label_map, model_input_width, model_input_height,
+def make_slices(slice_coords_dicts, mosaic_datasets, label_map, model_input_width, model_input_height,
                 train_test_ratio, train_output_path, test_output_path):
     """
     Slice up the mosaic, then create TFRecords for training and evaluation from these slices.
 
-    :param slice_coords_dict: a dict where the key is the (x, y) for top left of the slice, and the value is a list of 5-tuples
-        containing (x1, y1, x2, y2, label) for each annotation in the slice
-    :param mosaic_dataset: the mosaic DatasetReader
+    :param slice_coords_dicts: a list of dicts where the key is the (x, y) for top left of the slice, and the value
+        is a list of 5-tuples containing (x1, y1, x2, y2, label) for each annotation in the slice
+    :param mosaic_datasets: a list of mosaic DatasetReaders
     :param label_map: the label map object containing information about annotation classes
     :param model_input_width: the width of the input to the model
     :param model_input_height: the height of the input to the model
     :param train_test_ratio: the train/test split ratio
     :param train_output_path: the path to the train TFRecord
     :param test_output_path: the path to the test TFRecord
-    :return:
+    :return: none
     """
 
     # open writers for the train and test TFRecords
     train_writer = tf.io.TFRecordWriter(train_output_path)
     test_writer = tf.io.TFRecordWriter(test_output_path)
 
-    # create train/test split
-    in_train_split = create_train_test_split(train_test_ratio, slice_coords_dict)
+    # iterate over all mosaics
+    for slice_coords_dict, mosaic_dataset in zip(slice_coords_dicts, mosaic_datasets):
+        # create train/test split
+        in_train_split = create_train_test_split(train_test_ratio, slice_coords_dict)
 
-    # loop over slices
-    logger.info('Creating slices and TFExamples')
-    time.sleep(0.1)
-    for coord in tqdm(slice_coords_dict):
-        # get the annotations fully contained within this slice
-        annotations = slice_coords_dict[coord]
-        # top left corner for this slice
-        x, y = coord
+        # loop over slices
+        logger.info(f'Creating slices and TFExamples for {full_path(mosaic_dataset.name)}')
+        time.sleep(0.1)
+        for coord in tqdm(slice_coords_dict):
+            # get the annotations fully contained within this slice
+            annotations = slice_coords_dict[coord]
+            # top left corner for this slice
+            x, y = coord
 
-        # get the PIL image for this slice
-        image = get_image_window(mosaic_dataset, x, y, model_input_width, model_input_height)
+            # get the PIL image for this slice
+            image = get_image_window(mosaic_dataset, x, y, model_input_width, model_input_height)
 
-        # iterate over all annotations in slice
-        rel_annotations = list()
-        for x1, y1, x2, y2, label in annotations:
-            # calculate relative normalized coordinates for annotation in slice
-            rel_x1 = (x1 - x) / model_input_width
-            rel_y1 = (y1 - y) / model_input_height
-            rel_x2 = (x2 - x) / model_input_width
-            rel_y2 = (y2 - y) / model_input_height
+            # iterate over all annotations in slice
+            rel_annotations = list()
+            for x1, y1, x2, y2, label in annotations:
+                # calculate relative normalized coordinates for annotation in slice
+                rel_x1 = (x1 - x) / model_input_width
+                rel_y1 = (y1 - y) / model_input_height
+                rel_x2 = (x2 - x) / model_input_width
+                rel_y2 = (y2 - y) / model_input_height
 
-            rel_annotations.append((rel_x1, rel_y1, rel_x2, rel_y2, label))
+                rel_annotations.append((rel_x1, rel_y1, rel_x2, rel_y2, label))
 
-        # create the TF Example
-        # only apply transformation if this is a training slice
-        if in_train_split[coord]:
-            # transform the slice image and its annotations; may not apply transformation - see function for details
-            transformed_image, transformed_annotations = transform(image, rel_annotations)
+            # create the TF Example
+            # only apply transformation if this is a training slice
+            if in_train_split[coord]:
+                # transform the slice image and its annotations; may not apply transformation - see function for details
+                transformed_image, transformed_annotations = transform(image, rel_annotations)
 
-            # uncomment to show image along with annotations
-            # show_bounding_boxes(image, rel_annotations)
-            # show_bounding_boxes(transformed_image, transformed_annotations)
+                # uncomment to show image along with annotations
+                # show_bounding_boxes(image, rel_annotations)
+                # show_bounding_boxes(transformed_image, transformed_annotations)
 
-            tf_example = create_tf_example(transformed_annotations, transformed_image, label_map)
-            train_writer.write(tf_example.SerializeToString())
-        else:
-            tf_example = create_tf_example(rel_annotations, image, label_map)
-            test_writer.write(tf_example.SerializeToString())
+                tf_example = create_tf_example(transformed_annotations, transformed_image, label_map)
+                train_writer.write(tf_example.SerializeToString())
+            else:
+                tf_example = create_tf_example(rel_annotations, image, label_map)
+                test_writer.write(tf_example.SerializeToString())
 
     # close resources
     train_writer.close()
@@ -248,15 +275,16 @@ def main(name, data_dir, model_width, model_height, stride_length, ratio):
     """
 
     # directory setup and annotation preprocessing
-    slice_coords_dict, mosaic_dataset, label_map, train_output_path, test_output_path = \
+    slice_coords_dicts, mosaic_datasets, label_map, train_output_path, test_output_path = \
         setup(name, data_dir, model_width, model_height, stride_length)
 
     # slice up the image and create the TFRecords
-    make_slices(slice_coords_dict, mosaic_dataset, label_map, model_width, model_height,
+    make_slices(slice_coords_dicts, mosaic_datasets, label_map, model_width, model_height,
                 ratio, train_output_path, test_output_path)
 
     # close resources
-    mosaic_dataset.close()
+    for mosaic_dataset in mosaic_datasets:
+        mosaic_dataset.close()
 
 
 if __name__ == '__main__':

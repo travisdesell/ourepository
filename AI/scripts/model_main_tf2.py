@@ -75,11 +75,13 @@ import os
 import shutil
 import sys
 
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # suppress TensorFlow logging
 
 from absl import flags
 import tensorflow as tf
 from object_detection import model_lib_v2
+from object_detection.utils import label_map_util
 
 from scripts.util.download_model import download_and_unpack_model
 from scripts.util.edit_pipeline_config import edit_pipeline_config
@@ -189,7 +191,8 @@ def main(unused_argv):
     mosaic_annotations_dir = os.path.join(ROOT_DIR, 'annotations/' + FLAGS.name)
 
     # get the number of classes to train on
-    num_classes = len([f for f in os.listdir(FLAGS.data_dir) if f.lower().endswith('.csv')])
+    label_map_path = os.path.join(mosaic_annotations_dir, 'label_map.pbtxt')
+    num_classes = len(label_map_util.load_labelmap(label_map_path).item)
 
     # make the pipeline configuration
     pipeline_config_path = edit_pipeline_config(pretrained_model_dir, mosaic_model_dir, num_classes, mosaic_annotations_dir)
