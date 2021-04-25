@@ -185,7 +185,8 @@ def setup(name, data_dir, model_width, model_height, stride_length):
         logger.info(f'{round(percent_containing_annotations, 2)}% of all slices in mosaic contain annotations')
 
     # create label map
-    label_map_path = create_label_proto(list(label_names), mosaic_annotations_dir)
+    sorted_label_names_list = sorted([label_name.lower() for label_name in list(label_names)])
+    label_map_path = create_label_proto(sorted_label_names_list, mosaic_annotations_dir)
 
     # load label map
     label_map = label_map_util.load_labelmap(label_map_path)
