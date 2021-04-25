@@ -108,6 +108,11 @@ def setup(name, data_dir, model_width, model_height, stride_length):
     train_output_path = os.path.join(mosaic_annotations_dir, 'train.record')
     test_output_path = os.path.join(mosaic_annotations_dir, 'test.record')
 
+    # check to make sure data directory has at least one folder
+    if len(os.listdir(data_dir)) == 0:
+        logger.error('Data directory must contain at least one mosaic directory')
+        sys.exit(1)
+
     # check to make sure data directory only contains folders
     for mosaic_dir_name in os.listdir(data_dir):
         mosaic_dir = os.path.join(data_dir, mosaic_dir_name)
