@@ -70,9 +70,9 @@ def main():
 
     data_dir = os.path.join(os.path.dirname(__file__), 'test')
     create_directory_if_not_exists(full_path(data_dir))
-    for i in [1, 2]:
+    for j in [1, 2]:
         # create clean output directory
-        mosaic_dir = os.path.join(data_dir, f'test{i}')
+        mosaic_dir = os.path.join(data_dir, f'test{j}')
         if os.path.exists(mosaic_dir):
             shutil.rmtree(mosaic_dir)
         create_directory_if_not_exists(full_path(mosaic_dir))
@@ -84,9 +84,9 @@ def main():
             item_ims[label] = Image.open(image_path)
             coords_dfs[label] = pd.DataFrame(columns=['x1', 'y1', 'x2', 'y2'])
 
-            for i in range(50):
+            for j in range(10):
                 im, coords = add_item(im, item_ims[label])
-                coords_dfs[label].loc[i] = coords
+                coords_dfs[label].loc[j] = coords
 
             label_path = os.path.join(mosaic_dir, f'{label}_coords.csv')
             coords_dfs[label].to_csv(label_path, index=False, header=True)

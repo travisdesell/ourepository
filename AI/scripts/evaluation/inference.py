@@ -243,7 +243,7 @@ def main(model_uuid, image_path, model_width, model_height, stride_length):
         all_detections = append_detection(all_detections, detections)
 
     # only keep detections that meet a certain threshold
-    filter_detections(all_detections, 0.75)
+    filter_detections(all_detections, 0.90)
 
     # create inference-related directories
     image_name, image_inference_dir = create_dirs(model_uuid, image_path)
