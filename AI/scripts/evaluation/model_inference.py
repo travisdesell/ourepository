@@ -22,13 +22,12 @@ from scripts import ROOT_DIR
 logger = logging.getLogger(__name__)
 
 
-def load_from_saved_model(name, model_name):
+def load_from_saved_model(model_uuid):
     """
     Load a TensorFlow object detection SavedModel and its labels.
     Create a detection function from the model.
 
-    :param name: the name that uniquely identifies the mosaic that the model was trained on
-    :param model_name: the name of the model
+    :param model_uuid: the UUID of the model to load
     :return: the TensorFlow function that came from a SavedModel and a dict containing label information
     """
 
@@ -38,9 +37,9 @@ def load_from_saved_model(name, model_name):
         tf.config.experimental.set_memory_growth(gpu, True)
 
     # path to the SavedModel
-    saved_model_path = os.path.join(ROOT_DIR, 'exported-models', name, model_name, 'saved_model')
+    saved_model_path = os.path.join(ROOT_DIR, 'exported-models', model_uuid, 'saved_model')
     # path to the label map for the model
-    label_map_path = os.path.join(ROOT_DIR, 'annotations', name, 'label_map.pbtxt')
+    label_map_path = os.path.join(ROOT_DIR, 'annotations', model_uuid, 'label_map.pbtxt')
 
     logger.info('Loading model...')
     start_time = time.time()

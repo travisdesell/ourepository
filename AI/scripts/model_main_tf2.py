@@ -15,8 +15,7 @@
 # ==============================================================================
 
 """
-TODO Flags must be adjusted a bit for which are required and what is necessary for the file structure regarding
-organizations, projects, etc.
+TODO Flags must be adjusted a bit for which are required
 
        USAGE: model_main_tf2.py [flags]
 flags:
@@ -31,7 +30,8 @@ model_main_tf2.py:
   --[no]continue_from_checkpoint: whether training should continue from a
     checkpoint
     (default: 'false')
-  --data_dir: directory containing mosaic and CSVs to train on
+  --data_dir: directory containing directories containing mosaic and CSVs to
+    train on
     (default: 'C:/Users/Ian/Documents/College/Fourth Year/Fall Semester/Software
     Engineering Project/ourepository/AI/scripts\\../test/test')
   --[no]eval_on_train_data: Enable evaluating on train data (only supported in
@@ -46,7 +46,7 @@ model_main_tf2.py:
   --model_name: the name of the pretrained model from the TF Object Detection
     model zoo
     (default: 'faster_rcnn_resnet50_v1_640x640_coco17_tpu-8')
-  --name: a name that uniquely identifies this mosaic and training data
+  --model_uuid: the UUID of the model to run
     (default: 'test')
   --num_train_steps: Number of train steps.
     (an integer)
@@ -131,13 +131,13 @@ flags.DEFINE_boolean('record_summaries', True,
 # NEW FLAGS
 
 flags.DEFINE_string(
-    'name',
-    help='a name that uniquely identifies this mosaic and training data',
+    'model_uuid',
+    help='the UUID of the model to run',
     default='test'
-)  # TODO must be changed to account for user/project
+)
 flags.DEFINE_string(
     'data_dir',
-    help='directory containing mosaic and CSVs to train on',
+    help='directory containing directories containing mosaic and CSVs to train on',
     default=os.path.join(os.path.dirname(__file__), '../test/test')
 )
 flags.DEFINE_string(
@@ -165,37 +165,33 @@ def main(unused_argv):
     user_models_dir = os.path.join(ROOT_DIR, 'models')
     create_directory_if_not_exists(user_models_dir)
 
-    # path to directory containing user-trained models for this mosaic
-    mosaic_models_dir = os.path.join(user_models_dir, FLAGS.name)
-    create_directory_if_not_exists(mosaic_models_dir)
-
-    # path to directory containing the specific user-trained model for this mosaic
-    mosaic_model_dir = os.path.join(mosaic_models_dir, FLAGS.model_name)
+    # path to directory containing the specific user-trained model
+    model_dir = os.path.join(user_models_dir, FLAGS.model_uuid)
     # check whether model directory exists and whether to continue from checkpoint
-    if os.path.exists(mosaic_model_dir):
+    if os.path.exists(model_dir):
         if FLAGS.continue_from_checkpoint:
-            logger.info(f'Continuing from checkpoint at {full_path(mosaic_model_dir)}')
+            logger.info(f'Continuing from checkpoint at {full_path(model_dir)}')
         else:
             # if not continuing from checkpoint, delete the model and retrain
-            shutil.rmtree(mosaic_model_dir)
-            logger.info(f'Removed {full_path(mosaic_model_dir)}')
+            shutil.rmtree(model_dir)
+            logger.info(f'Removed {full_path(model_dir)}')
     else:
         if FLAGS.continue_from_checkpoint:
-            logger.error(f'Cannot find {full_path(mosaic_model_dir)}')
+            logger.error(f'Cannot find {full_path(model_dir)}')
             sys.exit(1)
 
     # create the user-trained model directory
-    create_directory_if_not_exists(mosaic_model_dir)
+    create_directory_if_not_exists(model_dir)
 
     # path to directory containing the annotations for this user-trained model
-    mosaic_annotations_dir = os.path.join(ROOT_DIR, 'annotations/' + FLAGS.name)
+    model_annotations_dir = os.path.join(ROOT_DIR, 'annotations/' + FLAGS.model_uuid)
 
     # get the number of classes to train on
-    label_map_path = os.path.join(mosaic_annotations_dir, 'label_map.pbtxt')
+    label_map_path = os.path.join(model_annotations_dir, 'label_map.pbtxt')
     num_classes = len(label_map_util.load_labelmap(label_map_path).item)
 
     # make the pipeline configuration
-    pipeline_config_path = edit_pipeline_config(pretrained_model_dir, mosaic_model_dir, num_classes, mosaic_annotations_dir)
+    pipeline_config_path = edit_pipeline_config(pretrained_model_dir, model_dir, num_classes, model_annotations_dir)
 
     # TODO what flags should be required
     # flags.mark_flag_as_required('model_dir')
@@ -205,7 +201,7 @@ def main(unused_argv):
     if FLAGS.checkpoint_dir:
         model_lib_v2.eval_continuously(
             pipeline_config_path=FLAGS.pipeline_config_path,
-            model_dir=mosaic_model_dir,
+            model_dir=model_dir,
             train_steps=FLAGS.num_train_steps,
             sample_1_of_n_eval_examples=FLAGS.sample_1_of_n_eval_examples,
             sample_1_of_n_eval_on_train_examples=(
@@ -230,7 +226,7 @@ def main(unused_argv):
         with strategy.scope():
             model_lib_v2.train_loop(
                 pipeline_config_path=pipeline_config_path,
-                model_dir=mosaic_model_dir,
+                model_dir=model_dir,
                 train_steps=FLAGS.num_train_steps,
                 use_tpu=FLAGS.use_tpu,
                 checkpoint_every_n=FLAGS.checkpoint_every_n,

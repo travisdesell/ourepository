@@ -1,16 +1,17 @@
 """
-Split up a large mosaic into overlapping slices to be used as part of a machine learning pipeline. Create TFRecords
-for training and testing using these slices. Only slices that contain annotations are used for training and evaluation.
+Split up large mosaics into overlapping slices to be used as part of a machine learning pipeline. Create TFRecords for
+training and testing using these slices. Only slices that contain annotations are used for training and evaluation.
 
-usage: crop.py [-H] [-n NAME] [-d DATA_DIR] [-w MODEL_WIDTH] [-h MODEL_HEIGHT]
-               [-s STRIDE_LENGTH] [-r RATIO]
+usage: crop.py [-H] [-m MODEL_UUID] [-d DATA_DIR] [-w MODEL_WIDTH]
+               [-h MODEL_HEIGHT] [-s STRIDE_LENGTH] [-r RATIO]
 
 optional arguments:
   -H, --help            show this help message and exit
-  -n NAME, --name NAME  a name that uniquely identifies this mosaic and
-                        training data
+  -m MODEL_UUID, --model_uuid MODEL_UUID
+                        the model UUID that this training data will be for
   -d DATA_DIR, --data_dir DATA_DIR
-                        directory containing mosaic and CSVs to train on
+                        directory containing directories containing mosaic and
+                        CSVs to train on
   -w MODEL_WIDTH, --model_width MODEL_WIDTH
                         the width of the input to the model
   -h MODEL_HEIGHT, --model_height MODEL_HEIGHT
@@ -81,32 +82,32 @@ def create_train_test_split(train_test_ratio, slice_coords_dict):
     return in_train_split
 
 
-def setup(name, data_dir, model_width, model_height, stride_length):
+def setup(model_uuid, data_dir, model_width, model_height, stride_length):
     """
     Create directories for annotation output that will be used for TensorFlow.
     Gather all the annotation labels and create a label map for them.
     Gather all the annotations and determine which slices contain each.
 
-    :param name: a name that uniquely identifies this mosaic and training data
-    :param data_dir: directory containing mosaic and CSVs to train on
+    :param model_uuid: the model UUID that this training data will be for
+    :param data_dir: directory containing directories containing mosaic and CSVs to train on
     :param model_width: the width of the input to the model
     :param model_height: the height of the input to the model
     :param stride_length: how far to move sliding window for each slice
-    :return: a dict mapping slice coordinates to the annotations contained within them, the mosaic DatasetReader,
-        the generated label map, the path to the train TFRecord, and the path to the test TFRecord
+    :return: a list of dicts mapping slice coordinates to the annotations contained within them, a list of mosaic
+        DatasetReaders, the generated label map, the path to the train TFRecord, and the path to the test TFRecord
     """
 
     # directory containing all annotations
     annotations_dir = os.path.join(ROOT_DIR, 'annotations')
     create_directory_if_not_exists(annotations_dir)
 
-    # path to directory containing annotations for this mosaic
-    mosaic_annotations_dir = os.path.join(annotations_dir, name)
-    create_directory_if_not_exists(mosaic_annotations_dir)
+    # path to directory containing the annotations for this user-trained model
+    model_annotations_dir = os.path.join(annotations_dir, model_uuid)
+    create_directory_if_not_exists(model_annotations_dir)
 
     # determine paths to train and test TFRecords
-    train_output_path = os.path.join(mosaic_annotations_dir, 'train.record')
-    test_output_path = os.path.join(mosaic_annotations_dir, 'test.record')
+    train_output_path = os.path.join(model_annotations_dir, 'train.record')
+    test_output_path = os.path.join(model_annotations_dir, 'test.record')
 
     # check to make sure data directory has at least one folder
     if len(os.listdir(data_dir)) == 0:
@@ -186,7 +187,7 @@ def setup(name, data_dir, model_width, model_height, stride_length):
 
     # create label map
     sorted_label_names_list = sorted([label_name.lower() for label_name in list(label_names)])
-    label_map_path = create_label_proto(sorted_label_names_list, mosaic_annotations_dir)
+    label_map_path = create_label_proto(sorted_label_names_list, model_annotations_dir)
 
     # load label map
     label_map = label_map_util.load_labelmap(label_map_path)
@@ -266,12 +267,12 @@ def make_slices(slice_coords_dicts, mosaic_datasets, label_map, model_input_widt
     logger.info('Successfully created the TFRecord file: {}'.format(full_path(test_output_path)))
 
 
-def main(name, data_dir, model_width, model_height, stride_length, ratio):
+def main(model_uuid, data_dir, model_width, model_height, stride_length, ratio):
     """
     Set up annotation-related directories. Process the annotations.
     Slice up the mosaic, then create TFRecords for training and evaluation from these slices.
 
-    :param name: a name that uniquely identifies this mosaic and training data
+    :param model_uuid: the model UUID that this training data will be for
     :param data_dir: directory containing mosaic and CSVs to train on
     :param model_width: the width of the input to the model
     :param model_height: the height of the input to the model
@@ -282,7 +283,7 @@ def main(name, data_dir, model_width, model_height, stride_length, ratio):
 
     # directory setup and annotation preprocessing
     slice_coords_dicts, mosaic_datasets, label_map, train_output_path, test_output_path = \
-        setup(name, data_dir, model_width, model_height, stride_length)
+        setup(model_uuid, data_dir, model_width, model_height, stride_length)
 
     # slice up the image and create the TFRecords
     make_slices(slice_coords_dicts, mosaic_datasets, label_map, model_width, model_height,
@@ -297,14 +298,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument('-H', '--help', action='help',
                         help='show this help message and exit')
-    parser.add_argument('-n',
-                        '--name',
-                        help='a name that uniquely identifies this mosaic and training data',
+    parser.add_argument('-m',
+                        '--model_uuid',
+                        help='the model UUID that this training data will be for',
                         type=str,
-                        default='test')  # TODO must be changed to account for user/project
+                        default='test')
     parser.add_argument('-d',
                         '--data_dir',
-                        help='directory containing mosaic and CSVs to train on',
+                        help='directory containing directories containing mosaic and CSVs to train on',
                         type=str,
                         default=os.path.join(os.path.dirname(__file__), '../../test/test'))
     parser.add_argument('-w',
@@ -330,4 +331,4 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    main(args.name, args.data_dir, args.model_width, args.model_height, args.stride_length, args.ratio)
+    main(args.model_uuid, args.data_dir, args.model_width, args.model_height, args.stride_length, args.ratio)

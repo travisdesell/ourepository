@@ -1,5 +1,5 @@
 """
-Take a pipeline.config from a pre-trained model and configure it to train on a mosaic.
+Take a pipeline.config from a pre-trained model and configure it to train on a set of mosaic.
 This involves (possibly) changing the number of classes and pointing to configuration to the correct paths for the
 training and testing TFRecords and the label map.
 """

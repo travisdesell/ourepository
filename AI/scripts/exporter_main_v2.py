@@ -22,8 +22,7 @@ configuration and a trained checkpoint. Outputs associated checkpoint files,
 a SavedModel, and a copy of the model config.
 
 
-TODO Flags must be adjusted a bit for which are required and what is necessary for the file structure regarding
-organizations, projects, etc.
+TODO Flags must be adjusted a bit for which are required
 
        USAGE: exporter_main_v2.py [flags]
 flags:
@@ -35,11 +34,7 @@ exporter_main_v2.py:
   --input_type: Type of input node. Can be one of [`image_tensor`,
     `encoded_image_string_tensor`, `tf_example`, `float_image_tensor`]
     (default: 'image_tensor')
-  --model_name: the name of the pretrained model from the TF Object Detection
-    model zoo
-    (default: 'faster_rcnn_resnet50_v1_640x640_coco17_tpu-8')
-  --name: a name that uniquely identifies the mosaic and data this model was
-    trained on
+  --model_uuid: the UUID of the model to run
     (default: 'test')
   --output_directory: Path to write outputs.
   --pipeline_config_path: Path to a pipeline_pb2.TrainEvalPipelineConfig config
@@ -134,15 +129,10 @@ flags.DEFINE_string('side_input_names', '',
 # NEW FLAGS
 
 flags.DEFINE_string(
-    'name',
-    help='a name that uniquely identifies the mosaic and data this model was trained on',
+    'model_uuid',
+    help='the UUID of the model to run',
     default='test'
-)  # TODO must be changed to account for user/project
-flags.DEFINE_string(
-    'model_name',
-    help='the name of the pretrained model from the TF Object Detection model zoo',
-    default='faster_rcnn_resnet50_v1_640x640_coco17_tpu-8'
-)  # TODO maybe add option for year
+)
 
 
 def main(_):
@@ -151,23 +141,19 @@ def main(_):
     # flags.mark_flag_as_required('trained_checkpoint_dir')
     # flags.mark_flag_as_required('output_directory')
 
-    # path to directory containing the specific user-trained model for this mosaic
-    trained_mosaic_model_dir = os.path.join(ROOT_DIR, 'models', FLAGS.name, FLAGS.model_name)
+    # path to directory containing the specific user-trained model
+    trained_model_dir = os.path.join(ROOT_DIR, 'models', FLAGS.model_uuid)
 
     # user exported models
     user_models_dir = os.path.join(ROOT_DIR, 'exported-models')
     create_directory_if_not_exists(user_models_dir)
 
-    # path to directory containing user-trained exported models for this mosaic
-    mosaic_models_dir = os.path.join(user_models_dir, FLAGS.name)
-    create_directory_if_not_exists(mosaic_models_dir)
-
-    # path to directory containing the specific user-trained exported model for this mosaic
-    mosaic_model_dir = os.path.join(mosaic_models_dir, FLAGS.model_name)
-    create_directory_if_not_exists(mosaic_model_dir)
+    # path to directory containing the specific user-trained exported model
+    model_dir = os.path.join(user_models_dir, FLAGS.model_uuid)
+    create_directory_if_not_exists(model_dir)
 
     # path to pipeline config for this mosaic for this model
-    pipeline_config_path = trained_mosaic_model_dir + '/pipeline.config'
+    pipeline_config_path = trained_model_dir + '/pipeline.config'
 
     # load the pipeline configuration
     pipeline_config = load_config(pipeline_config_path)
@@ -176,8 +162,8 @@ def main(_):
     # export the model
     logger.info(f'Model export has started...')
     exporter_lib_v2.export_inference_graph(
-        FLAGS.input_type, pipeline_config, trained_mosaic_model_dir,
-        mosaic_model_dir, FLAGS.use_side_inputs, FLAGS.side_input_shapes,
+        FLAGS.input_type, pipeline_config, trained_model_dir,
+        model_dir, FLAGS.use_side_inputs, FLAGS.side_input_shapes,
         FLAGS.side_input_types, FLAGS.side_input_names)
 
     logger.info(f'Model export completed')

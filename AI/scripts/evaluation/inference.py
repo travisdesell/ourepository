@@ -2,19 +2,15 @@
 Run inference on a mosaic using a trained TensorFlow object detection model.
 This will output the mosaic with detections on top and a CSV for each of the labels the model was trained on.
 
-usage: inference.py [-h] [-n NAME] [-i IMAGE_PATH] [-m MODEL_NAME]
-                    [-w MODEL_WIDTH] [--model_height MODEL_HEIGHT]
-                    [-s STRIDE_LENGTH]
+usage: inference.py [-h] [-n MODEL_UUID] [-i IMAGE_PATH] [-w MODEL_WIDTH]
+                    [--model_height MODEL_HEIGHT] [-s STRIDE_LENGTH]
 
 optional arguments:
   -h, --help            show this help message and exit
-  -n NAME, --name NAME  a name that uniquely identifies the mosaic that the
-                        model was trained on
+  -n MODEL_UUID, --model_uuid MODEL_UUID
+                        the UUID of the model to use for inference
   -i IMAGE_PATH, --image_path IMAGE_PATH
                         the path to the image to run the inference on
-  -m MODEL_NAME, --model_name MODEL_NAME
-                        the name of the pretrained model from the TF Object
-                        Detection model zoo
   -w MODEL_WIDTH, --model_width MODEL_WIDTH
                         the width of the input to the model
   --model_height MODEL_HEIGHT
@@ -43,13 +39,12 @@ from scripts import ROOT_DIR
 logger = logging.getLogger(__name__)
 
 
-def create_dirs(name, image_path, model_name):
+def create_dirs(model_uuid, image_path):
     """
     Create inference-related directories.
 
-    :param name: the name that uniquely identifies the mosaic that the model was trained on
+    :param model_uuid: the UUID of the model to use for inference
     :param image_path: the path to the image to perform the inference on
-    :param model_name: the name of the model
     :return: the name of the input image (without the extension) and the directory for inference output for this
         image using this model
     """
@@ -58,12 +53,8 @@ def create_dirs(name, image_path, model_name):
     inference_dir = os.path.join(ROOT_DIR, 'inferences')
     create_directory_if_not_exists(inference_dir)
 
-    # directory for the inferences for the mosaic the model was trained on
-    mosaic_inference_dir = os.path.join(inference_dir, name)
-    create_directory_if_not_exists(mosaic_inference_dir)
-
-    # directory for inferences on this specific model
-    model_inference_dir = os.path.join(mosaic_inference_dir, model_name)
+    # directory for the inferences for this model
+    model_inference_dir = os.path.join(inference_dir, model_uuid)
     create_directory_if_not_exists(model_inference_dir)
 
     # directory for inferences on the input image
@@ -211,13 +202,12 @@ def save_inference(image, detections, image_inference_dir, image_name, label_dic
         logger.info(f'Created {full_path(label_path)}')
 
 
-def main(name, image_path, model_name, model_width, model_height, stride_length):
+def main(model_uuid, image_path, model_width, model_height, stride_length):
     """
     Perform inference on an image and save the output.
 
-    :param name: the name that uniquely identifies the mosaic that the model was trained on
+    :param model_uuid: the UUID of the model to use for inference
     :param image_path: the path to the image to perform the inference on
-    :param model_name: the name of the model
     :param model_width: the width of the input to the model
     :param model_height: the height of the input to the model
     :param stride_length: how far to move each slice when traversing the mosaic
@@ -228,10 +218,10 @@ def main(name, image_path, model_name, model_width, model_height, stride_length)
     assert model_width == model_height
 
     # load the mosaic
-    mosaic_dataset, mosaic_width, mosaic_height = load_mosaic(image_path)\
+    mosaic_dataset, mosaic_width, mosaic_height = load_mosaic(image_path)
 
     # load the model
-    detect_fn, label_dict = load_from_saved_model(name, model_name)
+    detect_fn, label_dict = load_from_saved_model(model_uuid)
 
     # get the top left corner coordinate for each slice to inference on
     slice_coords_list = generate_slice_coords(mosaic_width, mosaic_height, model_width, model_width, stride_length)
@@ -256,7 +246,7 @@ def main(name, image_path, model_name, model_width, model_height, stride_length)
     filter_detections(all_detections, 0.75)
 
     # create inference-related directories
-    image_name, image_inference_dir = create_dirs(name, image_path, model_name)
+    image_name, image_inference_dir = create_dirs(model_uuid, image_path)
 
     # save the detections
     full_image = get_image_window(mosaic_dataset, 0, 0, mosaic_width, mosaic_height)
@@ -269,20 +259,15 @@ def main(name, image_path, model_name, model_width, model_height, stride_length)
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-n',
-                        '--name',
-                        help='a name that uniquely identifies the mosaic that the model was trained on',
+                        '--model_uuid',
+                        help='the UUID of the model to use for inference',
                         type=str,
-                        default='test')  # TODO must be changed to account for user/project
+                        default='test')
     parser.add_argument('-i',
                         '--image_path',
                         help='the path to the image to run the inference on',
                         type=str,
-                        default=os.path.join(os.path.dirname(__file__), '../../test/test/test.tif'))
-    parser.add_argument('-m',
-                        '--model_name',
-                        help='the name of the pretrained model from the TF Object Detection model zoo',
-                        type=str,
-                        default='faster_rcnn_resnet50_v1_640x640_coco17_tpu-8')
+                        default=os.path.join(os.path.dirname(__file__), '../../test/test/test1/test.tif'))
     parser.add_argument('-w',
                         '--model_width',
                         help='the width of the input to the model',
@@ -300,4 +285,4 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    main(args.name, args.image_path, args.model_name, args.model_width, args.model_height, args.stride_length)
+    main(args.model_uuid, args.image_path, args.model_width, args.model_height, args.stride_length)
