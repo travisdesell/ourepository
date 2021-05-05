@@ -37,7 +37,7 @@ def load_config(pipeline_config_path):
     return pipeline_config
 
 
-def edit_pipeline_config(pretrained_model_dir, output_dir, num_classes, annotations_dir):
+def edit_pipeline_config(pretrained_model_dir, output_dir, num_classes, annotations_dir, num_steps):
     """
     Edit a pipeline configuration model to work with training on a specific set of training data.
     This changes the number of classes, the batch size, the path to the pre-trained model checkpoint, the type of
@@ -74,7 +74,11 @@ def edit_pipeline_config(pretrained_model_dir, output_dir, num_classes, annotati
         sys.exit(1)
 
     # set the batch size
-    pipeline_config.train_config.batch_size = 8  # TODO change? Affects memory usage
+    pipeline_config.train_config.batch_size = 2  # TODO change? Affects memory usage
+    logger.info(f"Batch size: {pipeline_config.train_config.batch_size}")
+
+    # set the number of training steps
+    pipeline_config.train_config.num_steps = num_steps
 
     # Set the path to the checkpoint from the pre-trained model. This does not have to be changed for continuing
     # training from a checkpoint. TensorFlow will figure out the most recent checkpoint automatically.

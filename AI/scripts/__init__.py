@@ -16,7 +16,7 @@ formatter = logging.Formatter(
 absl.logging.get_absl_handler().setFormatter(formatter)
 
 # give TensorFlow logging same format
-logging.getLogger('tensorflow').setLevel(logging.ERROR)
+logging.getLogger('tensorflow').setLevel(logging.INFO)
 for h in logging.getLogger('tensorflow').handlers:
     h.setFormatter(formatter)
 

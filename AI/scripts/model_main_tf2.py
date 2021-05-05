@@ -76,7 +76,7 @@ import shutil
 import sys
 
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # suppress TensorFlow logging
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0'  # suppress TensorFlow logging
 
 from absl import flags
 import tensorflow as tf
@@ -86,10 +86,15 @@ from object_detection.utils import label_map_util
 from scripts.util.download_model import download_and_unpack_model
 from scripts.util.edit_pipeline_config import edit_pipeline_config
 from scripts.util.file_utils import create_directory_if_not_exists, full_path
+from scripts.util.analyze_checkpoint import tfevent_final_loss
 
 from scripts import ROOT_DIR
 
 logger = logging.getLogger(__name__)
+
+physical_devices = tf.config.list_physical_devices('GPU')
+tf.config.experimental.set_memory_growth(physical_devices[0], True)
+# os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 flags.DEFINE_string('pipeline_config_path', None, 'Path to pipeline config '
                                                   'file.')
@@ -154,7 +159,126 @@ flags.DEFINE_boolean(
 FLAGS = flags.FLAGS
 
 
+def train_model(pipeline_config_path, model_dir):
+    if FLAGS.use_tpu:
+        # TPU is automatically inferred if tpu_name is None and
+        # we are running under cloud ai-platform.
+        resolver = tf.distribute.cluster_resolver.TPUClusterResolver(
+            FLAGS.tpu_name)
+        tf.config.experimental_connect_to_cluster(resolver)
+        tf.tpu.experimental.initialize_tpu_system(resolver)
+        strategy = tf.distribute.experimental.TPUStrategy(resolver)
+    elif FLAGS.num_workers > 1:
+        strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy()
+    else:
+        strategy = tf.compat.v2.distribute.MirroredStrategy()
+
+    logger.info(f'Model training has started...')
+    with strategy.scope():
+        model_lib_v2.train_loop(
+            pipeline_config_path=pipeline_config_path,
+            model_dir=model_dir,
+            train_steps=FLAGS.num_train_steps,
+            use_tpu=FLAGS.use_tpu,
+            checkpoint_every_n=FLAGS.checkpoint_every_n,
+            record_summaries=FLAGS.record_summaries,
+            checkpoint_max_to_keep=1)
+    logger.info(f'Model training completed')
+
+
+def eval_model(pipeline_config_path, model_dir):
+    logger.info(f'Model evaluation has started...')
+    model_lib_v2.eval_continuously(
+        pipeline_config_path=pipeline_config_path,
+        model_dir=model_dir,
+        train_steps=FLAGS.num_train_steps,
+        sample_1_of_n_eval_examples=FLAGS.sample_1_of_n_eval_examples,
+        sample_1_of_n_eval_on_train_examples=(
+            FLAGS.sample_1_of_n_eval_on_train_examples),
+        checkpoint_dir=model_dir,
+        wait_interval=1, timeout=1)
+
+
+def train_and_eval(last_results, pipeline_config_path, model_dir, num_steps):
+    # train for n steps
+    # TODO do we need to worry about adding already trained steps to steps to train if we are resuming from checkpoint?
+    if last_results['train_loss'] != 10000:  # check if this is not first run
+        # TODO adjust already trained steps??
+        pass
+    # train_model(pipeline_config_path, model_dir)
+
+    # take note of final training loss
+    train_loss = tfevent_final_loss(model_dir)
+
+    # eval on saved model
+    eval_model(pipeline_config_path, model_dir)
+    tfevent_final_loss(model_dir, type='eval')
+    # TODO remove eval directory
+
+    # find loss from evaluation
+    test_loss = 0.6  # TODO
+
+    # take note when the test loss goes up while the train loss goes down. This could indicate over-fitting
+    went_up = (test_loss > last_results['test_loss']) and (train_loss < last_results['train_loss'])
+
+    # if the test loss went up this time and last time, we can be certain that we are over-fitting so we should stop
+    should_stop = went_up and last_results['went_up']
+
+    results = {'train_loss': train_loss, 'test_loss': test_loss, 'went_up': went_up, 'should_stop': should_stop}
+    return results
+
+
 def main(unused_argv):
+
+    # edit pipeline configs - if resuming from checkpoint add already trained steps to steps to train ?? maybe
+    # look at tfevents to get already trained steps
+    #
+    #
+    #
+    #
+    # starting new vs resuming training
+    #
+    #
+    #
+    #
+    # model_main_tf2 202 run with evaluation
+    #
+    #
+    # checkpoint_every_n
+    #
+    # mosaic_annotations_dir
+    # 	annotations/test/test.record OR train.record
+    #
+    # how to eval on test set? Does it do it automatically?
+    #
+    #
+    # how do we stop? Is it when the test set loss passes some threshold or is it when the losses start to diverge?
+
+    # train for 5, if it went up train for 5 more, if it went up stop and use the checkpoint from before it went up
+
+    #
+
+    # TODO remove all saved checkpoints other than the one from two loops ago
+
+    # check 1 went down
+    # check 2 went up
+    # check 3 went up
+    # STOP. See that we are on 3, get check 3-2=1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     # pretrained model from TensorFlow Object Detection model zoo
     pretrained_model_dir = os.path.join(ROOT_DIR, 'pre-trained-models', FLAGS.model_name)
@@ -172,12 +296,12 @@ def main(unused_argv):
         if FLAGS.continue_from_checkpoint:
             logger.info(f'Continuing from checkpoint at {full_path(model_dir)}')
         else:
-            # if not continuing from checkpoint, delete the model and retrain
-            shutil.rmtree(model_dir)
-            logger.info(f'Removed {full_path(model_dir)}')
+            # if not continuing from checkpoint, raise error
+            logger.error(f'Checkpoint file exists at {full_path(model_dir)} but continue_from_checkpoint is false')
+            sys.exit(1)
     else:
         if FLAGS.continue_from_checkpoint:
-            logger.error(f'Cannot find {full_path(model_dir)}')
+            logger.error(f'Cannot find checkpoint at {full_path(model_dir)}')
             sys.exit(1)
 
     # create the user-trained model directory
@@ -190,48 +314,20 @@ def main(unused_argv):
     label_map_path = os.path.join(model_annotations_dir, 'label_map.pbtxt')
     num_classes = len(label_map_util.load_labelmap(label_map_path).item)
 
-    # make the pipeline configuration
-    pipeline_config_path = edit_pipeline_config(pretrained_model_dir, model_dir, num_classes, model_annotations_dir)
+    results = {'train_loss': 100000, 'test_loss': 100000, 'went_up': False, 'should_stop': False}
+    num_steps = 500
+    while not results['should_stop']:
 
-    # TODO what flags should be required
-    # flags.mark_flag_as_required('model_dir')
-    # flags.mark_flag_as_required('pipeline_config_path')
-    tf.config.set_soft_device_placement(True)
+        # make the pipeline configuration
+        pipeline_config_path = edit_pipeline_config(pretrained_model_dir, model_dir, num_classes, model_annotations_dir, num_steps)
 
-    if FLAGS.checkpoint_dir:
-        model_lib_v2.eval_continuously(
-            pipeline_config_path=FLAGS.pipeline_config_path,
-            model_dir=model_dir,
-            train_steps=FLAGS.num_train_steps,
-            sample_1_of_n_eval_examples=FLAGS.sample_1_of_n_eval_examples,
-            sample_1_of_n_eval_on_train_examples=(
-                FLAGS.sample_1_of_n_eval_on_train_examples),
-            checkpoint_dir=FLAGS.checkpoint_dir,
-            wait_interval=300, timeout=FLAGS.eval_timeout)
-    else:
-        if FLAGS.use_tpu:
-            # TPU is automatically inferred if tpu_name is None and
-            # we are running under cloud ai-platform.
-            resolver = tf.distribute.cluster_resolver.TPUClusterResolver(
-                FLAGS.tpu_name)
-            tf.config.experimental_connect_to_cluster(resolver)
-            tf.tpu.experimental.initialize_tpu_system(resolver)
-            strategy = tf.distribute.experimental.TPUStrategy(resolver)
-        elif FLAGS.num_workers > 1:
-            strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy()
-        else:
-            strategy = tf.compat.v2.distribute.MirroredStrategy()
+        # TODO what flags should be required
+        # flags.mark_flag_as_required('model_dir')
+        # flags.mark_flag_as_required('pipeline_config_path')
+        tf.config.set_soft_device_placement(True)
 
-        logger.info(f'Model training has started...')
-        with strategy.scope():
-            model_lib_v2.train_loop(
-                pipeline_config_path=pipeline_config_path,
-                model_dir=model_dir,
-                train_steps=FLAGS.num_train_steps,
-                use_tpu=FLAGS.use_tpu,
-                checkpoint_every_n=FLAGS.checkpoint_every_n,
-                record_summaries=FLAGS.record_summaries)
-        logger.info(f'Model training completed')
+        results = train_and_eval(results, pipeline_config_path, model_dir, num_steps)
+        results['should_stop'] = True  # TODO just for debugging
 
 
 if __name__ == '__main__':
