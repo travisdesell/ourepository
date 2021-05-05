@@ -76,7 +76,7 @@ import shutil
 import sys
 
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0'  # suppress TensorFlow logging
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # suppress TensorFlow logging
 
 from absl import flags
 import tensorflow as tf
@@ -159,7 +159,7 @@ flags.DEFINE_boolean(
 FLAGS = flags.FLAGS
 
 
-def train_model(pipeline_config_path, model_dir):
+def train_model(pipeline_config_path, model_dir, steps_per_run):
     if FLAGS.use_tpu:
         # TPU is automatically inferred if tpu_name is None and
         # we are running under cloud ai-platform.
@@ -180,9 +180,10 @@ def train_model(pipeline_config_path, model_dir):
             model_dir=model_dir,
             train_steps=FLAGS.num_train_steps,
             use_tpu=FLAGS.use_tpu,
-            checkpoint_every_n=FLAGS.checkpoint_every_n,
+            checkpoint_every_n=steps_per_run-1,
             record_summaries=FLAGS.record_summaries,
-            checkpoint_max_to_keep=1)
+            num_steps_per_iteration=1,  # TODO if using TPU this maybe should be changed
+            checkpoint_max_to_keep=3)
     logger.info(f'Model training completed')
 
 
@@ -199,32 +200,28 @@ def eval_model(pipeline_config_path, model_dir):
         wait_interval=1, timeout=1)
 
 
-def train_and_eval(last_results, pipeline_config_path, model_dir, num_steps):
+def train_and_eval(last_results, pipeline_config_path, model_dir, steps_per_run):
     # train for n steps
-    # TODO do we need to worry about adding already trained steps to steps to train if we are resuming from checkpoint?
-    if last_results['train_loss'] != 10000:  # check if this is not first run
-        # TODO adjust already trained steps??
-        pass
-    # train_model(pipeline_config_path, model_dir)
+    train_model(pipeline_config_path, model_dir, steps_per_run)
 
     # take note of final training loss
     train_loss = tfevent_final_loss(model_dir)
 
     # eval on saved model
     eval_model(pipeline_config_path, model_dir)
-    tfevent_final_loss(model_dir, type='eval')
-    # TODO remove eval directory
 
     # find loss from evaluation
-    test_loss = 0.6  # TODO
+    eval_loss = tfevent_final_loss(model_dir, type='eval')
+    shutil.rmtree(os.path.join(model_dir, 'eval'))  # Delete eval directory so it will be fresh on the next run
 
     # take note when the test loss goes up while the train loss goes down. This could indicate over-fitting
-    went_up = (test_loss > last_results['test_loss']) and (train_loss < last_results['train_loss'])
+    went_up = (eval_loss > last_results['eval_loss']) and (train_loss < last_results['train_loss'])
 
     # if the test loss went up this time and last time, we can be certain that we are over-fitting so we should stop
     should_stop = went_up and last_results['went_up']
 
-    results = {'train_loss': train_loss, 'test_loss': test_loss, 'went_up': went_up, 'should_stop': should_stop}
+    results = {'train_loss': train_loss, 'eval_loss': eval_loss, 'went_up': went_up, 'should_stop': should_stop}
+    logger.debug(f"Finished training epoch. Train loss: {train_loss}, Eval loss: {eval_loss}, went up: {went_up}")
     return results
 
 
@@ -267,19 +264,6 @@ def main(unused_argv):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
     # pretrained model from TensorFlow Object Detection model zoo
     pretrained_model_dir = os.path.join(ROOT_DIR, 'pre-trained-models', FLAGS.model_name)
     if not os.path.exists(pretrained_model_dir):
@@ -314,20 +298,23 @@ def main(unused_argv):
     label_map_path = os.path.join(model_annotations_dir, 'label_map.pbtxt')
     num_classes = len(label_map_util.load_labelmap(label_map_path).item)
 
-    results = {'train_loss': 100000, 'test_loss': 100000, 'went_up': False, 'should_stop': False}
-    num_steps = 500
+    results = {'train_loss': 100000, 'eval_loss': 100000, 'went_up': False, 'should_stop': False}
+    steps_per_run = 50
+    num_steps = 0
     while not results['should_stop']:
+        num_steps += steps_per_run
 
         # make the pipeline configuration
-        pipeline_config_path = edit_pipeline_config(pretrained_model_dir, model_dir, num_classes, model_annotations_dir, num_steps)
+        pipeline_config_path = edit_pipeline_config(pretrained_model_dir, model_dir, num_classes, model_annotations_dir,
+                                                    num_steps)
 
         # TODO what flags should be required
         # flags.mark_flag_as_required('model_dir')
         # flags.mark_flag_as_required('pipeline_config_path')
         tf.config.set_soft_device_placement(True)
 
-        results = train_and_eval(results, pipeline_config_path, model_dir, num_steps)
-        results['should_stop'] = True  # TODO just for debugging
+        results = train_and_eval(results, pipeline_config_path, model_dir, steps_per_run)
+        # results['should_stop'] = True  # TODO just for debugging
 
 
 if __name__ == '__main__':
