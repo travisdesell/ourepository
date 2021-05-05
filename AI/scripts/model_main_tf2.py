@@ -86,15 +86,15 @@ from object_detection.utils import label_map_util
 from scripts.util.download_model import download_and_unpack_model
 from scripts.util.edit_pipeline_config import edit_pipeline_config
 from scripts.util.file_utils import create_directory_if_not_exists, full_path
-from scripts.util.analyze_checkpoint import tfevent_final_loss
+from scripts.util.analyze_checkpoint import tfevent_final_loss, checkpoint_steps
 
 from scripts import ROOT_DIR
 
 logger = logging.getLogger(__name__)
 
-physical_devices = tf.config.list_physical_devices('GPU')
-tf.config.experimental.set_memory_growth(physical_devices[0], True)
-# os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+# physical_devices = tf.config.list_physical_devices('GPU')
+# tf.config.experimental.set_memory_growth(physical_devices[0], True)
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 flags.DEFINE_string('pipeline_config_path', None, 'Path to pipeline config '
                                                   'file.')
@@ -183,7 +183,7 @@ def train_model(pipeline_config_path, model_dir, steps_per_run):
             checkpoint_every_n=steps_per_run-1,
             record_summaries=FLAGS.record_summaries,
             num_steps_per_iteration=1,  # TODO if using TPU this maybe should be changed
-            checkpoint_max_to_keep=3)
+            checkpoint_max_to_keep=5)
     logger.info(f'Model training completed')
 
 
@@ -221,7 +221,7 @@ def train_and_eval(last_results, pipeline_config_path, model_dir, steps_per_run)
     should_stop = went_up and last_results['went_up']
 
     results = {'train_loss': train_loss, 'eval_loss': eval_loss, 'went_up': went_up, 'should_stop': should_stop}
-    logger.debug(f"Finished training epoch. Train loss: {train_loss}, Eval loss: {eval_loss}, went up: {went_up}")
+    logger.info(f"Finished training epoch. Train loss: {train_loss}, Eval loss: {eval_loss}, went up: {went_up}")
     return results
 
 
@@ -275,10 +275,14 @@ def main(unused_argv):
 
     # path to directory containing the specific user-trained model
     model_dir = os.path.join(user_models_dir, FLAGS.model_uuid)
+
+    num_steps = 0
+
     # check whether model directory exists and whether to continue from checkpoint
     if os.path.exists(model_dir):
         if FLAGS.continue_from_checkpoint:
             logger.info(f'Continuing from checkpoint at {full_path(model_dir)}')
+            num_steps = checkpoint_steps(model_dir)
         else:
             # if not continuing from checkpoint, raise error
             logger.error(f'Checkpoint file exists at {full_path(model_dir)} but continue_from_checkpoint is false')
@@ -299,8 +303,7 @@ def main(unused_argv):
     num_classes = len(label_map_util.load_labelmap(label_map_path).item)
 
     results = {'train_loss': 100000, 'eval_loss': 100000, 'went_up': False, 'should_stop': False}
-    steps_per_run = 50
-    num_steps = 0
+    steps_per_run = 25
     while not results['should_stop']:
         num_steps += steps_per_run
 

@@ -22,8 +22,19 @@ def tfevent_final_loss(model_dir, type='train'):
                     val = tensor_util.MakeNdarray(v.tensor).item(0)
                     max_step = e.step
                     loss = val
-                    # print(f"Found new loss at step {e.step}: {val}")
+                    print(f"Found new loss at step {e.step}: {val}")
     return loss
+
+
+def checkpoint_steps(model_dir):
+    tfevents = find_tfevents(model_dir, 'train')
+    max_step = -1
+    for tfevent in tfevents:
+        for e in summary_iterator(tfevent):
+            for v in e.summary.value:
+                if '/total_loss' in v.tag:
+                    max_step = e.step
+    return max_step
 
 
 def get_last_checkpoint(model_dir):
@@ -35,5 +46,5 @@ def get_last_checkpoint(model_dir):
 if __name__ == '__main__':
     user_models_dir = os.path.join(ROOT_DIR, 'models')
     model_dir = os.path.join(user_models_dir, 'test')
-    print(tfevent_final_loss(model_dir, type='train'))
-    # print(get_last_checkpoint(model_dir))
+    # print(tfevent_final_loss(model_dir, type='train'))
+    print(checkpoint_steps(model_dir))

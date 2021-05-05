@@ -74,7 +74,7 @@ def edit_pipeline_config(pretrained_model_dir, output_dir, num_classes, annotati
         sys.exit(1)
 
     # set the batch size
-    pipeline_config.train_config.batch_size = 1  # TODO change? Affects memory usage
+    pipeline_config.train_config.batch_size = 8  # TODO change? Affects memory usage
     logger.info(f"Batch size: {pipeline_config.train_config.batch_size}")
 
     # set the number of training steps
