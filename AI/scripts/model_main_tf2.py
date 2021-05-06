@@ -94,7 +94,7 @@ logger = logging.getLogger(__name__)
 
 # physical_devices = tf.config.list_physical_devices('GPU')
 # tf.config.experimental.set_memory_growth(physical_devices[0], True)
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+# os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 flags.DEFINE_string('pipeline_config_path', None, 'Path to pipeline config '
                                                   'file.')
@@ -283,6 +283,7 @@ def main(unused_argv):
         if FLAGS.continue_from_checkpoint:
             logger.info(f'Continuing from checkpoint at {full_path(model_dir)}')
             num_steps = checkpoint_steps(model_dir)
+            # TODO save and load results dict from previous run
         else:
             # if not continuing from checkpoint, raise error
             logger.error(f'Checkpoint file exists at {full_path(model_dir)} but continue_from_checkpoint is false')
