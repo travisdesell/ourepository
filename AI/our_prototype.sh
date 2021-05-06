@@ -35,29 +35,60 @@
 #SBATCH -p tier3 -n 1
 
 # Job memory requirements in MB
-#SBATCH --mem-per-cpu=5G  # I like to mem with a suffix [K|M|G|T] 5000
+#SBATCH --mem-per-cpu=100G  # I like to mem with a suffix [K|M|G|T] 5000
 
 
-# RUN TENSORFLOW JOB #
+## RUN TENSORFLOW JOB ##
 
+# get positional arguments
+# to pass job params to python scripts
+
+crop_args="default"
+train_args="default"
+
+for args in "$@"
+do
+        crop_args=$1
+        train_args=$2
+done
+
+
+# navigate to AI dir
 PATH_TO_AI="/home/jtm5356/ourepository/AI"
-
-# generate test images
 cd $PATH_TO_AI
-python -m test.generate_test_img
+
+## generate test images
+#python -m test.generate_test_img
 
 # image  slicing and TFRecords
-python -m scripts.preprocessing.crop
-
-echo "plz"
+python -m scripts.preprocessing.crop $crop_args
 
 # begin training
-#python -m scripts.model_main_tf2
+if [$? -eq 0]
+then
+	python -m scripts.model_main_tf2 $train_args
+else
+	echo "Job failure while attempting to crop mosaic!"
+	exit 1
+fi
 
 # export model
-#python -m scripts.exporter_main_v2
+if [$? -eq 0]
+then
+	python -m scripts.exporter_main_v2
+else
+	echo "Job failure while attempting to train model!"
+	exit 1
+fi
 
-# evaluate
+## evaluate
 #python -m scripts.evaluation.inference
 
-echo "finished!"
+if [$? -eq 0]
+then
+	echo "finished!"
+else
+	echo "Job failure while attempting to export model!"
+	exit 1
+fi
+
