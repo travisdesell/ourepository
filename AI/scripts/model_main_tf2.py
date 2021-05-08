@@ -86,7 +86,7 @@ from object_detection.utils import label_map_util
 from scripts.util.download_model import download_and_unpack_model
 from scripts.util.edit_pipeline_config import edit_pipeline_config
 from scripts.util.file_utils import create_directory_if_not_exists, full_path
-from scripts.util.analyze_checkpoint import tfevent_final_loss, checkpoint_steps
+from scripts.util.analyze_checkpoint import tfevent_final_losses, checkpoint_steps
 
 from scripts import ROOT_DIR
 
@@ -94,7 +94,7 @@ logger = logging.getLogger(__name__)
 
 # physical_devices = tf.config.list_physical_devices('GPU')
 # tf.config.experimental.set_memory_growth(physical_devices[0], True)
-# os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 flags.DEFINE_string('pipeline_config_path', None, 'Path to pipeline config '
                                                   'file.')
@@ -205,23 +205,25 @@ def train_and_eval(last_results, pipeline_config_path, model_dir, steps_per_run)
     train_model(pipeline_config_path, model_dir, steps_per_run)
 
     # take note of final training loss
-    train_loss = tfevent_final_loss(model_dir)
+    train_loss = tfevent_final_losses(model_dir)[1]
 
     # eval on saved model
     eval_model(pipeline_config_path, model_dir)
 
     # find loss from evaluation
-    eval_loss = tfevent_final_loss(model_dir, type='eval')
-    shutil.rmtree(os.path.join(model_dir, 'eval'))  # Delete eval directory so it will be fresh on the next run
+    eval_losses = tfevent_final_losses(model_dir, type='eval')
 
     # take note when the test loss goes up while the train loss goes down. This could indicate over-fitting
-    went_up = (eval_loss > last_results['eval_loss']) and (train_loss < last_results['train_loss'])
+    if len(eval_losses) == 2:
+        went_up = eval_losses[1] > eval_losses[0]
+    else:
+        went_up = False
 
     # if the test loss went up this time and last time, we can be certain that we are over-fitting so we should stop
     should_stop = went_up and last_results['went_up']
 
-    results = {'train_loss': train_loss, 'eval_loss': eval_loss, 'went_up': went_up, 'should_stop': should_stop}
-    logger.info(f"Finished training epoch. Train loss: {train_loss}, Eval loss: {eval_loss}, went up: {went_up}")
+    results = {'went_up': went_up, 'should_stop': should_stop}
+    logger.info(f"Finished training epoch. Train loss: {train_loss}, Eval losses: {eval_losses}, went up: {went_up}")
     return results
 
 
@@ -303,9 +305,12 @@ def main(unused_argv):
     label_map_path = os.path.join(model_annotations_dir, 'label_map.pbtxt')
     num_classes = len(label_map_util.load_labelmap(label_map_path).item)
 
-    results = {'train_loss': 100000, 'eval_loss': 100000, 'went_up': False, 'should_stop': False}
+    results = {'went_up': False, 'should_stop': False}
     steps_per_run = 25
-    while not results['should_stop']:
+    while True:
+    # while not results['should_stop']: TODO put back
+        if results['should_stop']:
+            logger.info("WOULD'VE STOPPED HERE")
         num_steps += steps_per_run
 
         # make the pipeline configuration
