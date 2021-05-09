@@ -92,10 +92,6 @@ from scripts import ROOT_DIR
 
 logger = logging.getLogger(__name__)
 
-# physical_devices = tf.config.list_physical_devices('GPU')
-# tf.config.experimental.set_memory_growth(physical_devices[0], True)
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-
 flags.DEFINE_string('pipeline_config_path', None, 'Path to pipeline config '
                                                   'file.')
 flags.DEFINE_integer('num_train_steps', None, 'Number of train steps.')
@@ -160,6 +156,13 @@ FLAGS = flags.FLAGS
 
 
 def train_model(pipeline_config_path, model_dir, steps_per_run):
+    """
+    Runs one training loop. Because this function is blocking, we will only train for a small number of steps at a time
+    so that we can periodically stop to evaluate the training progress. Will create one checkpoint during this run.
+    :param pipeline_config_path: the path to the pipeline config
+    :param model_dir: the directory containing the model files
+    :param steps_per_run: how many steps will be taken this run. Used to configure how often to create a checkpoint
+    """
     if FLAGS.use_tpu:
         # TPU is automatically inferred if tpu_name is None and
         # we are running under cloud ai-platform.
@@ -188,6 +191,11 @@ def train_model(pipeline_config_path, model_dir, steps_per_run):
 
 
 def eval_model(pipeline_config_path, model_dir):
+    """
+    Evaluates the model on the test dataset. Will run the evaluation on the most recent checkpoint.
+    :param pipeline_config_path: the path to the pipeline config
+    :param model_dir: the directory containing the model files
+    """
     logger.info(f'Model evaluation has started...')
     model_lib_v2.eval_continuously(
         pipeline_config_path=pipeline_config_path,
@@ -201,6 +209,18 @@ def eval_model(pipeline_config_path, model_dir):
 
 
 def train_and_eval(last_results, pipeline_config_path, model_dir, steps_per_run):
+    """
+    Run one train and eval loop. Will first train the model for steps_per_run steps, then will stop and evaluate the
+    model on the test set. The loss for each evaluation run will be smoothed, and if the loss went up for this round,
+    we set went_up to True in the results dict. If went_up is True and it was also True in the last_results dict, then
+    should_stop is set to True in the results dict. This indicates that we have begun to over-fit.
+    :param last_results: dict containing information about the last time train_and_eval was called.
+    :param pipeline_config_path: the path to the pipeline config
+    :param model_dir: the directory containing the model files
+    :param steps_per_run: how many steps will be taken this run
+    :return: a dict containing information about the training progress including if the eval loss went up and if we
+    should stop or not.
+    """
     # train for n steps
     train_model(pipeline_config_path, model_dir, steps_per_run)
 
@@ -228,44 +248,6 @@ def train_and_eval(last_results, pipeline_config_path, model_dir, steps_per_run)
 
 
 def main(unused_argv):
-
-    # edit pipeline configs - if resuming from checkpoint add already trained steps to steps to train ?? maybe
-    # look at tfevents to get already trained steps
-    #
-    #
-    #
-    #
-    # starting new vs resuming training
-    #
-    #
-    #
-    #
-    # model_main_tf2 202 run with evaluation
-    #
-    #
-    # checkpoint_every_n
-    #
-    # mosaic_annotations_dir
-    # 	annotations/test/test.record OR train.record
-    #
-    # how to eval on test set? Does it do it automatically?
-    #
-    #
-    # how do we stop? Is it when the test set loss passes some threshold or is it when the losses start to diverge?
-
-    # train for 5, if it went up train for 5 more, if it went up stop and use the checkpoint from before it went up
-
-    #
-
-    # TODO remove all saved checkpoints other than the one from two loops ago
-
-    # check 1 went down
-    # check 2 went up
-    # check 3 went up
-    # STOP. See that we are on 3, get check 3-2=1
-
-
-
     # pretrained model from TensorFlow Object Detection model zoo
     pretrained_model_dir = os.path.join(ROOT_DIR, 'pre-trained-models', FLAGS.model_name)
     if not os.path.exists(pretrained_model_dir):
@@ -305,12 +287,10 @@ def main(unused_argv):
     label_map_path = os.path.join(model_annotations_dir, 'label_map.pbtxt')
     num_classes = len(label_map_util.load_labelmap(label_map_path).item)
 
+    # begin the main training loop. Will continuously run until it is detected that the model is beginning to over-fit
     results = {'went_up': False, 'should_stop': False}
     steps_per_run = 25
-    while True:
-    # while not results['should_stop']: TODO put back
-        if results['should_stop']:
-            logger.info("WOULD'VE STOPPED HERE")
+    while not results['should_stop']:
         num_steps += steps_per_run
 
         # make the pipeline configuration
@@ -323,7 +303,6 @@ def main(unused_argv):
         tf.config.set_soft_device_placement(True)
 
         results = train_and_eval(results, pipeline_config_path, model_dir, steps_per_run)
-        # results['should_stop'] = True  # TODO just for debugging
 
 
 if __name__ == '__main__':
