@@ -60,4 +60,4 @@ def smooth(data):
     """
     Smooths the given data using an exponential moving average.
     """
-    return pd.DataFrame({'data': data}).ewm(alpha=0.1).mean()
+    return pd.DataFrame({'data': data}).ewm(alpha=0.3).mean()
