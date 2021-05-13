@@ -159,10 +159,12 @@ def train_model(pipeline_config_path, model_dir, steps_per_run):
     """
     Runs one training loop. Because this function is blocking, we will only train for a small number of steps at a time
     so that we can periodically stop to evaluate the training progress. Will create one checkpoint during this run.
+
     :param pipeline_config_path: the path to the pipeline config
     :param model_dir: the directory containing the model files
     :param steps_per_run: how many steps will be taken this run. Used to configure how often to create a checkpoint
     """
+
     if FLAGS.use_tpu:
         # TPU is automatically inferred if tpu_name is None and
         # we are running under cloud ai-platform.
@@ -193,9 +195,11 @@ def train_model(pipeline_config_path, model_dir, steps_per_run):
 def eval_model(pipeline_config_path, model_dir):
     """
     Evaluates the model on the test dataset. Will run the evaluation on the most recent checkpoint.
+
     :param pipeline_config_path: the path to the pipeline config
     :param model_dir: the directory containing the model files
     """
+
     logger.info(f'Model evaluation has started...')
     model_lib_v2.eval_continuously(
         pipeline_config_path=pipeline_config_path,
@@ -214,6 +218,7 @@ def train_and_eval(last_results, pipeline_config_path, model_dir, steps_per_run)
     model on the test set. The loss for each evaluation run will be smoothed, and if the loss went up for this round,
     we set went_up to True in the results dict. If went_up is True and it was also True in the last_results dict, then
     should_stop is set to True in the results dict. This indicates that we have begun to over-fit.
+
     :param last_results: dict containing information about the last time train_and_eval was called.
     :param pipeline_config_path: the path to the pipeline config
     :param model_dir: the directory containing the model files
@@ -221,6 +226,7 @@ def train_and_eval(last_results, pipeline_config_path, model_dir, steps_per_run)
     :return: a dict containing information about the training progress including if the eval loss went up and if we
     should stop or not.
     """
+
     # train for n steps
     train_model(pipeline_config_path, model_dir, steps_per_run)
 
